@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Claude Code (course tooling, not app code — re-fetch via `10x get <lesson>`) ###
+.claude/skills/
+.claude/prompts/
+.claude/.10x-cli-manifest.json
