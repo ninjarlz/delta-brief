@@ -35,3 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Claude Code (tooling, not app code) ###
+.claude/skills/
+.claude/prompts/
+.claude/.10x-cli-manifest.json
