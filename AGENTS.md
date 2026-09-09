@@ -1,6 +1,6 @@
 # Repository Guidelines
 
-DeltaBrief is a Spring Boot 4 web app (Java 21, Gradle) that generates *delta briefings* — summaries of what **changed** about a news topic since the user's last briefing, not what's newest. The repo is freshly scaffolded: only the Spring Boot entrypoint exists. Auth, briefing generation, and scheduling are specified but not yet built.
+DeltaBrief is a Spring Boot 4 web app (Java 21, Gradle) generating *delta briefings* — what **changed** about a news topic since the last briefing, not what's newest. Only the entrypoint exists so far; auth, generation, and scheduling are specified but unbuilt.
 
 ## Hard rules
 
@@ -12,8 +12,9 @@ DeltaBrief is a Spring Boot 4 web app (Java 21, Gradle) that generates *delta br
 
 ## Project structure
 
-- App code: `src/main/java/pl/tul/deltabrief/` — everything nests under `pl.tul.deltabrief`.
-- Entry point: `@src/main/java/pl/tul/deltabrief/DeltaBriefApplication.java`.
+- Modular monolith under `pl.tul.deltabrief`: one package per bounded context — `auth`, `topic`, `briefing` (core domain: delta classification), `delivery`, `feedback`; cross-cutting code in `shared`.
+- Each module layers `domain` → `application` → `adapter.in.web` (controllers/HTMX) / `adapter.out.<concern>` (persistence, AI, email); dependencies point inward only.
+- Entry point (root package, not a module): `@src/main/java/pl/tul/deltabrief/DeltaBriefApplication.java`.
 - Runtime config: `src/main/resources/application.properties`.
 - Build: `@build.gradle` / `@settings.gradle`. Product requirements live in `context/foundation/`.
 
@@ -29,7 +30,7 @@ Always use the wrapper (`./gradlew`), not a system `gradle`.
 ## Coding style
 
 - Java 21; tab indentation (match the existing scaffold files).
-- Put new code in feature packages under `pl.tul.deltabrief` (e.g. `.topic`, `.briefing`, `.auth`) — not the root package.
+- New code goes in its module/layer (e.g. `briefing.domain`, `topic.adapter.in.web`), never the root package; modules reference each other by ID only (e.g. `UserId`), never by importing another module's `domain` aggregate.
 - No linter or formatter is configured; there is no automated style gate.
 
 ## Testing
@@ -42,4 +43,6 @@ Always use the wrapper (`./gradlew`), not a system `gradle`.
 
 ## Commit & PR
 
-- Not a git repo yet — run `git init` first. Commit convention is undefined; adopt Conventional Commits unless the team decides otherwise.
+- Trunk-based: `main` always deployable (merges auto-deploy to Render, `@context/foundation/infrastructure.md`); short-lived `feature/<name>` branches, no `develop`.
+- Commit with `git commit --no-verify` — a global hook on this machine demands a Jira key that doesn't apply here.
+- Repo `github.com/ninjarlz/delta-brief` (public); commit author is repo-scoped to `ninjarlz`, separate from this machine's work git identity — don't overwrite it.
