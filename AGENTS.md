@@ -14,6 +14,7 @@ DeltaBrief is a Spring Boot 4 web app (Java 21, Gradle) generating *delta briefi
 
 - Modular monolith under `pl.tul.deltabrief`: one package per bounded context — `auth`, `topic`, `briefing` (core domain: delta classification), `delivery`, `feedback`; cross-cutting code in `shared`.
 - Each module layers `domain` → `application` → `adapter.in.web` (controllers/HTMX) / `adapter.out.<concern>` (persistence, AI, email); dependencies point inward only.
+- Two sanctioned exceptions to "every package is a bounded context": `config` (cross-cutting technical wiring, e.g. `SecurityConfig`) and flat, explicitly-temporary scaffolding like `placeholder` (no sublayers — delete once superseded).
 - Entry point (root package, not a module): `@src/main/java/pl/tul/deltabrief/DeltaBriefApplication.java`.
 - Runtime config: `src/main/resources/application.properties`.
 - Build: `@build.gradle` / `@settings.gradle`. Product requirements live in `context/foundation/`.
