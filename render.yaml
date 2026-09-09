@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: delta-brief
+    runtime: docker
+    plan: starter
+    healthCheckPath: /actuator/health
+    autoDeploy: false
+    envVars:
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75
