@@ -41,20 +41,35 @@ dependencies {
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	// testcontainers-bom doesn't resolve reliably through io.spring.dependency-management
 	// (unlike spring-ai-bom above) — Gradle's native platform() import is the documented,
 	// reliable path for this specific BOM.
 	testImplementation platform("org.testcontainers:testcontainers-bom:${testcontainersVersion}")
 	// Testcontainers 2.x renamed every module with a testcontainers- prefix
-	// (was org.testcontainers:junit-jupiter / :postgresql in 1.x).
-	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	// (was org.testcontainers:postgresql in 1.x). testcontainers-postgresql pulls in
+	// the core testcontainers artifact transitively (GenericContainer, Wait, etc.) —
+	// no separate core or junit-jupiter module needed since container lifecycle is
+	// managed manually, not via @Testcontainers/@Container (see
+	// DeltaBriefApplicationTests for why: @ServiceConnection doesn't support the
+	// host-network GenericContainer the local (VPN-constrained) mode requires).
 	testImplementation 'org.testcontainers:testcontainers-postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// CI/local Testcontainers mode is selected via the CI Spring profile, set here
+	// (not read directly in application code) so bean selection stays declarative —
+	// see TestcontainersDatasourceConfig. Pattern mirrors xServer's build.gradle.
+	def isCi = (System.getenv('CI') ?: 'false').toBoolean()
+	if (isCi) {
+		systemProperty 'spring.profiles.active', 'CI'
+	} else {
+		// Ryuk doesn't reliably manage host-network Testcontainers (required locally on
+		// this machine due to a VPN/Docker bridge-networking conflict — see
+		// TestcontainersDatasourceConfig).
+		environment 'TESTCONTAINERS_RYUK_DISABLED', 'true'
+	}
 }
 
 bootJar {
