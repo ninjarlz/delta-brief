@@ -17,6 +17,12 @@ repositories {
 	mavenCentral()
 }
 
+configurations {
+	all {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+	}
+}
+
 ext {
 	springAiVersion = '2.0.0'
 	testcontainersVersion = '2.0.5'
@@ -30,6 +36,7 @@ dependencyManagement {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -39,8 +46,12 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
 	// testcontainers-bom doesn't resolve reliably through io.spring.dependency-management
 	// (unlike spring-ai-bom above) — Gradle's native platform() import is the documented,
 	// reliable path for this specific BOM.
@@ -60,13 +71,13 @@ tasks.named('test') {
 	useJUnitPlatform()
 	// CI/local Testcontainers mode is selected via the CI Spring profile, set here
 	// (not read directly in application code) so bean selection stays declarative —
-	// see TestcontainersDatasourceConfig. Pattern mirrors xServer's build.gradle.
+	// see TestcontainersDatasourceConfig.
 	def isCi = (System.getenv('CI') ?: 'false').toBoolean()
 	if (isCi) {
 		systemProperty 'spring.profiles.active', 'CI'
 	} else {
-		// Ryuk doesn't reliably manage host-network Testcontainers (required locally on
-		// this machine due to a VPN/Docker bridge-networking conflict — see
+		// Ryuk doesn't reliably manage host-network Testcontainers (required locally
+		// when a VPN/Docker bridge-networking conflict is present — see
 		// TestcontainersDatasourceConfig).
 		environment 'TESTCONTAINERS_RYUK_DISABLED', 'true'
 	}

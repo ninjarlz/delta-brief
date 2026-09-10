@@ -4,6 +4,7 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import javax.sql.DataSource;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
@@ -29,10 +30,10 @@ import org.testcontainers.utility.DockerImageName;
  *       default) reaps it, matching GitHub Actions' normal Docker setup.</li>
  *   <li><b>no {@code CI} profile (local)</b>: a {@link GenericContainer}
  *       with Docker host network mode and a fixed port, cleaned up via a
- *       JVM shutdown hook. Required on this machine — its corporate VPN
- *       breaks Docker's default bridge networking (TCP handshakes complete
- *       but the Postgres protocol connection gets reset before completing).
- *       Ryuk is disabled for local runs (see {@code build.gradle}) since it
+ *       JVM shutdown hook. Required when a VPN breaks Docker's default
+ *       bridge networking (TCP handshakes complete but the Postgres
+ *       protocol connection gets reset before completing). Ryuk is
+ *       disabled for local runs (see {@code build.gradle}) since it
  *       doesn't reliably manage host-network containers.</li>
  * </ul>
  *
@@ -40,7 +41,8 @@ import org.testcontainers.utility.DockerImageName;
  * datasource bean for JPA and Flyway alike, without needing to exclude
  * {@code DataSourceAutoConfiguration}.
  */
-@TestConfiguration(proxyBeanMethods = false)
+@TestConfiguration
+@Log4j2
 public class TestcontainersDatasourceConfig {
 
 	private static final DockerImageName POSTGRES_IMAGE = DockerImageName.parse("postgres:17");
@@ -53,18 +55,22 @@ public class TestcontainersDatasourceConfig {
 	@Primary
 	@Profile("CI")
 	public DataSource ciDataSource() {
+		log.info(">>> Starting CI Testcontainers PostgreSQL (bridge network, dynamic port)...");
 		PostgreSQLContainer container = new PostgreSQLContainer(POSTGRES_IMAGE)
 				.withDatabaseName(DB_NAME)
 				.withUsername(DB_USER)
 				.withPassword(DB_PASSWORD);
 		container.start();
-		return buildDataSource(container.getJdbcUrl(), container.getUsername(), container.getPassword());
+		String jdbcUrl = container.getJdbcUrl();
+		log.info(">>> Creating CI datasource using Testcontainers JDBC URL: {}", jdbcUrl);
+		return buildDataSource(jdbcUrl, container.getUsername(), container.getPassword());
 	}
 
 	@Bean
 	@Primary
 	@Profile("!CI")
 	public DataSource localDataSource() {
+		log.info(">>> Starting local Testcontainers PostgreSQL (host network, fixed port {})...", FIXED_LOCAL_PORT);
 		GenericContainer<?> container = new GenericContainer<>(POSTGRES_IMAGE)
 				.withEnv("POSTGRES_DB", DB_NAME)
 				.withEnv("POSTGRES_USER", DB_USER)
@@ -75,12 +81,14 @@ public class TestcontainersDatasourceConfig {
 				.withCreateContainerCmdModifier(cmd -> cmd.withHostConfig(new HostConfig().withNetworkMode("host")));
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			if (container.isRunning()) {
+				log.info(">>> Stopping local Testcontainers PostgreSQL...");
 				container.stop();
 			}
 		}));
 		container.start();
-		String url = "jdbc:postgresql://localhost:%d/%s".formatted(FIXED_LOCAL_PORT, DB_NAME);
-		return buildDataSource(url, DB_USER, DB_PASSWORD);
+		String jdbcUrl = "jdbc:postgresql://localhost:%d/%s".formatted(FIXED_LOCAL_PORT, DB_NAME);
+		log.info(">>> Creating local datasource using fixed host-network JDBC URL: {}", jdbcUrl);
+		return buildDataSource(jdbcUrl, DB_USER, DB_PASSWORD);
 	}
 
 	private DataSource buildDataSource(String jdbcUrl, String username, String password) {

@@ -232,9 +232,9 @@ Not applicable — there is no existing data to migrate. The `db/migration` dire
 
 #### Automated
 
-- [x] 2.1 `./gradlew test --no-daemon` passes with a real Testcontainers Postgres
-- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end
-- [ ] 2.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
+- [x] 2.1 `./gradlew test --no-daemon` passes with a real Testcontainers Postgres — 9588f8f
+- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end — 9588f8f
+- [x] 2.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes — 9588f8f
 
 #### Manual
 
