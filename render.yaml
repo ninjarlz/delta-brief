@@ -2,7 +2,7 @@ services:
   - type: web
     name: delta-brief
     runtime: docker
-    plan: free
+    plan: starter
     healthCheckPath: /actuator/health
     autoDeploy: false
     envVars:
