@@ -26,6 +26,7 @@ milestone_status: open
 - **Source materials:** `context/foundation/prd.md` (v1)
 - **Done when:** every F-NN and S-NN below is `done`, and the full US-01 loop (create topic → onboarding briefing → delta briefing) works end-to-end for at least one real topic with real source content.
 - **Scope anchors:** FR-001 through FR-013 (FR-004 excluded — deferred to v2 in the PRD itself), US-01.
+- **External backlog:** [GitHub Project — DeltaBrief M-1](https://github.com/users/ninjarlz/projects/1) (public). Each F-NN/S-NN below is a linked issue (see the `GitHub` column / `GitHub Issue` field); the project's `Roadmap Status` field mirrors each item's `Status` here — the built-in `Status` field is intentionally left unset (its generic Todo/In Progress/Done can't represent `proposed` vs. `blocked` without losing the distinction).
 
 ## Vision recap
 
