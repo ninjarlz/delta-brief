@@ -238,7 +238,7 @@ Not applicable — there is no existing data to migrate. The `db/migration` dire
 
 #### Manual
 
-- [ ] 2.4 CI run log confirms a real Testcontainers container started (not skipped)
+- [x] 2.4 CI run log confirms a real Testcontainers container started (not skipped)
 
 ### Phase 3: Wire the deployed environment
 
