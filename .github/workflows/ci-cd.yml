@@ -21,3 +21,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build and test
         run: ./gradlew build --no-daemon
+
+  deploy:
+    name: Deploy to Render
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
