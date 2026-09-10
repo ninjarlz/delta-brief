@@ -47,3 +47,8 @@ Always use the wrapper (`./gradlew`), not a system `gradle`.
 - Trunk-based: `main` always deployable (merges auto-deploy to Render, `@context/foundation/infrastructure.md`); short-lived `feature/<name>` branches, no `develop`.
 - Commit with `git commit --no-verify` — a global hook on this machine demands a Jira key that doesn't apply here.
 - Repo `github.com/ninjarlz/delta-brief` (public); commit author is repo-scoped to `ninjarlz`, separate from this machine's work git identity — don't overwrite it.
+
+## Roadmap & backlog
+
+- `context/foundation/roadmap.md` is the sequencing source of truth; every F-NN/S-NN has a linked GitHub issue and a card in the public GitHub Project (both referenced in the roadmap doc).
+- When starting or finishing work on a roadmap item, update **both** the issue (comment/close) and the Project's `Roadmap Status` field (Ready → In Progress → Done) — keep the external backlog in sync with the roadmap; don't let it drift.
