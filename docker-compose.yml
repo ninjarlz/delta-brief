@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17
+    # Host network mode, not the default bridge mode: this machine's corporate
+    # VPN client breaks Docker's bridge-network NAT/port-forwarding (connections
+    # complete a TCP handshake but get reset before the Postgres protocol layer
+    # connects). Host mode shares the host's network stack directly, sidestepping
+    # that NAT layer entirely.
+    #
+    # Host mode means no port remapping — the container listens directly on the
+    # host's ports. Since 5432 is already taken by a native system Postgres
+    # service (unrelated to this project), the containerized Postgres is told
+    # to listen on 5433 instead, via both PGPORT and the equivalent -c flag.
+    network_mode: host
+    environment:
+      POSTGRES_DB: deltabrief
+      POSTGRES_USER: deltabrief
+      POSTGRES_PASSWORD: deltabrief
+      PGPORT: 5433
+    command: ["postgres", "-c", "port=5433"]

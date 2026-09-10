@@ -220,13 +220,13 @@ Not applicable — there is no existing data to migrate. The `db/migration` dire
 
 #### Automated
 
-- [ ] 1.1 Build compiles cleanly: `./gradlew build --no-daemon`
-- [ ] 1.2 Local app boots against Docker Postgres: `docker compose up -d && ./gradlew bootRun`
+- [x] 1.1 Build compiles cleanly: `./gradlew build --no-daemon`
+- [x] 1.2 Local app boots against Docker Postgres: `docker compose up -d && ./gradlew bootRun`
 
 #### Manual
 
-- [ ] 1.3 Startup log shows successful Hikari + Flyway (0 migrations) against local Postgres
-- [ ] 1.4 `curl -i http://localhost:8080/actuator/health` returns 200
+- [x] 1.3 Startup log shows successful Hikari + Flyway (0 migrations) against local Postgres
+- [x] 1.4 `curl -i http://localhost:8080/actuator/health` returns 200
 
 ### Phase 2: Prove it with a real, ephemeral Postgres
 
