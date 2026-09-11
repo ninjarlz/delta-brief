@@ -1,10 +1,10 @@
 ---
 change_id: wire-database-connectivity
 title: Wire database connectivity
-status: impl_reviewed
+status: archived
 created: 2026-09-10
 updated: 2026-09-11
-archived_at: null
+archived_at: 2026-09-11T15:29:51Z
 ---
 
 ## Notes
