@@ -217,6 +217,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Real-time alerts or push notifications** — Why parked: PRD Non-Goal — contradicts the reduce-noise mission; briefings are periodic by design.
 - **Multi-user collaboration or shared topics** — Why parked: PRD Non-Goal — keeps the data model and access control simple for MVP.
 - **Source bias or credibility scoring** — Why parked: PRD Non-Goal — a separate hard problem; attempting it in MVP risks misleading users.
+- **OAuth / social login (Google, Facebook) for S-01** — Why parked: explicitly optional per `tech-stack.md` and FR-001's "email + password or OAuth" phrasing; confirmed via `/10x-frame` (2026-09-11, see `context/changes/user-registration-and-login/frame.md`) that deferring costs nothing structurally (additive `V2` migration, no `SecurityFilterChain` restructuring) and Google is a near-free fast-follow once S-01 ships — no rush to build now.
 
 ## Milestone History
 
