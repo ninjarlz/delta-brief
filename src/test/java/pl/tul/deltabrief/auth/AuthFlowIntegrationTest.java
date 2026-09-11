@@ -83,6 +83,10 @@ class AuthFlowIntegrationTest {
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/login?error"));
 
+		mockMvc.perform(get("/some-protected-path"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
+
 		mockMvc.perform(post("/logout").with(csrf()))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/login?logout"));

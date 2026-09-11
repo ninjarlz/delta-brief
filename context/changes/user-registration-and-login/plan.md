@@ -325,6 +325,8 @@ Add a `PasswordEncoder` bean: `PasswordEncoderFactories.createDelegatingPassword
 
 **Contract**: `@SpringBootTest @AutoConfigureMockMvc`, using `MockMvc` to: register a user, extract the verification token from the `FakeEmailSender`'s recorded message, hit `/verify?token=...`, then log in via `/login` with the registered credentials and confirm a redirect to `/` with an authenticated session, then log out and confirm the session is invalidated.
 
+**Addendum (post-implementation, added during `/10x-impl-review`)**: Two deviations from the contract above, both landed in commit `cc5a7fe`. (1) The test does **not** use `@AutoConfigureMockMvc` — that annotation changes Spring's test-context cache key, which would force a second `ApplicationContext` (and a second Testcontainers container competing for the same fixed host-network port `TestcontainersDatasourceConfig` uses locally). `MockMvc` is instead built manually via `MockMvcBuilders.webAppContextSetup(webApplicationContext).apply(springSecurity()).build()`, which applies the real Spring Security filter chain (CSRF and authentication genuinely enforced) while reusing the exact same shared context — confirmed only one container started across all tests. (2) Manual testing surfaced that Spring Boot Actuator auto-adds a mail health indicator that tests live SMTP connectivity to Resend on every `/actuator/health` call — this returned `503 DOWN` in an environment without outbound SMTP access, and the same risk applies in production, where Render uses this exact endpoint to decide whether to keep routing traffic. Fixed via `management.health.mail.enabled=false` in `application.properties`; `RegistrationService` already handles mail failures gracefully on its own, so this indicator isn't needed for the app's health signal.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -449,7 +451,7 @@ Not applicable — `V1__create_users_table.sql` is a brand-new table with no exi
 
 - [x] 3.1 `./gradlew test --no-daemon` passes, including the full register→verify→login→logout integration test — cc5a7fe
 - [x] 3.2 `./gradlew build --no-daemon` passes end-to-end — cc5a7fe
-- [x] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
+- [x] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes — bd8dee3
 
 #### Manual
 
