@@ -9,10 +9,9 @@ import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * App-wide security wiring. Public paths are the placeholder landing page,
- * Render's health check, and the registration/verification pages (login's
- * own permitAll + form-login wiring lands in Phase 3); everything else
- * defaults to authenticated — this is intentional so newly added endpoints
- * are secure-by-default rather than accidentally public.
+ * Render's health check, and the registration/verification/login pages;
+ * everything else defaults to authenticated — this is intentional so newly
+ * added endpoints are secure-by-default rather than accidentally public.
  */
 @Configuration
 public class SecurityConfig {
@@ -20,8 +19,21 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests(authorize -> authorize
-				.requestMatchers("/", "/actuator/health", "/register", "/check-email", "/verify").permitAll()
-				.anyRequest().authenticated());
+				.requestMatchers("/", "/actuator/health", "/register", "/check-email", "/verify", "/login")
+				.permitAll()
+				.anyRequest().authenticated())
+			.formLogin(form -> form
+				.loginPage("/login")
+				.loginProcessingUrl("/login")
+				.failureUrl("/login?error")
+				.defaultSuccessUrl("/", false)
+				.permitAll())
+			.logout(logout -> logout
+				.logoutUrl("/logout")
+				.logoutSuccessUrl("/login?logout")
+				.invalidateHttpSession(true)
+				.deleteCookies("JSESSIONID")
+				.permitAll());
 		return http.build();
 	}
 

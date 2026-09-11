@@ -447,14 +447,14 @@ Not applicable — `V1__create_users_table.sql` is a brand-new table with no exi
 
 #### Automated
 
-- [ ] 3.1 `./gradlew test --no-daemon` passes, including the full register→verify→login→logout integration test
-- [ ] 3.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 3.1 `./gradlew test --no-daemon` passes, including the full register→verify→login→logout integration test
+- [x] 3.2 `./gradlew build --no-daemon` passes end-to-end
 - [ ] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
 
 #### Manual
 
-- [ ] 3.4 Full manual register→verify→login→logout cycle succeeds; wrong password fails cleanly
-- [ ] 3.5 `curl -i http://localhost:8080/actuator/health` still returns 200
+- [x] 3.4 Full manual register→verify→login→logout cycle succeeds; wrong password fails cleanly
+- [x] 3.5 `curl -i http://localhost:8080/actuator/health` still returns 200
 
 ### Phase 4: Wire the deployed environment
 
