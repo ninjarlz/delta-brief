@@ -120,6 +120,8 @@ The `UNIQUE` constraint on `email` is the correctness guarantee for duplicate-re
 
 **Contract**: `@Component implements UserRepository`, delegating to `UserJpaRepository` and mapping entity ↔ domain in both directions.
 
+**Addendum (post-implementation)**: Entity↔domain mapping was switched from hand-written constructor calls to a MapStruct-generated mapper (`UserEntityMapper`, `org.mapstruct:mapstruct` added to `build.gradle`), at the user's request, to establish the project's mapping convention going forward. `toDomain` maps implicitly (entity's JavaBean getters match `User`'s constructor parameter names, with a `toUserId(Long)` helper for the `Long -> UserId` conversion); `toEntity` uses explicit `@Mapping(..., expression = ...)` per field since `User`'s accessors are fluent (no get/is prefix) and aren't auto-detected as JavaBean properties by MapStruct's default naming strategy. The adapter's own logic (assigning the generated id/version back onto the domain object post-save) is not a pure mapping concern and stays manual in `UserRepositoryAdapter`.
+
 ### Success Criteria:
 
 #### Automated Verification:
