@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.auth;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -90,6 +91,19 @@ class AuthFlowIntegrationTest {
 		mockMvc.perform(post("/logout").with(csrf()))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/login?logout"));
+	}
+
+	@Test
+	void defaultViewRedirectsAnonymousVisitorsToLogin() throws Exception {
+		mockMvc.perform(get("/"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
+	}
+
+	@Test
+	void defaultViewShowsPlaceholderForAuthenticatedVisitors() throws Exception {
+		mockMvc.perform(get("/").with(user("someone@example.com")))
+			.andExpect(status().isOk());
 	}
 
 	private String extractToken(String email) {
