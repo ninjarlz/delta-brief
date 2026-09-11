@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Log in — DeltaBrief</title>
+</head>
+<body>
+	<main>
+		<h1>Log in</h1>
+		<p th:if="${param.error}">Invalid email or password.</p>
+		<p th:if="${param.verified}">Your email is verified — please log in.</p>
+		<p th:if="${param.verification_error}">That verification link is invalid or has expired.</p>
+		<p th:if="${param.logout}">You've been logged out.</p>
+		<form th:action="@{/login}" method="post">
+			<div>
+				<label for="username">Email</label>
+				<input type="email" id="username" name="username"/>
+			</div>
+			<div>
+				<label for="password">Password</label>
+				<input type="password" id="password" name="password"/>
+			</div>
+			<button type="submit">Log in</button>
+		</form>
+		<p><a th:href="@{/register}">Need an account? Register</a></p>
+	</main>
+</body>
+</html>

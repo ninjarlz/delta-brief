@@ -40,3 +40,6 @@ out/
 .claude/skills/
 .claude/prompts/
 .claude/.10x-cli-manifest.json
+
+### Local secrets (never commit — see .env.example) ###
+.env
