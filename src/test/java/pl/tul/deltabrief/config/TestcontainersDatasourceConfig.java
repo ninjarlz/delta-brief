@@ -1,14 +1,18 @@
 package pl.tul.deltabrief.config;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.util.List;
 import javax.sql.DataSource;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -50,6 +54,7 @@ public class TestcontainersDatasourceConfig {
 	private static final String DB_NAME = "deltabrief_test";
 	private static final String DB_USER = "deltabrief";
 	private static final String DB_PASSWORD = "deltabrief";
+	private static final String LOCAL_CONTAINER_NAME = "deltabrief-local-testcontainers-postgres";
 
 	@Bean
 	@Primary
@@ -71,6 +76,7 @@ public class TestcontainersDatasourceConfig {
 	@Profile("!CI")
 	public DataSource localDataSource() {
 		log.info(">>> Starting local Testcontainers PostgreSQL (host network, fixed port {})...", FIXED_LOCAL_PORT);
+		removeStaleLocalContainer();
 		GenericContainer<?> container = new GenericContainer<>(POSTGRES_IMAGE)
 				.withEnv("POSTGRES_DB", DB_NAME)
 				.withEnv("POSTGRES_USER", DB_USER)
@@ -78,7 +84,8 @@ public class TestcontainersDatasourceConfig {
 				.withEnv("PGPORT", String.valueOf(FIXED_LOCAL_PORT))
 				.withCommand("postgres", "-c", "port=" + FIXED_LOCAL_PORT)
 				.waitingFor(Wait.forLogMessage(".*database system is ready to accept connections.*", 2))
-				.withCreateContainerCmdModifier(cmd -> cmd.withHostConfig(new HostConfig().withNetworkMode("host")));
+				.withCreateContainerCmdModifier(cmd -> cmd.withName(LOCAL_CONTAINER_NAME)
+						.withHostConfig(new HostConfig().withNetworkMode("host")));
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			if (container.isRunning()) {
 				log.info(">>> Stopping local Testcontainers PostgreSQL...");
@@ -89,6 +96,25 @@ public class TestcontainersDatasourceConfig {
 		String jdbcUrl = "jdbc:postgresql://localhost:%d/%s".formatted(FIXED_LOCAL_PORT, DB_NAME);
 		log.info(">>> Creating local datasource using fixed host-network JDBC URL: {}", jdbcUrl);
 		return buildDataSource(jdbcUrl, DB_USER, DB_PASSWORD);
+	}
+
+	/**
+	 * Self-heals a leaked local container from a prior JVM hard-kill (Ryuk is
+	 * disabled for host-network mode, and a hard kill skips the shutdown hook
+	 * below) — without this, a leaked container would keep {@link
+	 * #FIXED_LOCAL_PORT} bound and fail every subsequent local test run until
+	 * removed manually.
+	 */
+	private void removeStaleLocalContainer() {
+		DockerClient client = DockerClientFactory.instance().client();
+		List<Container> stale = client.listContainersCmd()
+				.withShowAll(true)
+				.withNameFilter(List.of(LOCAL_CONTAINER_NAME))
+				.exec();
+		for (Container container : stale) {
+			log.info(">>> Removing stale local Testcontainers PostgreSQL container: {}", container.getId());
+			client.removeContainerCmd(container.getId()).withForce(true).exec();
+		}
 	}
 
 	private DataSource buildDataSource(String jdbcUrl, String username, String password) {
