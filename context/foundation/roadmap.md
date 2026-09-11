@@ -50,6 +50,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | proposed | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
 | S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | proposed | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
 | S-07 | rate-a-briefing                  | rate a briefing with predefined categories                          | S-03           | FR-013                  | proposed | [#12](https://github.com/ninjarlz/delta-brief/issues/12) |
+| S-08 | oauth-login-google-facebook      | log in or register via Google or Facebook, in addition to email/password | S-01      | FR-001                  | proposed | [#22](https://github.com/ninjarlz/delta-brief/issues/22) |
 
 ## Streams
 
@@ -62,6 +63,7 @@ Navigation aid — groups items that share a Prerequisites chain. Canonical orde
 | C      | Briefing history          | `S-05`                              | Joins Stream A at `S-03`. Independent of B, D, E — parallelizable.     |
 | D      | Delivery                  | `S-06`                              | Joins Stream A at `S-03`. Independent of B, C, E — parallelizable.     |
 | E      | Feedback loop             | `S-07`                              | Joins Stream A at `S-03`. Independent of B, C, D — parallelizable.     |
+| F      | OAuth fast-follow          | `S-08`                              | Joins Stream A at `S-01`. Independent of B, C, D, E — parallelizable; extends `auth` once S-01 ships. |
 
 ## Baseline
 
@@ -188,6 +190,20 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Capturing the rating itself is safe to build regardless of the open question above — "how ratings feed back into prompts" is a separate, unblocked downstream concern that doesn't gate collecting the data now.
 - **Status:** proposed
 
+### S-08: OAuth login (Google, Facebook)
+
+- **Outcome:** User can log in or register using Google or Facebook, as an alternative to email/password, with accounts linked by verified email where the provider confirms it (Google), or explicit confirmation otherwise (Facebook).
+- **Change ID:** oauth-login-google-facebook
+- **GitHub Issue:** [#22](https://github.com/ninjarlz/delta-brief/issues/22)
+- **PRD refs:** FR-001 (the "or OAuth" clause)
+- **Prerequisites:** S-01
+- **Parallel with:** S-02 (and transitively S-03-S-07) — independent of the topic/briefing chain, only depends on S-01's `auth` module and `users` table existing.
+- **Blockers:** —
+- **Unknowns:**
+  - Facebook's `email` permission review status was flagged uncertain by research (conflicting sources on whether Meta's App Review is required) — Owner: user. Block: no (Google can proceed regardless; only affects Facebook's specific rollout timing).
+- **Risk:** Originally parked as explicitly optional per `tech-stack.md` and FR-001's either-or phrasing; promoted to a tracked slice per user request after `/10x-frame` confirmed (2026-09-11, `context/changes/user-registration-and-login/frame.md`) that it's a clean, additive extension of S-01 — no `users` table retrofit, no `SecurityFilterChain` restructuring. Sequenced strictly after S-01 (extends the `auth` module rather than preceding it); does not block or get blocked by S-02 onward. Google is lower-friction than Facebook (no app-review path for basic scopes) — implement Google first, Facebook as a near-free fast-follow. Full research: `context/changes/user-registration-and-login/research.md`.
+- **Status:** proposed
+
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                          | Suggested issue title                                   | Ready for `/10x-plan` | Notes                                              |
@@ -200,6 +216,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-05       | browse-briefing-history              | Browse briefing history                                      | no                     | Waiting on S-03                                     |
 | S-06       | email-briefing-delivery              | Email briefing delivery                                       | no                     | Waiting on S-03; email format still open (Q3)       |
 | S-07       | rate-a-briefing                      | Rate a briefing                                               | no                     | Waiting on S-03; ratings usage still open (Q4)      |
+| S-08       | oauth-login-google-facebook          | OAuth login (Google, Facebook)                                | no                     | Waiting on S-01                                     |
 
 ## Open Roadmap Questions
 
@@ -217,7 +234,6 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Real-time alerts or push notifications** — Why parked: PRD Non-Goal — contradicts the reduce-noise mission; briefings are periodic by design.
 - **Multi-user collaboration or shared topics** — Why parked: PRD Non-Goal — keeps the data model and access control simple for MVP.
 - **Source bias or credibility scoring** — Why parked: PRD Non-Goal — a separate hard problem; attempting it in MVP risks misleading users.
-- **OAuth / social login (Google, Facebook) for S-01** — Why parked: explicitly optional per `tech-stack.md` and FR-001's "email + password or OAuth" phrasing; confirmed via `/10x-frame` (2026-09-11, see `context/changes/user-registration-and-login/frame.md`) that deferring costs nothing structurally (additive `V2` migration, no `SecurityFilterChain` restructuring) and Google is a near-free fast-follow once S-01 ships — no rush to build now.
 
 ## Milestone History
 
