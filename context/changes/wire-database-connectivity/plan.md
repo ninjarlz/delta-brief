@@ -244,9 +244,9 @@ Not applicable — there is no existing data to migrate. The `db/migration` dire
 
 #### Automated
 
-- [x] 3.1 `curl -i https://delta-brief.onrender.com/actuator/health` returns 200 with `db: UP`
+- [x] 3.1 `curl -i https://delta-brief.onrender.com/actuator/health` returns 200 with `db: UP` — 2597aa1
 
 #### Manual
 
-- [x] 3.2 Render deploy logs show successful connection to real Supabase
-- [x] 3.3 Supabase dashboard confirms an active connection from the app
+- [x] 3.2 Render deploy logs show successful connection to real Supabase — 2597aa1
+- [x] 3.3 Supabase dashboard confirms an active connection from the app — 2597aa1
