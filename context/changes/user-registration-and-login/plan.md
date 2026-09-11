@@ -430,16 +430,16 @@ Not applicable — `V1__create_users_table.sql` is a brand-new table with no exi
 
 #### Automated
 
-- [ ] 2.1 Build compiles cleanly: `./gradlew build --no-daemon`
-- [ ] 2.2 `FakeEmailSender` wired into test context, no real network/API key needed
-- [ ] 2.3 `RegistrationService` test proves registration, duplicate-rejection, and token verification behavior
-- [ ] 2.4 `./gradlew test --no-daemon` passes
+- [x] 2.1 Build compiles cleanly: `./gradlew build --no-daemon`
+- [x] 2.2 `FakeEmailSender` wired into test context, no real network/API key needed
+- [x] 2.3 `RegistrationService` test proves registration, duplicate-rejection, and token verification behavior
+- [x] 2.4 `./gradlew test --no-daemon` passes
 
 #### Manual
 
-- [ ] 2.5 A real verification email arrives at the developer's own address and its link works
-- [ ] 2.6 Clicking the link flips `email_verified` and redirects to `/login?verified`
-- [ ] 2.7 Duplicate-email registration shows a friendly inline error
+- [x] 2.5 A real verification email arrives at the developer's own address and its link works
+- [x] 2.6 Clicking the link flips `email_verified` and redirects to `/login?verified`
+- [x] 2.7 Duplicate-email registration shows a friendly inline error
 
 ### Phase 3: Login and logout
 

@@ -43,6 +43,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-flyway'
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
@@ -85,4 +87,23 @@ tasks.named('test') {
 
 bootJar {
 	archiveFileName = 'app.jar'
+}
+
+tasks.named('bootRun') {
+	// Auto-loads a gitignored .env file for local secrets so
+	// `./gradlew bootRun` picks them up with no extra flags. Never used for
+	// CI/deployed environments — those set real env vars directly (Render,
+	// GitHub Actions).
+	def envFile = file('.env')
+	if (envFile.exists()) {
+		envFile.readLines().each { line ->
+			line = line.trim()
+			if (line && !line.startsWith('#')) {
+				def parts = line.split('=', 2)
+				if (parts.length == 2 && parts[1].trim()) {
+					environment parts[0].trim(), parts[1].trim()
+				}
+			}
+		}
+	}
 }
