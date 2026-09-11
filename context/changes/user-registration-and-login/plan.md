@@ -238,6 +238,8 @@ The developer needs a free Resend account and API key for local testing (no doma
 
 **Contract**: `register.html` posts to `/register` with `th:object`/`th:field` bindings for the three `RegistrationRequest` fields and `th:errors` blocks. `check-email.html` is static informational content.
 
+**Addendum (post-implementation, added during `/10x-impl-review`)**: Manual testing during this phase surfaced four fixes beyond the contract above, all landed in commit `dd5c20f` — (1) `/register`, `/check-email`, `/verify` had to be added to `SecurityConfig`'s `permitAll` list now rather than in Phase 3, since Phase 2 can't be manually tested at all while they 403; the `PasswordEncoder` bean moved here for the same reason (`RegistrationService` needs it immediately, not in Phase 3). (2) SMTP connect/read/write timeouts (5s) were added after a real hang of 120+ seconds was observed with none configured. (3) `RegistrationService.register()` wraps the email-send call in a `try/catch (MailException)` so a delivery failure no longer 500s the registration — the account is still created and the failure is logged, consistent with verification never gating login. (4) A gitignored `.env` mechanism (auto-loaded by `build.gradle`'s `bootRun` task) plus `.env.example` were added so a developer's Resend API key is picked up with no extra flags and never risks being committed.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -430,16 +432,16 @@ Not applicable — `V1__create_users_table.sql` is a brand-new table with no exi
 
 #### Automated
 
-- [x] 2.1 Build compiles cleanly: `./gradlew build --no-daemon`
-- [x] 2.2 `FakeEmailSender` wired into test context, no real network/API key needed
-- [x] 2.3 `RegistrationService` test proves registration, duplicate-rejection, and token verification behavior
-- [x] 2.4 `./gradlew test --no-daemon` passes
+- [x] 2.1 Build compiles cleanly: `./gradlew build --no-daemon` — dd5c20f
+- [x] 2.2 `FakeEmailSender` wired into test context, no real network/API key needed — dd5c20f
+- [x] 2.3 `RegistrationService` test proves registration, duplicate-rejection, and token verification behavior — dd5c20f
+- [x] 2.4 `./gradlew test --no-daemon` passes — dd5c20f
 
 #### Manual
 
-- [x] 2.5 A real verification email arrives at the developer's own address and its link works
-- [x] 2.6 Clicking the link flips `email_verified` and redirects to `/login?verified`
-- [x] 2.7 Duplicate-email registration shows a friendly inline error
+- [x] 2.5 A real verification email arrives at the developer's own address and its link works — dd5c20f
+- [x] 2.6 Clicking the link flips `email_verified` and redirects to `/login?verified` — dd5c20f
+- [x] 2.7 Duplicate-email registration shows a friendly inline error — dd5c20f
 
 ### Phase 3: Login and logout
 

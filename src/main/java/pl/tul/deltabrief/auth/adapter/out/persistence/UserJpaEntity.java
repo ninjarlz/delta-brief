@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Instant;
 
 /**
@@ -20,6 +21,9 @@ public class UserJpaEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
+	@Version
+	private Long version;
 
 	@Column(nullable = false, unique = true)
 	private String email;
@@ -42,9 +46,10 @@ public class UserJpaEntity {
 	protected UserJpaEntity() {
 	}
 
-	public UserJpaEntity(Long id, String email, String passwordHash, boolean emailVerified,
+	public UserJpaEntity(Long id, Long version, String email, String passwordHash, boolean emailVerified,
 			String verificationToken, Instant verificationTokenExpiresAt, Instant createdAt) {
 		this.id = id;
+		this.version = version;
 		this.email = email;
 		this.passwordHash = passwordHash;
 		this.emailVerified = emailVerified;
@@ -55,6 +60,10 @@ public class UserJpaEntity {
 
 	public Long getId() {
 		return id;
+	}
+
+	public Long getVersion() {
+		return version;
 	}
 
 	public String getEmail() {

@@ -11,6 +11,7 @@ import java.util.Objects;
 public class User {
 
 	private UserId id;
+	private Long version;
 	private String email;
 	private String passwordHash;
 	private boolean emailVerified;
@@ -18,9 +19,10 @@ public class User {
 	private Instant verificationTokenExpiresAt;
 	private final Instant createdAt;
 
-	public User(UserId id, String email, String passwordHash, boolean emailVerified,
+	public User(UserId id, Long version, String email, String passwordHash, boolean emailVerified,
 			String verificationToken, Instant verificationTokenExpiresAt, Instant createdAt) {
 		this.id = id;
+		this.version = version;
 		this.email = email;
 		this.passwordHash = passwordHash;
 		this.emailVerified = emailVerified;
@@ -30,7 +32,7 @@ public class User {
 	}
 
 	public static User register(String email, String passwordHash, Instant createdAt) {
-		return new User(null, email, passwordHash, false, null, null, createdAt);
+		return new User(null, null, email, passwordHash, false, null, null, createdAt);
 	}
 
 	public void issueVerificationToken(String token, Instant expiresAt) {
@@ -64,6 +66,14 @@ public class User {
 
 	public void assignId(UserId id) {
 		this.id = Objects.requireNonNull(id);
+	}
+
+	public Long version() {
+		return version;
+	}
+
+	public void assignVersion(Long version) {
+		this.version = version;
 	}
 
 	public String email() {

@@ -13,13 +13,15 @@ public class RegistrationRequest {
 
 	@NotBlank
 	@Email
+	@Size(max = 255)
 	private String email;
 
 	@NotBlank
-	@Size(min = 8)
+	@Size(min = 8, max = 100)
 	private String password;
 
 	@NotBlank
+	@Size(max = 100)
 	private String confirmPassword;
 
 	public String getEmail() {

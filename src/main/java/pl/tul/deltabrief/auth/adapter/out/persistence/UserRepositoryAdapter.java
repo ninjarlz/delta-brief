@@ -19,6 +19,7 @@ class UserRepositoryAdapter implements UserRepository {
 	public User save(User user) {
 		UserJpaEntity entity = new UserJpaEntity(
 				user.id() != null ? user.id().value() : null,
+				user.version(),
 				user.email(),
 				user.passwordHash(),
 				user.emailVerified(),
@@ -27,6 +28,7 @@ class UserRepositoryAdapter implements UserRepository {
 				user.createdAt());
 		UserJpaEntity saved = jpaRepository.save(entity);
 		user.assignId(new UserId(saved.getId()));
+		user.assignVersion(saved.getVersion());
 		return user;
 	}
 
@@ -48,6 +50,7 @@ class UserRepositoryAdapter implements UserRepository {
 	private static User toDomain(UserJpaEntity entity) {
 		return new User(
 				new UserId(entity.getId()),
+				entity.getVersion(),
 				entity.getEmail(),
 				entity.getPasswordHash(),
 				entity.isEmailVerified(),

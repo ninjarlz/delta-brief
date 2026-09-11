@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.auth.adapter.in.web;
 
 import jakarta.validation.Valid;
+import java.util.Objects;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,19 +28,25 @@ public class RegistrationController {
 	@PostMapping("/register")
 	public String register(@Valid @ModelAttribute("registrationRequest") RegistrationRequest form,
 			BindingResult bindingResult) {
-		if (!form.getPassword().equals(form.getConfirmPassword())) {
+		if (!Objects.equals(form.getPassword(), form.getConfirmPassword())) {
 			bindingResult.rejectValue("confirmPassword", "password.mismatch", "Passwords do not match");
 		}
 		if (bindingResult.hasErrors()) {
-			return "register";
+			return clearPasswordsAndReturnToForm(form);
 		}
 		try {
 			registrationService.register(form);
 		} catch (EmailAlreadyRegisteredException alreadyRegistered) {
 			bindingResult.rejectValue("email", "email.taken", "This email is already registered");
-			return "register";
+			return clearPasswordsAndReturnToForm(form);
 		}
 		return "redirect:/check-email";
+	}
+
+	private String clearPasswordsAndReturnToForm(RegistrationRequest form) {
+		form.setPassword(null);
+		form.setConfirmPassword(null);
+		return "register";
 	}
 
 	@GetMapping("/check-email")
