@@ -43,7 +43,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | ID   | Change ID                       | Outcome (user can …)                                              | Prerequisites | PRD refs               | Status   | GitHub |
 | ---- | -------------------------------- | ------------------------------------------------------------------- | -------------- | ----------------------- | -------- | ------ |
 | F-01 | wire-database-connectivity       | (foundation) app connects to a real Postgres DB, locally and deployed | —              | Access Control, NFR: user data privacy | done | [#5](https://github.com/ninjarlz/delta-brief/issues/5) |
-| S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | proposed | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
+| S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | ready | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
 | S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | blocked  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | proposed | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
 | S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | proposed | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
@@ -104,7 +104,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Sequenced before topics/briefings because the PRD's access-control model makes all downstream data per-user from day one — building topics/briefings first would mean retrofitting ownership onto existing data later.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-02: Create topic and select sources
 
@@ -193,7 +193,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | Roadmap ID | Change ID                          | Suggested issue title                                   | Ready for `/10x-plan` | Notes                                              |
 | ---------- | ------------------------------------ | ---------------------------------------------------------- | ---------------------- | --------------------------------------------------- |
 | F-01       | wire-database-connectivity           | Wire Supabase Postgres connectivity + migrations           | yes                    | —                                                   |
-| S-01       | user-registration-and-login          | User registration and login                                | no                     | Waiting on F-01                                     |
+| S-01       | user-registration-and-login          | User registration and login                                | yes                    | —                                                    |
 | S-02       | create-topic-and-select-sources      | Create topic and select sources                             | no                     | Blocked — preset source lists not yet defined (user) |
 | S-03       | first-onboarding-and-delta-briefing  | First onboarding + delta briefing (manual trigger)          | no                     | Waiting on S-02                                     |
 | S-04       | scheduled-briefing-generation        | Scheduled briefing generation                                | no                     | Waiting on S-03                                     |
