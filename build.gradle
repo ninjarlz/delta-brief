@@ -17,8 +17,15 @@ repositories {
 	mavenCentral()
 }
 
+configurations {
+	all {
+		exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+	}
+}
+
 ext {
 	springAiVersion = '2.0.0'
+	testcontainersVersion = '2.0.5'
 }
 
 dependencyManagement {
@@ -29,18 +36,51 @@ dependencyManagement {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-log4j2'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'org.postgresql:postgresql'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+	// testcontainers-bom doesn't resolve reliably through io.spring.dependency-management
+	// (unlike spring-ai-bom above) — Gradle's native platform() import is the documented,
+	// reliable path for this specific BOM.
+	testImplementation platform("org.testcontainers:testcontainers-bom:${testcontainersVersion}")
+	// Testcontainers 2.x renamed every module with a testcontainers- prefix
+	// (was org.testcontainers:postgresql in 1.x). testcontainers-postgresql pulls in
+	// the core testcontainers artifact transitively (GenericContainer, Wait, etc.) —
+	// no separate core or junit-jupiter module needed since container lifecycle is
+	// managed manually, not via @Testcontainers/@Container (see
+	// DeltaBriefApplicationTests for why: @ServiceConnection doesn't support the
+	// host-network GenericContainer the local (VPN-constrained) mode requires).
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// CI/local Testcontainers mode is selected via the CI Spring profile, set here
+	// (not read directly in application code) so bean selection stays declarative —
+	// see TestcontainersDatasourceConfig.
+	def isCi = (System.getenv('CI') ?: 'false').toBoolean()
+	if (isCi) {
+		systemProperty 'spring.profiles.active', 'CI'
+	} else {
+		// Ryuk doesn't reliably manage host-network Testcontainers (required locally
+		// when a VPN/Docker bridge-networking conflict is present — see
+		// TestcontainersDatasourceConfig).
+		environment 'TESTCONTAINERS_RYUK_DISABLED', 'true'
+	}
 }
 
 bootJar {

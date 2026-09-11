@@ -42,7 +42,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 
 | ID   | Change ID                       | Outcome (user can …)                                              | Prerequisites | PRD refs               | Status   | GitHub |
 | ---- | -------------------------------- | ------------------------------------------------------------------- | -------------- | ----------------------- | -------- | ------ |
-| F-01 | wire-database-connectivity       | (foundation) app connects to a real Postgres DB, locally and deployed | —              | Access Control, NFR: user data privacy | planning | [#5](https://github.com/ninjarlz/delta-brief/issues/5) |
+| F-01 | wire-database-connectivity       | (foundation) app connects to a real Postgres DB, locally and deployed | —              | Access Control, NFR: user data privacy | in-progress | [#5](https://github.com/ninjarlz/delta-brief/issues/5) |
 | S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | proposed | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
 | S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | blocked  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | proposed | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
@@ -89,7 +89,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Every other slice needs real persistence — sequenced first so S-01 onward isn't built against throwaway in-memory state that would need reworking later. Creating the actual Supabase project is part of this slice's own execution, not a precondition to starting it.
-- **Status:** planning
+- **Status:** in-progress
 
 ## Slices
 
