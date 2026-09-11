@@ -238,15 +238,15 @@ Not applicable — there is no existing data to migrate. The `db/migration` dire
 
 #### Manual
 
-- [x] 2.4 CI run log confirms a real Testcontainers container started (not skipped)
+- [x] 2.4 CI run log confirms a real Testcontainers container started (not skipped) — cf1c41c
 
 ### Phase 3: Wire the deployed environment
 
 #### Automated
 
-- [ ] 3.1 `curl -i https://delta-brief.onrender.com/actuator/health` returns 200 with `db: UP`
+- [x] 3.1 `curl -i https://delta-brief.onrender.com/actuator/health` returns 200 with `db: UP`
 
 #### Manual
 
-- [ ] 3.2 Render deploy logs show successful connection to real Supabase
-- [ ] 3.3 Supabase dashboard confirms an active connection from the app
+- [x] 3.2 Render deploy logs show successful connection to real Supabase
+- [x] 3.3 Supabase dashboard confirms an active connection from the app
