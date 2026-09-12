@@ -1,0 +1,62 @@
+/* DeltaBrief — small overrides on top of Pico.css for a centered auth-card layout */
+
+body {
+	display: flex;
+	min-height: 100vh;
+	align-items: center;
+	justify-content: center;
+	padding: 1.5rem;
+}
+
+.auth-card {
+	width: 100%;
+	max-width: 26rem;
+	background: var(--pico-card-background-color);
+	border-radius: var(--pico-border-radius);
+	box-shadow: var(--pico-card-box-shadow);
+	padding: 2rem;
+}
+
+.auth-card h1 {
+	margin-bottom: 0.25rem;
+	font-size: 1.5rem;
+}
+
+.auth-card .subtitle {
+	color: var(--pico-muted-color);
+	margin-bottom: 1.5rem;
+}
+
+.auth-card form {
+	margin-bottom: 0;
+}
+
+.auth-card .switch-link {
+	text-align: center;
+	margin: 1.5rem 0 0;
+	font-size: 0.9rem;
+}
+
+.field-error {
+	color: var(--pico-del-color);
+	font-size: 0.85rem;
+	display: block;
+	margin-top: 0.25rem;
+}
+
+.notice {
+	padding: 0.6rem 0.9rem;
+	border-radius: var(--pico-border-radius);
+	margin-bottom: 1.25rem;
+	font-size: 0.9rem;
+}
+
+.notice-error {
+	background: color-mix(in srgb, var(--pico-del-color) 15%, transparent);
+	color: var(--pico-del-color);
+}
+
+.notice-success {
+	background: color-mix(in srgb, var(--pico-ins-color) 15%, transparent);
+	color: var(--pico-ins-color);
+}
