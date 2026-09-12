@@ -1,7 +1,7 @@
 ---
 change_id: user-registration-and-login
 title: User registration and login
-status: implemented
+status: impl_reviewed
 created: 2026-09-11
 updated: 2026-09-12
 archived_at: null
