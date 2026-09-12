@@ -27,6 +27,12 @@ public class AsyncConfig {
 		executor.setMaxPoolSize(2);
 		executor.setQueueCapacity(50);
 		executor.setThreadNamePrefix("email-task-");
+		// Without this, a queued/in-flight send is abruptly abandoned mid-shutdown
+		// (e.g. a Render redeploy) rather than allowed to finish. 10s comfortably
+		// covers a single send's worst case under the 5s SMTP connect/read/write
+		// timeouts already configured, without meaningfully delaying shutdown.
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+		executor.setAwaitTerminationSeconds(10);
 		executor.initialize();
 		return executor;
 	}

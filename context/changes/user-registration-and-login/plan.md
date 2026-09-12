@@ -390,6 +390,8 @@ Verify a real domain with Resend and wire production credentials into Render, so
 
 **Addendum (post-implementation, added during full-plan `/10x-impl-review`)**: The known-unverified branch did a real synchronous SMTP round-trip while the unknown/already-verified branches returned near-instantly — a timing side-channel for email enumeration even though response content was uniform (see `reviews/impl-review.md` F2). Fixed by making `resendVerification` run off the request thread: `@Async("emailTaskExecutor")`, backed by a new `AsyncConfig` (`@EnableAsync` + a small `ThreadPoolTaskExecutor` bean, gated by `app.async.email.enabled` so tests can substitute a same-thread executor deterministically via a new `SynchronousAsyncConfig` test config). Verified: both branches now return in ~13ms regardless of which path is taken, and the async work still completes correctly (new token issued, DB updated).
 
+**Addendum (post-implementation, follow-up discussion)**: `emailTaskExecutor` also sets `setWaitForTasksToCompleteOnShutdown(true)` + `setAwaitTerminationSeconds(10)` — without this, a queued or in-flight resend email would be abruptly abandoned mid-shutdown (e.g. a Render redeploy) rather than allowed to finish. 10s comfortably covers a single send's worst case under the existing 5s SMTP connect/read/write timeouts without meaningfully delaying shutdown.
+
 #### 4. Gate login on email verification (code change, added during this phase)
 
 **Intent**: The user asked for login to actually require a verified account, reversing the original "verification never gates login" decision.
