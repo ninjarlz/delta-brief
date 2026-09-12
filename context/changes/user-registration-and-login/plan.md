@@ -494,5 +494,5 @@ Not applicable — `V1__create_users_table.sql` is a brand-new table with no exi
 
 #### Manual
 
-- [x] 4.2 A real (non-developer-owned) email address receives a verification email through the deployed app
-- [x] 4.3 Render deploy logs show no mail-configuration errors
+- [x] 4.2 A real (non-developer-owned) email address receives a verification email through the deployed app — f118042
+- [x] 4.3 Render deploy logs show no mail-configuration errors — f118042
