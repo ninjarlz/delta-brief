@@ -380,7 +380,13 @@ Verify a real domain with Resend and wire production credentials into Render, so
 
 **Contract**: `JpaUserDetailsService` sets `UserDetails.disabled(!user.emailVerified())` — Spring Security's standard account-status hook, checked by `DaoAuthenticationProvider` before password verification. `SecurityConfig`'s `formLogin` uses a custom `failureHandler` distinguishing `DisabledException` (redirects to `/login?unverified`, a distinct message with a resend-verification link) from every other authentication failure (`/login?error`, the original generic "invalid email or password" message) — a deliberate, discussed tradeoff: this reveals that an account exists (for a *correct* password against an unverified account) in exchange for real UX clarity, since Spring Security's account-status checks run before password matching regardless. A wrong password on either a verified or unverified account still falls through to the same generic message either way. Covered by a new `AuthFlowIntegrationTest` case (`unverifiedAccountCannotLogIn`) plus a full manual smoke test locally covering all four combinations (unverified/verified × correct/wrong password).
 
-#### 5. Default view for unauthenticated visitors (code change, added during this phase)
+#### 5. Fix "prepared statement already exists" against Supavisor (code change, added during this phase)
+
+**Intent**: A manual test of the newly-deployed resend-verification flow (item #3 above) silently failed to send an email. Render logs showed `PSQLException: prepared statement "S_2" already exists` — the classic JDBC + PgBouncer/Supavisor **transaction-mode** pooling failure mode: the pooler hands a different physical server connection to each transaction, but the PostgreSQL JDBC driver's server-side prepared-statement cache assumes a stable one, so statement names collide across transactions. Unlike the already-handled `MailException` path, this exception was uncaught and silently aborted the request before any email-send attempt.
+
+**Contract**: `spring.datasource.hikari.data-source-properties.prepareThreshold=0` added to `application.properties` — disables the JDBC driver's server-side prepared statements (falls back to the simple/extended query protocol), the standard fix for this exact pooling mode. Applies uniformly to both the deployed Supavisor connection and local's non-pooled Postgres (a no-op there, but harmless). Not something `/10x-research`/`/10x-plan` could have anticipated — it only reproduces under `infrastructure.md`'s already-chosen Supavisor transaction-pooler in real deployed traffic, not against the local Testcontainers/Postgres setup this project's whole test suite runs against.
+
+#### 6. Default view for unauthenticated visitors (code change, added during this phase)
 
 **Intent**: Surfaced during manual verification — visiting `/` gave every visitor the placeholder page regardless of auth state, with no path into `/login`/`/register` from the root URL.
 
