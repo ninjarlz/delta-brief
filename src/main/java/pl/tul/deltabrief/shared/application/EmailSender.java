@@ -7,6 +7,9 @@ package pl.tul.deltabrief.shared.application;
  */
 public interface EmailSender {
 
+	/**
+	 * @throws EmailDeliveryException if the email could not be sent
+	 */
 	void send(String to, String subject, String body);
 
 }

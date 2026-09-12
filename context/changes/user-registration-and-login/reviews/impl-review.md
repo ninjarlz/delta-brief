@@ -41,7 +41,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
   - Tradeoff: A real, standing enumeration surface ships to production.
   - Confidence: MEDIUM — depends entirely on the user's risk tolerance for this pre-launch stage.
   - Blind spot: No compliance/regulatory review has been done, though unlikely to matter at this project's current scale.
-- **Decision**: PENDING
+- **Decision**: FIXED via Fix A — `JpaUserDetailsService` now returns a custom `AppUserDetails` carrying `emailVerified`; `SecurityConfig`'s `formLogin` uses a `successHandler` that checks verification only *after* password match, invalidating the session and redirecting to `/login?unverified` if unverified. Added `wrongPasswordOnUnverifiedAccountStaysGeneric` test. Verified empirically (both automated and a full manual matrix: unverified+wrong→`/login?error`, unverified+correct→`/login?unverified` with no live session, verified+correct→success). `plan.md`'s Phase 4 item #4 updated with a corrected contract + addendum.
 
 ### F2 — Timing side-channel on `/resend-verification`
 
@@ -60,7 +60,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
   - Tradeoff: Introduces this project's first async cross-cutting concern (config, and losing synchronous failure logging) for a WARNING-level finding.
   - Confidence: MEDIUM — straightforward Spring feature, but non-trivial scope growth for the severity involved.
   - Blind spot: Async failure observability isn't designed yet.
-- **Decision**: PENDING
+- **Decision**: FIXED via Fix B — `resendVerification` is now `@Async("emailTaskExecutor")`, backed by a new `AsyncConfig` (small `ThreadPoolTaskExecutor`, property-gated so tests substitute a deterministic same-thread executor via `SynchronousAsyncConfig`). Verified empirically: known-unverified and unknown-email branches both return in ~13ms; async work still completes correctly.
 
 ### F3 — Optimistic locking (`@Version`) and its migrations never documented in plan.md
 
@@ -70,7 +70,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
 - **Location**: context/changes/user-registration-and-login/plan.md (Phase 1 section) vs. src/main/java/pl/tul/deltabrief/auth/domain/User.java:14,71-77, src/main/java/pl/tul/deltabrief/auth/adapter/out/persistence/UserJpaEntity.java:25-26, src/main/resources/db/migration/V2__index_verification_token.sql, V3__add_users_version_column.sql
 - **Detail**: The `@Version`/optimistic-locking field (plus the `V2` partial-index and `V3` version-column migrations) is real, tested, and was already reviewed and approved in `impl-review-phase-2.md` (findings F4/F5) — but that approval was never backfilled into `plan.md` itself as an addendum, unlike every other post-implementation addition in this same plan (the MapStruct switch, the Phase 2-4 addenda). A reader of `plan.md` alone would have no idea `version` exists.
 - **Fix**: Add a short addendum to Phase 1's plan.md section documenting the `@Version` addition and the `V2`/`V3` migrations, referencing `impl-review-phase-2.md` F4/F5 for full rationale — mirrors the addendum pattern already used everywhere else in this plan.
-- **Decision**: PENDING
+- **Decision**: FIXED — added item #8 to Phase 1's "Changes Required" section documenting both migrations and the `@Version` field, referencing `impl-review-phase-2.md` F4/F5.
 
 ### F4 — Pico.css visual restyling never documented in plan.md
 
@@ -80,7 +80,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
 - **Location**: context/changes/user-registration-and-login/plan.md (Phase 4 section) vs. src/main/resources/static/css/pico.min.css, src/main/resources/static/css/app.css, all 5 templates, src/main/java/pl/tul/deltabrief/config/SecurityConfig.java:24
 - **Detail**: A full, real, deployed restyling (vendored Pico.css, custom `app.css`, all five templates updated, `/css/**` added to `SecurityConfig`'s permitAll) shipped as part of this plan with zero trace anywhere in `plan.md` — not even a passing mention, unlike every other Phase 4 addition, which each got a numbered "Changes Required" addendum.
 - **Fix**: Add a numbered item to Phase 4's "Changes Required" section documenting the styling work, mirroring the format of the other Phase 4 addenda.
-- **Decision**: PENDING
+- **Decision**: FIXED — added item #7 to Phase 4's "Changes Required" section.
 
 ### F5 — Test classes violate AGENTS.md's `<Unit>Tests` naming convention
 
@@ -90,7 +90,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
 - **Location**: src/test/java/pl/tul/deltabrief/auth/AuthFlowIntegrationTest.java, .../adapter/out/persistence/UserRepositoryAdapterTest.java, .../application/RegistrationServiceTest.java, .../domain/UserTest.java
 - **Detail**: `AGENTS.md` explicitly states: "name test classes `<Unit>Tests`" and its own referenced sample is `DeltaBriefApplicationTests` (plural). All four new test classes in this slice use the singular `Test` suffix instead — a clean, consistent violation of a written project rule (self-consistent across the slice, just consistently non-compliant with the doc).
 - **Fix**: Rename all four classes to the `...Tests` suffix (`AuthFlowIntegrationTests`, `UserRepositoryAdapterTests`, `RegistrationServiceTests`, `UserTests`), and update any `--tests` filter references in plan.md/commit history-adjacent docs that cite the old names.
-- **Decision**: PENDING
+- **Decision**: FIXED — all 4 files and their class declarations renamed (`git mv`); `plan.md` and `context/foundation/test-plan.md` current-state references updated to match. Historical review files (`impl-review-phase-2.md`, `impl-review-phase-3.md`) left as-is — frozen records of what was true at the time. Full suite passes with the new names.
 
 ### F6 — Application layer catches adapter-specific exception types across port boundaries
 
@@ -109,7 +109,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
   - Tradeoff: The risk stays latent and undetected until S-06 lands.
   - Confidence: MEDIUM — reasonable YAGNI call, but the reuse intent is already documented, not hypothetical.
   - Blind spot: Timeline for S-06 is unclear.
-- **Decision**: PENDING
+- **Decision**: FIXED via Fix A — added `EmailDeliveryException` to `shared.application`; `ResendSmtpEmailSender` wraps `MailException` into it; `RegistrationService` catches only the port-declared type. `DataIntegrityViolationException` left as-is per the fix's own scoping. Full suite passes.
 
 ### F7 — `resend-verification`'s email parameter has no format/length validation
 
@@ -119,7 +119,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
 - **Location**: src/main/java/pl/tul/deltabrief/auth/adapter/in/web/RegistrationController.java:64
 - **Detail**: `resendVerification(@RequestParam("email") String email)` has zero validation, while `register`'s equivalent field goes through `@Valid RegistrationRequest` with `@NotBlank @Email @Size(max = 255)`. No injection risk (parameterized JPA lookup either way), just inconsistent rigor between two sibling endpoints in the same controller.
 - **Fix**: Add `@Email @Size(max = 255)` to the parameter (or route it through a tiny DTO reusing `RegistrationRequest.email`'s constraints).
-- **Decision**: PENDING
+- **Decision**: FIXED — `RegistrationController` is now `@Validated`, parameter carries `@Email @Size(max = 255)`, and a `ConstraintViolationException` handler redirects to `/check-email` (same generic outcome as every other input). Verified: malformed and over-length emails both redirect cleanly.
 
 ### F8 — Minor persistence-layer hardening opportunities
 
@@ -129,7 +129,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
 - **Location**: src/main/java/pl/tul/deltabrief/auth/domain/User.java:51 (token comparison), src/main/java/pl/tul/deltabrief/auth/adapter/out/persistence/UserRepositoryAdapter.java:20 (`save`), src/main/resources/db/migration/V1__create_users_table.sql (timestamp columns)
 - **Detail**: Three small, independent, non-urgent items: (1) `User.verify()`'s `!verificationToken.equals(token)` is a non-constant-time comparison for a security-sensitive token (low practical risk — single-use UUID, real-world network jitter). (2) `UserRepositoryAdapter.save()` always builds a fresh transient entity via the mapper, so update paths (`verify`, `resendVerification`) go through JPA `merge()`, costing an extra internal `SELECT` versus mutating an already-managed entity. (3) `verification_token_expires_at`/`created_at` are `TIMESTAMP` (no time zone) backing `java.time.Instant` fields — correct only as long as the JVM/DB session time zone stays consistently UTC; `TIMESTAMPTZ` removes that assumption entirely.
 - **Fix**: Optional, low-priority: constant-time comparison via `MessageDigest.isEqual(...)`; fetch-then-mutate the managed entity on update paths instead of always going through the mapper; a future migration to `TIMESTAMPTZ` if timezone assumptions ever become non-uniform. None urgent at current scale.
-- **Decision**: PENDING
+- **Decision**: PARTIALLY FIXED — applied (1) constant-time comparison in `User.verify()` and (3) `V4__timestamptz_for_instant_columns.sql` converting both `Instant`-backed columns to `TIMESTAMPTZ`. Deliberately **skipped** (2) fetch-then-mutate on update paths: discussed with the user — it would weaken optimistic-locking correctness (the current `merge()`-based `save()` catches races across the full read-modify-write span by comparing the *original caller's* version against the DB at save time; fetch-then-mutate would re-read a fresh version instead and silently drop that cross-request check). The extra `SELECT` this leaves in place is real but negligible at current scale. See `plan.md` Phase 1 item #9 for the accurate addendum.
 
 ### F9 — Soft assertion in `defaultViewShowsPlaceholderForAuthenticatedVisitors`
 
@@ -139,7 +139,7 @@ A sub-agent flagged missing CSRF tokens on all POST forms (`register`, `login`, 
 - **Location**: src/test/java/pl/tul/deltabrief/auth/AuthFlowIntegrationTest.java:127-130
 - **Detail**: This test only asserts `status().isOk()` for an authenticated `GET /`. It would pass for any 200 response, not specifically the `placeholder` view — a slightly weaker proof than "shows placeholder" implies, though it does exercise the correct code path.
 - **Fix**: Strengthen to `.andExpect(view().name("placeholder"))` or assert body content.
-- **Decision**: PENDING
+- **Decision**: FIXED — added `.andExpect(view().name("placeholder"))` to the test.
 
 ## Success Criteria Verification
 

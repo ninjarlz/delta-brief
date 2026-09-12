@@ -1,9 +1,11 @@
 package pl.tul.deltabrief.shared.adapter.out.email;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
+import pl.tul.deltabrief.shared.application.EmailDeliveryException;
 import pl.tul.deltabrief.shared.application.EmailSender;
 
 /**
@@ -28,7 +30,11 @@ public class ResendSmtpEmailSender implements EmailSender {
 		message.setTo(to);
 		message.setSubject(subject);
 		message.setText(body);
-		mailSender.send(message);
+		try {
+			mailSender.send(message);
+		} catch (MailException smtpFailure) {
+			throw new EmailDeliveryException("Failed to send email to " + to, smtpFailure);
+		}
 	}
 
 }

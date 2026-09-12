@@ -14,6 +14,7 @@ import pl.tul.deltabrief.auth.application.RegistrationService.EmailAlreadyRegist
 import pl.tul.deltabrief.auth.application.dto.RegistrationRequest;
 import pl.tul.deltabrief.auth.application.port.out.UserRepository;
 import pl.tul.deltabrief.auth.domain.User;
+import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
 
@@ -23,9 +24,9 @@ import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
  * Testcontainers-backed datasource — see {@link TestcontainersDatasourceConfig}'s
  * single-fixed-local-port constraint.
  */
-@SpringBootTest
-@Import(TestcontainersDatasourceConfig.class)
-class RegistrationServiceTest {
+@SpringBootTest(properties = "app.async.email.enabled=false")
+@Import({TestcontainersDatasourceConfig.class, SynchronousAsyncConfig.class})
+class RegistrationServiceTests {
 
 	private static final Pattern TOKEN_PATTERN = Pattern.compile("token=([\\w-]+)");
 
