@@ -10,23 +10,16 @@ import pl.tul.deltabrief.auth.domain.UserId;
 class UserRepositoryAdapter implements UserRepository {
 
 	private final UserJpaRepository jpaRepository;
+	private final UserEntityMapper mapper;
 
-	UserRepositoryAdapter(UserJpaRepository jpaRepository) {
+	UserRepositoryAdapter(UserJpaRepository jpaRepository, UserEntityMapper mapper) {
 		this.jpaRepository = jpaRepository;
+		this.mapper = mapper;
 	}
 
 	@Override
 	public User save(User user) {
-		UserJpaEntity entity = new UserJpaEntity(
-				user.id() != null ? user.id().value() : null,
-				user.version(),
-				user.email(),
-				user.passwordHash(),
-				user.emailVerified(),
-				user.verificationToken(),
-				user.verificationTokenExpiresAt(),
-				user.createdAt());
-		UserJpaEntity saved = jpaRepository.save(entity);
+		UserJpaEntity saved = jpaRepository.save(mapper.toEntity(user));
 		user.assignId(new UserId(saved.getId()));
 		user.assignVersion(saved.getVersion());
 		return user;
@@ -34,29 +27,17 @@ class UserRepositoryAdapter implements UserRepository {
 
 	@Override
 	public Optional<User> findByEmail(String email) {
-		return jpaRepository.findByEmail(email).map(UserRepositoryAdapter::toDomain);
+		return jpaRepository.findByEmail(email).map(mapper::toDomain);
 	}
 
 	@Override
 	public Optional<User> findByVerificationToken(String token) {
-		return jpaRepository.findByVerificationToken(token).map(UserRepositoryAdapter::toDomain);
+		return jpaRepository.findByVerificationToken(token).map(mapper::toDomain);
 	}
 
 	@Override
 	public boolean existsByEmail(String email) {
 		return jpaRepository.existsByEmail(email);
-	}
-
-	private static User toDomain(UserJpaEntity entity) {
-		return new User(
-				new UserId(entity.getId()),
-				entity.getVersion(),
-				entity.getEmail(),
-				entity.getPasswordHash(),
-				entity.isEmailVerified(),
-				entity.getVerificationToken(),
-				entity.getVerificationTokenExpiresAt(),
-				entity.getCreatedAt());
 	}
 
 }

@@ -120,6 +120,8 @@ The `UNIQUE` constraint on `email` is the correctness guarantee for duplicate-re
 
 **Contract**: `@Component implements UserRepository`, delegating to `UserJpaRepository` and mapping entity ↔ domain in both directions.
 
+**Addendum (post-implementation)**: Entity↔domain mapping was switched from hand-written constructor calls to a MapStruct-generated mapper (`UserEntityMapper`, `org.mapstruct:mapstruct` added to `build.gradle`), at the user's request, to establish the project's mapping convention going forward. `toDomain` maps implicitly (entity's JavaBean getters match `User`'s constructor parameter names, with a `toUserId(Long)` helper for the `Long -> UserId` conversion); `toEntity` uses explicit `@Mapping(..., expression = ...)` per field since `User`'s accessors are fluent (no get/is prefix) and aren't auto-detected as JavaBean properties by MapStruct's default naming strategy. The adapter's own logic (assigning the generated id/version back onto the domain object post-save) is not a pure mapping concern and stays manual in `UserRepositoryAdapter`.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -364,6 +366,14 @@ Verify a real domain with Resend and wire production credentials into Render, so
 
 **Contract**: On the `delta-brief` Render service, set `RESEND_API_KEY` (the account's real API key) and `MAIL_FROM_ADDRESS` (e.g. `noreply@<verified-domain>`). Trigger a redeploy (or wait for the next merge to `main`).
 
+**Addendum (post-implementation)**: Two deviations from the contract above, discovered during this phase's manual verification. (1) A domain was not purchased/verified yet; the user opted to test Phase 4 for now using their own Resend-account email address (the free-tier `onboarding@resend.dev` sender, which can only deliver to that one address) rather than blocking on a domain purchase. This means 4.2 below is verified only for the developer's own address, not an arbitrary non-developer-owned recipient — full arbitrary-recipient delivery still requires a verified domain, which remains a follow-up (not abandoned). (2) The contract above omitted `APP_BASE_URL` — `RegistrationService` builds the verification link from `app.base-url` (`application.properties`), which defaults to `http://localhost:8080` when unset. The first real-deploy registration test produced a verification link pointing at `localhost:8080` instead of the deployed app. Fixed by also setting `APP_BASE_URL=https://delta-brief.onrender.com` on Render and redeploying.
+
+#### 3. Default view for unauthenticated visitors (code change, added during this phase)
+
+**Intent**: Surfaced during manual verification — visiting `/` gave every visitor the placeholder page regardless of auth state, with no path into `/login`/`/register` from the root URL.
+
+**Contract**: `PlaceholderController.home()` now takes an `HttpServletRequest` and returns `redirect:/login` when `request.getUserPrincipal() == null` (unauthenticated), otherwise still renders `placeholder` (until a real home page ships). `login.html` already links to `/register`, so this gives unauthenticated visitors a path into both flows from `/`. Covered by two new `AuthFlowIntegrationTest` cases: `defaultViewRedirectsAnonymousVisitorsToLogin`, `defaultViewShowsPlaceholderForAuthenticatedVisitors` (the latter using `SecurityMockMvcRequestPostProcessors.user(...)` rather than a full login round-trip).
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -462,7 +472,7 @@ Not applicable — `V1__create_users_table.sql` is a brand-new table with no exi
 
 #### Automated
 
-- [ ] 4.1 `curl -i https://delta-brief.onrender.com/actuator/health` returns 200
+- [x] 4.1 `curl -i https://delta-brief.onrender.com/actuator/health` returns 200
 
 #### Manual
 

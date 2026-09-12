@@ -26,6 +26,7 @@ configurations {
 ext {
 	springAiVersion = '2.0.0'
 	testcontainersVersion = '2.0.5'
+	mapstructVersion = '1.6.3'
 }
 
 dependencyManagement {
@@ -46,6 +47,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
 	compileOnly 'org.projectlombok:lombok'
