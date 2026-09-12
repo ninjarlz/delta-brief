@@ -122,6 +122,14 @@ The `UNIQUE` constraint on `email` is the correctness guarantee for duplicate-re
 
 **Addendum (post-implementation)**: Entity↔domain mapping was switched from hand-written constructor calls to a MapStruct-generated mapper (`UserEntityMapper`, `org.mapstruct:mapstruct` added to `build.gradle`), at the user's request, to establish the project's mapping convention going forward. `toDomain` maps implicitly (entity's JavaBean getters match `User`'s constructor parameter names, with a `toUserId(Long)` helper for the `Long -> UserId` conversion); `toEntity` uses explicit `@Mapping(..., expression = ...)` per field since `User`'s accessors are fluent (no get/is prefix) and aren't auto-detected as JavaBean properties by MapStruct's default naming strategy. The adapter's own logic (assigning the generated id/version back onto the domain object post-save) is not a pure mapping concern and stays manual in `UserRepositoryAdapter`.
 
+#### 8. Optimistic locking (`@Version`) and an index on `verification_token` (post-implementation additions)
+
+**Addendum (added during full-plan `/10x-impl-review`, backfilling `impl-review-phase-2.md` findings F4/F5)**: Two Phase 2 review findings were fixed at the time but never backfilled into this plan document (see `reviews/impl-review.md` F3). (1) **F4 — no index on `verification_token`**: `findByVerificationToken` did a full-table-scan equality lookup with no index. Fixed via `V2__index_verification_token.sql` — a partial index (`WHERE verification_token IS NOT NULL`, since the column is null once verified). (2) **F5 — no optimistic locking on `UserJpaEntity`**: a concurrent double-submit of the same verification link could perform two independent merges instead of detecting a conflict (harmless today since both converge on the same idempotent end state, but worth having as project convention). Fixed by adding `@Version private Long version` to `UserJpaEntity`, threading a `version` field through `User` (domain, via `version()`/`assignVersion(...)`) and `UserRepositoryAdapter` (read in `toDomain()`, written back after `save()`), and `V3__add_users_version_column.sql` (`ALTER TABLE users ADD COLUMN version BIGINT NOT NULL DEFAULT 0` — additive, non-locking on Postgres, pre-existing rows backfilled to `0`). Both verified against a fresh Testcontainers Postgres and the existing local dev DB at the time.
+
+#### 9. Constant-time token comparison and `TIMESTAMPTZ` columns (post-implementation additions)
+
+**Addendum (added during full-plan `/10x-impl-review`, see `reviews/impl-review.md` F8)**: Two of three minor persistence-hardening observations from the review were applied (the third — fetching-then-mutating the managed entity on update paths to avoid an extra `merge()`-triggered `SELECT` — was deliberately **not** applied: it would silently weaken optimistic-locking correctness, since the current `merge()`-based `save()` compares the version the *original caller* read against the DB at save time, catching races across the full read-modify-write span; a naive fetch-then-mutate inside `save()` would instead re-read a fresh version and drop that check). (1) `User.verify()`'s token comparison switched from `String.equals()` to a constant-time `MessageDigest.isEqual(...)` comparison — low practical risk (single-use UUID, real-world network jitter) but the textbook-correct approach for a security-sensitive token compare. (2) `verification_token_expires_at` and `created_at` converted from `TIMESTAMP` (no time zone) to `TIMESTAMPTZ` via `V4__timestamptz_for_instant_columns.sql`, removing the implicit assumption that the JVM/DB session time zone stays consistently UTC. Verified against both a fresh Testcontainers Postgres and the existing local dev DB (incrementally, already at V3).
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -166,6 +174,8 @@ implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 **Contract**: `void send(String to, String subject, String body)`.
 
+**Addendum (post-implementation, added during full-plan `/10x-impl-review`)**: The port originally declared no failure contract at all, so `RegistrationService` (application layer) caught `org.springframework.mail.MailException` directly — an adapter-specific type leaking across the port boundary. If a future `EmailSender` implementation (the class is explicitly meant for reuse by S-06) threw something else, that catch would silently become dead code and break the documented "email failure is non-fatal" guarantee (see `reviews/impl-review.md` F6). Fixed by adding `EmailDeliveryException` (a new unchecked exception declared on this port) and having `RegistrationService` catch only that.
+
 #### 3. `src/main/java/pl/tul/deltabrief/shared/adapter/out/email/ResendSmtpEmailSender.java`
 
 **File**: `src/main/java/pl/tul/deltabrief/shared/adapter/out/email/ResendSmtpEmailSender.java`
@@ -173,6 +183,8 @@ implementation 'org.springframework.boot:spring-boot-starter-mail'
 **Intent**: Implements `EmailSender` using Spring Boot's auto-configured `JavaMailSender`, talking to Resend's SMTP relay.
 
 **Contract**: `@Component implements EmailSender`, wraps a `SimpleMailMessage` built from `to`/`subject`/`body` plus a configured from-address, sent via the injected `JavaMailSender`.
+
+**Addendum (post-implementation, added during full-plan `/10x-impl-review`)**: Wraps any `MailException` from `JavaMailSender.send(...)` into `EmailDeliveryException` — see the `EmailSender` addendum above.
 
 #### 4. `src/main/resources/application.properties`
 
@@ -319,9 +331,9 @@ Add a `PasswordEncoder` bean: `PasswordEncoderFactories.createDelegatingPassword
 
 **Contract**: Posts to `/login`, shows an error message when `${param.error}` is present, a "verified, please log in" message when `${param.verified}` is present, and a logout confirmation when `${param.logout}` is present.
 
-#### 5. `src/test/java/pl/tul/deltabrief/auth/AuthFlowIntegrationTest.java`
+#### 5. `src/test/java/pl/tul/deltabrief/auth/AuthFlowIntegrationTests.java`
 
-**File**: `src/test/java/pl/tul/deltabrief/auth/AuthFlowIntegrationTest.java`
+**File**: `src/test/java/pl/tul/deltabrief/auth/AuthFlowIntegrationTests.java`
 
 **Intent**: Proves the full flow against a real Postgres. **Must** `@Import(TestcontainersDatasourceConfig.class)` into the same context shape as `DeltaBriefApplicationTests` (per the Critical Implementation Details note above — no extra mocked beans that would force a second Spring context).
 
@@ -333,7 +345,7 @@ Add a `PasswordEncoder` bean: `PasswordEncoderFactories.createDelegatingPassword
 
 #### Automated Verification:
 
-- `./gradlew test --no-daemon` passes, including `AuthFlowIntegrationTest`'s full register→verify→login→logout sequence against a real Testcontainers Postgres
+- `./gradlew test --no-daemon` passes, including `AuthFlowIntegrationTests`'s full register→verify→login→logout sequence against a real Testcontainers Postgres
 - `./gradlew build --no-daemon` passes end-to-end
 - Pushing through the existing PR flow: `build-and-test` passes in GitHub Actions with no `ci-cd.yml` changes
 
@@ -366,19 +378,27 @@ Verify a real domain with Resend and wire production credentials into Render, so
 
 **Contract**: On the `delta-brief` Render service, set `RESEND_API_KEY` (the account's real API key) and `MAIL_FROM_ADDRESS` (e.g. `noreply@<verified-domain>`). Trigger a redeploy (or wait for the next merge to `main`).
 
-**Addendum (post-implementation)**: Two deviations from the contract above, discovered during this phase's manual verification. (1) A domain was not purchased/verified yet; the user opted to test Phase 4 for now using their own Resend-account email address (the free-tier `onboarding@resend.dev` sender, which can only deliver to that one address) rather than blocking on a domain purchase. This means 4.2 below is verified only for the developer's own address, not an arbitrary non-developer-owned recipient — full arbitrary-recipient delivery still requires a verified domain, which remains a follow-up (not abandoned). (2) The contract above omitted `APP_BASE_URL` — `RegistrationService` builds the verification link from `app.base-url` (`application.properties`), which defaults to `http://localhost:8080` when unset. The first real-deploy registration test produced a verification link pointing at `localhost:8080` instead of the deployed app. Fixed by also setting `APP_BASE_URL=https://delta-brief.onrender.com` on Render and redeploying.
+**Addendum (post-implementation)**: Three deviations from the contract above, discovered during this phase's manual verification. (1) A domain was not purchased/verified yet; the user opted to test Phase 4 for now using their own Resend-account email address (the free-tier `onboarding@resend.dev` sender, which can only deliver to that one address) rather than blocking on a domain purchase. This means 4.2 below is verified only for the developer's own address, not an arbitrary non-developer-owned recipient — full arbitrary-recipient delivery still requires a verified domain, which remains a follow-up (not abandoned). (2) The contract above omitted `APP_BASE_URL` — `RegistrationService` builds the verification link from `app.base-url` (`application.properties`), which defaults to `http://localhost:8080` when unset. The first real-deploy registration test produced a verification link pointing at `localhost:8080` instead of the deployed app. Fixed by also setting `APP_BASE_URL=https://delta-brief.onrender.com` on Render and redeploying. (3) A verification email sent from `onboarding@resend.dev` landed in the recipient's spam folder — confirmed via the Resend dashboard's own delivery log (the send succeeded; our SMTP call threw no exception, which is also why it produced no application log line — a real logging gap, since success is currently never logged, only `MailException` failures). This is an expected consequence of the shared, unauthenticated testing domain having no sender reputation or SPF/DKIM alignment with the recipient — not a code defect. Retrieving the email from spam and clicking through verified correctly. Reinforces that reliable inbox delivery (not just successful sending) still requires the deferred verified-domain follow-up.
 
 #### 3. Resend-verification-email flow (code change, added during this phase)
 
 **Intent**: Surfaced during manual verification — an account whose verification link pointed at `localhost:8080` (before `APP_BASE_URL` was fixed) could never be verified afterward, since re-registering the same email is rejected as a duplicate and there was no other way to get a fresh token. The user asked for this as a real feature, not just a one-off workaround.
 
-**Contract**: `RegistrationService.resendVerification(email)` — looks up the account, no-ops silently for an unknown email or an already-verified one (so the caller can't use it to enumerate registered addresses), otherwise reissues a new token (invalidating the old one, since `User.issueVerificationToken` overwrites the stored value) and resends the email. `RegistrationController` adds `GET`/`POST /resend-verification`; both the success and no-op paths redirect to the same generic `/check-email` page. New template `resend-verification.html`, linked from `check-email.html`. `SecurityConfig` permits `/resend-verification`. Covered by three new `RegistrationServiceTest` cases (fresh token replaces and invalidates the old one; no-op for an already-verified account; no-op for an unknown email) plus a full manual DB-level smoke test locally (register → resend → confirm old token rejected, new token verifies, `email_verified` flips to true).
+**Contract**: `RegistrationService.resendVerification(email)` — looks up the account, no-ops silently for an unknown email or an already-verified one (so the caller can't use it to enumerate registered addresses), otherwise reissues a new token (invalidating the old one, since `User.issueVerificationToken` overwrites the stored value) and resends the email. `RegistrationController` adds `GET`/`POST /resend-verification`; both the success and no-op paths redirect to the same generic `/check-email` page. New template `resend-verification.html`, linked from `check-email.html`. `SecurityConfig` permits `/resend-verification`. Covered by three new `RegistrationServiceTests` cases (fresh token replaces and invalidates the old one; no-op for an already-verified account; no-op for an unknown email) plus a full manual DB-level smoke test locally (register → resend → confirm old token rejected, new token verifies, `email_verified` flips to true).
+
+**Addendum (post-implementation, added during full-plan `/10x-impl-review`)**: The `email` parameter had no format/length validation, unlike `/register`'s `@Valid RegistrationRequest` (see `reviews/impl-review.md` F7) — inconsistent rigor, though no injection risk either way (parameterized lookup). Fixed: `RegistrationController` is now `@Validated`, and the parameter carries `@Email @Size(max = 255)`; a `ConstraintViolationException` handler redirects to the same generic `/check-email` outcome as every other input (malformed or otherwise), so this adds no new information leak. Verified: both a malformed email and an over-255-character email now redirect cleanly with no error page.
+
+**Addendum (post-implementation, added during full-plan `/10x-impl-review`)**: The known-unverified branch did a real synchronous SMTP round-trip while the unknown/already-verified branches returned near-instantly — a timing side-channel for email enumeration even though response content was uniform (see `reviews/impl-review.md` F2). Fixed by making `resendVerification` run off the request thread: `@Async("emailTaskExecutor")`, backed by a new `AsyncConfig` (`@EnableAsync` + a small `ThreadPoolTaskExecutor` bean, gated by `app.async.email.enabled` so tests can substitute a same-thread executor deterministically via a new `SynchronousAsyncConfig` test config). Verified: both branches now return in ~13ms regardless of which path is taken, and the async work still completes correctly (new token issued, DB updated).
+
+**Addendum (post-implementation, follow-up discussion)**: `emailTaskExecutor` also sets `setWaitForTasksToCompleteOnShutdown(true)` + `setAwaitTerminationSeconds(10)` — without this, a queued or in-flight resend email would be abruptly abandoned mid-shutdown (e.g. a Render redeploy) rather than allowed to finish. 10s comfortably covers a single send's worst case under the existing 5s SMTP connect/read/write timeouts without meaningfully delaying shutdown.
 
 #### 4. Gate login on email verification (code change, added during this phase)
 
 **Intent**: The user asked for login to actually require a verified account, reversing the original "verification never gates login" decision.
 
-**Contract**: `JpaUserDetailsService` sets `UserDetails.disabled(!user.emailVerified())` — Spring Security's standard account-status hook, checked by `DaoAuthenticationProvider` before password verification. `SecurityConfig`'s `formLogin` uses a custom `failureHandler` distinguishing `DisabledException` (redirects to `/login?unverified`, a distinct message with a resend-verification link) from every other authentication failure (`/login?error`, the original generic "invalid email or password" message) — a deliberate, discussed tradeoff: this reveals that an account exists (for a *correct* password against an unverified account) in exchange for real UX clarity, since Spring Security's account-status checks run before password matching regardless. A wrong password on either a verified or unverified account still falls through to the same generic message either way. Covered by a new `AuthFlowIntegrationTest` case (`unverifiedAccountCannotLogIn`) plus a full manual smoke test locally covering all four combinations (unverified/verified × correct/wrong password).
+**Contract**: `JpaUserDetailsService` returns a custom `AppUserDetails` (`email`, `passwordHash`, `emailVerified`) instead of Spring Security's built-in `User`. `SecurityConfig`'s `formLogin` uses a custom `successHandler`: only *after* `DaoAuthenticationProvider` has already matched the password does the handler check `emailVerified` — if false, it immediately invalidates the session (`SecurityContextLogoutHandler`) and redirects to `/login?unverified` (a distinct message with a resend-verification link); if true, redirects to `/`. A wrong password (against a verified or unverified account, or an unknown email) always falls through to the unchanged generic `/login?error` — verification status is never checked before the password, so it can never be revealed by a password-guessing attempt. Covered by `AuthFlowIntegrationTests` cases `unverifiedAccountCannotLogIn` and `wrongPasswordOnUnverifiedAccountStaysGeneric`, plus a full manual smoke test locally covering all four combinations (unverified/verified × correct/wrong password).
+
+**Addendum (post-implementation, added during full-plan `/10x-impl-review`)**: The first implementation of this item used Spring Security's built-in `UserDetails.disabled(...)` flag, checked by `DaoAuthenticationProvider`'s *pre*-authentication checks — which run *before* password verification. This meant `/login?unverified` was returned for *any* password (right or wrong) against a registered-but-unverified account, not just a correct one as intended and originally documented above — a materially broader email-enumeration leak. Found and fixed during the full-plan review (see `reviews/impl-review.md` F1): switched to the `AppUserDetails` + `successHandler` design described in the contract above, which gates on verification only after a successful password match. Verified directly (both automated and manual): a wrong password against an unverified account now returns the same generic `/login?error` as every other wrong-password case.
 
 #### 5. Fix "prepared statement already exists" against Supavisor (code change, added during this phase)
 
@@ -390,7 +410,15 @@ Verify a real domain with Resend and wire production credentials into Render, so
 
 **Intent**: Surfaced during manual verification — visiting `/` gave every visitor the placeholder page regardless of auth state, with no path into `/login`/`/register` from the root URL.
 
-**Contract**: `PlaceholderController.home()` now takes an `HttpServletRequest` and returns `redirect:/login` when `request.getUserPrincipal() == null` (unauthenticated), otherwise still renders `placeholder` (until a real home page ships). `login.html` already links to `/register`, so this gives unauthenticated visitors a path into both flows from `/`. Covered by two new `AuthFlowIntegrationTest` cases: `defaultViewRedirectsAnonymousVisitorsToLogin`, `defaultViewShowsPlaceholderForAuthenticatedVisitors` (the latter using `SecurityMockMvcRequestPostProcessors.user(...)` rather than a full login round-trip).
+**Contract**: `PlaceholderController.home()` now takes an `HttpServletRequest` and returns `redirect:/login` when `request.getUserPrincipal() == null` (unauthenticated), otherwise still renders `placeholder` (until a real home page ships). `login.html` already links to `/register`, so this gives unauthenticated visitors a path into both flows from `/`. Covered by two new `AuthFlowIntegrationTests` cases: `defaultViewRedirectsAnonymousVisitorsToLogin`, `defaultViewShowsPlaceholderForAuthenticatedVisitors` (the latter using `SecurityMockMvcRequestPostProcessors.user(...)` rather than a full login round-trip).
+
+**Addendum (post-implementation, added during full-plan `/10x-impl-review`)**: `defaultViewShowsPlaceholderForAuthenticatedVisitors` originally only asserted `status().isOk()` — a soft assertion that would pass for any 200 response, not specifically the `placeholder` view (see `reviews/impl-review.md` F9). Strengthened to also assert `view().name("placeholder")`.
+
+#### 7. Visual restyling with Pico.css (code change, added during this phase)
+
+**Intent**: The user asked for the auth pages to be visually beautified — a clean, concise, modern look — rather than the unstyled default HTML the plan otherwise produced.
+
+**Contract**: Pico.css v2.1.1 vendored locally (`src/main/resources/static/css/pico.min.css`, no CDN dependency) plus a small custom `app.css` giving a centered auth-card layout, notice/error banners, and `aria-invalid` validation styling — matching the styling approach already named in `tech-stack.md` ("Responsive CSS (e.g. Pico.css)"). All five templates (`login.html`, `register.html`, `check-email.html`, `placeholder.html`, `resend-verification.html`) reference both stylesheets. `SecurityConfig` permits `/css/**` so the stylesheet loads for unauthenticated visitors. Verified locally: pages and CSS return `200` unauthenticated, no regressions to redirect/rendering behavior, full test suite unaffected. No automated test coverage (purely visual — no behavior to assert).
 
 ### Success Criteria:
 
@@ -416,7 +444,7 @@ Verify a real domain with Resend and wire production credentials into Render, so
 
 ### Integration Tests:
 
-- Phase 1's repository-level test (JPA mapping + unique constraint) and Phase 3's `AuthFlowIntegrationTest` (full register→verify→login→logout) — both against a real Testcontainers Postgres, reusing the existing CI/local dual-mode pattern.
+- Phase 1's repository-level test (JPA mapping + unique constraint) and Phase 3's `AuthFlowIntegrationTests` (full register→verify→login→logout) — both against a real Testcontainers Postgres, reusing the existing CI/local dual-mode pattern.
 
 ### Manual Testing Steps:
 
@@ -494,5 +522,5 @@ Not applicable — `V1__create_users_table.sql` is a brand-new table with no exi
 
 #### Manual
 
-- [ ] 4.2 A real (non-developer-owned) email address receives a verification email through the deployed app
-- [ ] 4.3 Render deploy logs show no mail-configuration errors
+- [x] 4.2 A real (non-developer-owned) email address receives a verification email through the deployed app — f118042
+- [x] 4.3 Render deploy logs show no mail-configuration errors — f118042

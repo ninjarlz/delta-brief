@@ -6,7 +6,7 @@ import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 
-class UserTest {
+class UserTests {
 
 	private static User newUser() {
 		return User.register("user@example.com", "hashed-password", Instant.now());

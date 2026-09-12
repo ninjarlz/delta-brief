@@ -3,6 +3,7 @@ package pl.tul.deltabrief;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 
 /**
@@ -12,8 +13,8 @@ import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
  * provisioned and CI/local mode selection (the {@code CI} Spring profile, set
  * by {@code build.gradle}'s {@code test} task).
  */
-@SpringBootTest
-@Import(TestcontainersDatasourceConfig.class)
+@SpringBootTest(properties = "app.async.email.enabled=false")
+@Import({TestcontainersDatasourceConfig.class, SynchronousAsyncConfig.class})
 class DeltaBriefApplicationTests {
 
 	@Test

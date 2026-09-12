@@ -1,9 +1,14 @@
 package pl.tul.deltabrief.auth.adapter.in.web;
 
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 import java.util.Objects;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +17,7 @@ import pl.tul.deltabrief.auth.application.RegistrationService;
 import pl.tul.deltabrief.auth.application.RegistrationService.EmailAlreadyRegisteredException;
 import pl.tul.deltabrief.auth.application.dto.RegistrationRequest;
 
+@Validated
 @Controller
 public class RegistrationController {
 
@@ -61,8 +67,19 @@ public class RegistrationController {
 	}
 
 	@PostMapping("/resend-verification")
-	public String resendVerification(@RequestParam("email") String email) {
+	public String resendVerification(@RequestParam("email") @Email @Size(max = 255) String email) {
 		registrationService.resendVerification(email);
+		return "redirect:/check-email";
+	}
+
+	/**
+	 * A malformed email can never match a registered account anyway, so this
+	 * lands on the same generic outcome as any other non-matching input —
+	 * never a stack trace, and no information the uniform redirect wouldn't
+	 * already reveal.
+	 */
+	@ExceptionHandler(ConstraintViolationException.class)
+	public String handleInvalidResendEmail() {
 		return "redirect:/check-email";
 	}
 

@@ -2,11 +2,12 @@ package pl.tul.deltabrief.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import pl.tul.deltabrief.auth.adapter.out.security.AppUserDetails;
 
 /**
  * App-wide security wiring. Public paths are the placeholder landing page,
@@ -27,9 +28,20 @@ public class SecurityConfig {
 			.formLogin(form -> form
 				.loginPage("/login")
 				.loginProcessingUrl("/login")
-				.failureHandler((request, response, exception) -> response.sendRedirect(
-						exception instanceof DisabledException ? "/login?unverified" : "/login?error"))
-				.defaultSuccessUrl("/", false)
+				.failureUrl("/login?error")
+				.successHandler((request, response, authentication) -> {
+					// Verification is checked here — AFTER the password has already
+					// been matched by DaoAuthenticationProvider — never before, so a
+					// wrong-password attempt can never reveal that an account exists
+					// but is unverified.
+					if (authentication.getPrincipal() instanceof AppUserDetails userDetails
+							&& !userDetails.emailVerified()) {
+						new SecurityContextLogoutHandler().logout(request, response, authentication);
+						response.sendRedirect("/login?unverified");
+						return;
+					}
+					response.sendRedirect("/");
+				})
 				.permitAll())
 			.logout(logout -> logout
 				.logoutUrl("/logout")

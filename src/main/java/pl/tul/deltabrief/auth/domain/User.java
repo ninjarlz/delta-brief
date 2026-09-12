@@ -1,5 +1,7 @@
 package pl.tul.deltabrief.auth.domain;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -48,7 +50,7 @@ public class User {
 	 * @return whether verification succeeded
 	 */
 	public boolean verify(String token, Instant now) {
-		if (verificationToken == null || !verificationToken.equals(token)) {
+		if (verificationToken == null || token == null || !constantTimeEquals(verificationToken, token)) {
 			return false;
 		}
 		if (verificationTokenExpiresAt == null || now.isAfter(verificationTokenExpiresAt)) {
@@ -58,6 +60,10 @@ public class User {
 		this.verificationToken = null;
 		this.verificationTokenExpiresAt = null;
 		return true;
+	}
+
+	private static boolean constantTimeEquals(String a, String b) {
+		return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
 	}
 
 	public UserId id() {

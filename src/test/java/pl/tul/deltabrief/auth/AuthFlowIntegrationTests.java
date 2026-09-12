@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -20,6 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
 
@@ -32,9 +34,9 @@ import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
  * the one shared by {@code DeltaBriefApplicationTests} and the other tests —
  * see {@link TestcontainersDatasourceConfig}'s single-fixed-local-port constraint.
  */
-@SpringBootTest
-@Import(TestcontainersDatasourceConfig.class)
-class AuthFlowIntegrationTest {
+@SpringBootTest(properties = "app.async.email.enabled=false")
+@Import({TestcontainersDatasourceConfig.class, SynchronousAsyncConfig.class})
+class AuthFlowIntegrationTests {
 
 	private static final Pattern TOKEN_PATTERN = Pattern.compile("token=([\\w-]+)");
 
@@ -117,6 +119,25 @@ class AuthFlowIntegrationTest {
 	}
 
 	@Test
+	void wrongPasswordOnUnverifiedAccountStaysGeneric() throws Exception {
+		String email = "unverified-wrongpw-" + UUID.randomUUID() + "@example.com";
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf())
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		mockMvc.perform(post("/login").with(csrf())
+				.param("username", email)
+				.param("password", "wrong-password"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?error"));
+	}
+
+	@Test
 	void defaultViewRedirectsAnonymousVisitorsToLogin() throws Exception {
 		mockMvc.perform(get("/"))
 			.andExpect(status().is3xxRedirection())
@@ -126,7 +147,8 @@ class AuthFlowIntegrationTest {
 	@Test
 	void defaultViewShowsPlaceholderForAuthenticatedVisitors() throws Exception {
 		mockMvc.perform(get("/").with(user("someone@example.com")))
-			.andExpect(status().isOk());
+			.andExpect(status().isOk())
+			.andExpect(view().name("placeholder"));
 	}
 
 	private String extractToken(String email) {

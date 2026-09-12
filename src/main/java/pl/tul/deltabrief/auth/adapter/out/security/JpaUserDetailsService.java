@@ -23,12 +23,7 @@ public class JpaUserDetailsService implements UserDetailsService {
 	public UserDetails loadUserByUsername(String email) {
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("No user: " + email));
-		return org.springframework.security.core.userdetails.User
-				.withUsername(user.email())
-				.password(user.passwordHash())
-				.disabled(!user.emailVerified())
-				.authorities("ROLE_USER")
-				.build();
+		return new AppUserDetails(user.email(), user.passwordHash(), user.emailVerified());
 	}
 
 }

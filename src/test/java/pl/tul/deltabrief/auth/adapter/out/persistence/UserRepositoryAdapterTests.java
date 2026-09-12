@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import pl.tul.deltabrief.auth.application.port.out.UserRepository;
 import pl.tul.deltabrief.auth.domain.User;
+import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 
 /**
@@ -21,9 +22,9 @@ import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
  * standing up a second context — see {@link TestcontainersDatasourceConfig}'s
  * single-fixed-local-port constraint.
  */
-@SpringBootTest
-@Import(TestcontainersDatasourceConfig.class)
-class UserRepositoryAdapterTest {
+@SpringBootTest(properties = "app.async.email.enabled=false")
+@Import({TestcontainersDatasourceConfig.class, SynchronousAsyncConfig.class})
+class UserRepositoryAdapterTests {
 
 	@Autowired
 	private UserRepository userRepository;

@@ -5,13 +5,14 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.mail.MailException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.tul.deltabrief.auth.application.dto.RegistrationRequest;
 import pl.tul.deltabrief.auth.application.port.out.UserRepository;
 import pl.tul.deltabrief.auth.domain.User;
+import pl.tul.deltabrief.shared.application.EmailDeliveryException;
 import pl.tul.deltabrief.shared.application.EmailSender;
 
 /**
@@ -65,7 +66,11 @@ public class RegistrationService {
 	 * Silently no-ops for an unknown email or an already-verified account —
 	 * the caller always shows the same generic "check your email" outcome
 	 * regardless, so this can't be used to enumerate registered addresses.
+	 * Runs off the request thread ({@code @Async}) so the known-unverified
+	 * branch's SMTP round-trip can't be distinguished from the other
+	 * branches' near-instant no-op by response latency alone.
 	 */
+	@Async("emailTaskExecutor")
 	public void resendVerification(String email) {
 		userRepository.findByEmail(email).ifPresent(user -> {
 			if (user.emailVerified()) {
@@ -88,7 +93,7 @@ public class RegistrationService {
 		try {
 			emailSender.send(email, "Verify your DeltaBrief email address",
 					"Click the link below to verify your email address:\n\n" + verificationLink);
-		} catch (MailException emailDeliveryFailed) {
+		} catch (EmailDeliveryException emailDeliveryFailed) {
 			// The account is already created; email_verified just stays false until
 			// the user finds another way to verify. Verification never gates login,
 			// so this is non-fatal.
