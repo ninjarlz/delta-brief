@@ -2,6 +2,7 @@ package pl.tul.deltabrief.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,13 +20,15 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests(authorize -> authorize
-				.requestMatchers("/", "/actuator/health", "/register", "/check-email", "/verify", "/login", "/css/**")
+				.requestMatchers("/", "/actuator/health", "/register", "/check-email", "/verify", "/login",
+						"/resend-verification", "/css/**")
 				.permitAll()
 				.anyRequest().authenticated())
 			.formLogin(form -> form
 				.loginPage("/login")
 				.loginProcessingUrl("/login")
-				.failureUrl("/login?error")
+				.failureHandler((request, response, exception) -> response.sendRedirect(
+						exception instanceof DisabledException ? "/login?unverified" : "/login?error"))
 				.defaultSuccessUrl("/", false)
 				.permitAll())
 			.logout(logout -> logout

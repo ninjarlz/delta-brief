@@ -27,8 +27,8 @@ Verification: `./gradlew test` proves the full register → verify → login →
 
 - **OAuth/social login** (Google, Facebook) — tracked separately as roadmap slice `S-08` (`context/changes/user-registration-and-login/frame.md` confirmed this is a clean, additive extension to build later, not now).
 - **Password reset / "forgot password" flow** — not required by FR-001/FR-002; a natural follow-on but out of scope for this slice.
-- **Resend-verification-email flow** — if the first verification email is lost or expires, there's no UI to request a new one for this minimal slice. Login isn't gated on verification (see below), so this doesn't block product usage.
-- **Gating login on email verification** — verification tracks `email_verified` for future use (e.g., before S-06 sends real briefing emails), but does not block login. Unverified users can use the app normally.
+- ~~**Resend-verification-email flow**~~ **Added during Phase 4** — see Phase 4's addendum. Originally scoped out ("no UI to request a new one for this minimal slice"); the user asked for it after the deployed-app manual test surfaced exactly this gap (a `localhost`-pointing link from before `APP_BASE_URL` was set left an account permanently unverifiable without it, since duplicate-email rejection blocks re-registration).
+- ~~**Gating login on email verification**~~ **Added during Phase 4** — see Phase 4's addendum. Originally: verification tracked `email_verified` for future use but did not block login. The user asked for login to actually require a verified account.
 - **"Remember me" / persistent login** — the default Spring Security session timeout is used as-is; no extended timeout, no persistent-token table.
 - **Display name or any profile field beyond email/password** — FR-001 requires only email + password; no personalization fields are added preemptively.
 - **Rate-limiting registration or login attempts** — not required by the PRD's NFRs; a future hardening concern, not this slice's.
@@ -368,7 +368,19 @@ Verify a real domain with Resend and wire production credentials into Render, so
 
 **Addendum (post-implementation)**: Two deviations from the contract above, discovered during this phase's manual verification. (1) A domain was not purchased/verified yet; the user opted to test Phase 4 for now using their own Resend-account email address (the free-tier `onboarding@resend.dev` sender, which can only deliver to that one address) rather than blocking on a domain purchase. This means 4.2 below is verified only for the developer's own address, not an arbitrary non-developer-owned recipient — full arbitrary-recipient delivery still requires a verified domain, which remains a follow-up (not abandoned). (2) The contract above omitted `APP_BASE_URL` — `RegistrationService` builds the verification link from `app.base-url` (`application.properties`), which defaults to `http://localhost:8080` when unset. The first real-deploy registration test produced a verification link pointing at `localhost:8080` instead of the deployed app. Fixed by also setting `APP_BASE_URL=https://delta-brief.onrender.com` on Render and redeploying.
 
-#### 3. Default view for unauthenticated visitors (code change, added during this phase)
+#### 3. Resend-verification-email flow (code change, added during this phase)
+
+**Intent**: Surfaced during manual verification — an account whose verification link pointed at `localhost:8080` (before `APP_BASE_URL` was fixed) could never be verified afterward, since re-registering the same email is rejected as a duplicate and there was no other way to get a fresh token. The user asked for this as a real feature, not just a one-off workaround.
+
+**Contract**: `RegistrationService.resendVerification(email)` — looks up the account, no-ops silently for an unknown email or an already-verified one (so the caller can't use it to enumerate registered addresses), otherwise reissues a new token (invalidating the old one, since `User.issueVerificationToken` overwrites the stored value) and resends the email. `RegistrationController` adds `GET`/`POST /resend-verification`; both the success and no-op paths redirect to the same generic `/check-email` page. New template `resend-verification.html`, linked from `check-email.html`. `SecurityConfig` permits `/resend-verification`. Covered by three new `RegistrationServiceTest` cases (fresh token replaces and invalidates the old one; no-op for an already-verified account; no-op for an unknown email) plus a full manual DB-level smoke test locally (register → resend → confirm old token rejected, new token verifies, `email_verified` flips to true).
+
+#### 4. Gate login on email verification (code change, added during this phase)
+
+**Intent**: The user asked for login to actually require a verified account, reversing the original "verification never gates login" decision.
+
+**Contract**: `JpaUserDetailsService` sets `UserDetails.disabled(!user.emailVerified())` — Spring Security's standard account-status hook, checked by `DaoAuthenticationProvider` before password verification. `SecurityConfig`'s `formLogin` uses a custom `failureHandler` distinguishing `DisabledException` (redirects to `/login?unverified`, a distinct message with a resend-verification link) from every other authentication failure (`/login?error`, the original generic "invalid email or password" message) — a deliberate, discussed tradeoff: this reveals that an account exists (for a *correct* password against an unverified account) in exchange for real UX clarity, since Spring Security's account-status checks run before password matching regardless. A wrong password on either a verified or unverified account still falls through to the same generic message either way. Covered by a new `AuthFlowIntegrationTest` case (`unverifiedAccountCannotLogIn`) plus a full manual smoke test locally covering all four combinations (unverified/verified × correct/wrong password).
+
+#### 5. Default view for unauthenticated visitors (code change, added during this phase)
 
 **Intent**: Surfaced during manual verification — visiting `/` gave every visitor the placeholder page regardless of auth state, with no path into `/login`/`/register` from the root URL.
 

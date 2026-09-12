@@ -15,6 +15,10 @@
 		<p class="notice notice-success" th:if="${param.verified}">Your email is verified — please log in.</p>
 		<p class="notice notice-error" th:if="${param.verification_error}">That verification link is invalid or has expired.</p>
 		<p class="notice notice-success" th:if="${param.logout}">You've been logged out.</p>
+		<p class="notice notice-error" th:if="${param.unverified}">
+			Please verify your email before logging in.
+			<a th:href="@{/resend-verification}">Resend verification email</a>
+		</p>
 		<form th:action="@{/login}" method="post">
 			<label for="username">Email
 				<input type="email" id="username" name="username" autocomplete="email" required/>

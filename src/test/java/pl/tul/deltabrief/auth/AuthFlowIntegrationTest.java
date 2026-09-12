@@ -94,6 +94,29 @@ class AuthFlowIntegrationTest {
 	}
 
 	@Test
+	void unverifiedAccountCannotLogIn() throws Exception {
+		String email = "unverified-" + UUID.randomUUID() + "@example.com";
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf())
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		mockMvc.perform(post("/login").with(csrf())
+				.param("username", email)
+				.param("password", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?unverified"));
+
+		mockMvc.perform(get("/some-protected-path"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
+	}
+
+	@Test
 	void defaultViewRedirectsAnonymousVisitorsToLogin() throws Exception {
 		mockMvc.perform(get("/"))
 			.andExpect(status().is3xxRedirection())
