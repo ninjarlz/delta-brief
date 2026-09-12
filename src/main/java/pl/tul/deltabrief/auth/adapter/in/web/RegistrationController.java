@@ -7,6 +7,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import pl.tul.deltabrief.auth.application.RegistrationService;
 import pl.tul.deltabrief.auth.application.RegistrationService.EmailAlreadyRegisteredException;
 import pl.tul.deltabrief.auth.application.dto.RegistrationRequest;
@@ -52,6 +53,17 @@ public class RegistrationController {
 	@GetMapping("/check-email")
 	public String checkEmail() {
 		return "check-email";
+	}
+
+	@GetMapping("/resend-verification")
+	public String showResendVerificationForm() {
+		return "resend-verification";
+	}
+
+	@PostMapping("/resend-verification")
+	public String resendVerification(@RequestParam("email") String email) {
+		registrationService.resendVerification(email);
+		return "redirect:/check-email";
 	}
 
 }

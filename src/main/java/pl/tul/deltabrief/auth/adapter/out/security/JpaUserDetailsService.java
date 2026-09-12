@@ -26,6 +26,7 @@ public class JpaUserDetailsService implements UserDetailsService {
 		return org.springframework.security.core.userdetails.User
 				.withUsername(user.email())
 				.password(user.passwordHash())
+				.disabled(!user.emailVerified())
 				.authorities("ROLE_USER")
 				.build();
 	}

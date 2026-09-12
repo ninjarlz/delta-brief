@@ -93,6 +93,43 @@ class RegistrationServiceTest {
 		assertThat(verified).isFalse();
 	}
 
+	@Test
+	void resendVerificationIssuesAFreshTokenAndInvalidatesTheOldOne() {
+		String email = uniqueEmail();
+		registrationService.register(requestFor(email));
+		String originalToken = extractToken(email);
+
+		registrationService.resendVerification(email);
+
+		User afterResend = userRepository.findByEmail(email).orElseThrow();
+		assertThat(afterResend.verificationToken()).isNotEqualTo(originalToken);
+		assertThat(fakeEmailSender.sentEmails().stream().filter(sent -> sent.to().equals(email)).count())
+				.isEqualTo(2);
+		assertThat(emailVerificationService.verify(originalToken)).isFalse();
+		assertThat(emailVerificationService.verify(afterResend.verificationToken())).isTrue();
+	}
+
+	@Test
+	void resendVerificationIsANoOpForAnAlreadyVerifiedAccount() {
+		String email = uniqueEmail();
+		registrationService.register(requestFor(email));
+		emailVerificationService.verify(extractToken(email));
+
+		registrationService.resendVerification(email);
+
+		assertThat(fakeEmailSender.sentEmails().stream().filter(sent -> sent.to().equals(email)).count())
+				.isEqualTo(1);
+	}
+
+	@Test
+	void resendVerificationIsANoOpForAnUnknownEmail() {
+		String unknownEmail = uniqueEmail();
+
+		registrationService.resendVerification(unknownEmail);
+
+		assertThat(fakeEmailSender.sentEmails()).noneMatch(sent -> sent.to().equals(unknownEmail));
+	}
+
 	private String extractToken(String email) {
 		String body = fakeEmailSender.sentEmails().stream()
 				.filter(sent -> sent.to().equals(email))

@@ -49,8 +49,7 @@ public class RegistrationService {
 
 		String passwordHash = passwordEncoder.encode(request.getPassword());
 		User user = User.register(request.getEmail(), passwordHash, Instant.now());
-		String token = UUID.randomUUID().toString();
-		user.issueVerificationToken(token, Instant.now().plus(VERIFICATION_TOKEN_TTL));
+		String token = issueNewVerificationToken(user);
 
 		try {
 			userRepository.save(user);
@@ -58,16 +57,42 @@ public class RegistrationService {
 			throw new EmailAlreadyRegisteredException(request.getEmail());
 		}
 
+		sendVerificationEmail(request.getEmail(), token);
+	}
+
+	/**
+	 * Reissues a verification link for an existing, not-yet-verified account.
+	 * Silently no-ops for an unknown email or an already-verified account —
+	 * the caller always shows the same generic "check your email" outcome
+	 * regardless, so this can't be used to enumerate registered addresses.
+	 */
+	public void resendVerification(String email) {
+		userRepository.findByEmail(email).ifPresent(user -> {
+			if (user.emailVerified()) {
+				return;
+			}
+			String token = issueNewVerificationToken(user);
+			userRepository.save(user);
+			sendVerificationEmail(email, token);
+		});
+	}
+
+	private String issueNewVerificationToken(User user) {
+		String token = UUID.randomUUID().toString();
+		user.issueVerificationToken(token, Instant.now().plus(VERIFICATION_TOKEN_TTL));
+		return token;
+	}
+
+	private void sendVerificationEmail(String email, String token) {
 		String verificationLink = baseUrl + "/verify?token=" + token;
 		try {
-			emailSender.send(request.getEmail(), "Verify your DeltaBrief email address",
+			emailSender.send(email, "Verify your DeltaBrief email address",
 					"Click the link below to verify your email address:\n\n" + verificationLink);
 		} catch (MailException emailDeliveryFailed) {
 			// The account is already created; email_verified just stays false until
-			// the user finds another way to verify (or re-registration is attempted
-			// later). Verification never gates login, so this is non-fatal.
-			log.warn(">>> Failed to send verification email to {}: {}", request.getEmail(),
-					emailDeliveryFailed.getMessage());
+			// the user finds another way to verify. Verification never gates login,
+			// so this is non-fatal.
+			log.warn(">>> Failed to send verification email to {}: {}", email, emailDeliveryFailed.getMessage());
 		}
 	}
 
