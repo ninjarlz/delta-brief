@@ -4,12 +4,15 @@
 	<meta charset="UTF-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>Check your email — DeltaBrief</title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
 <body>
-	<main>
+	<main class="auth-card">
 		<h1>Check your email</h1>
-		<p>We've sent a verification link to the email address you registered with. Click it to verify your account.</p>
-		<p><a th:href="@{/login}">Back to login</a></p>
+		<p class="subtitle">We've sent a verification link to the address you registered with.</p>
+		<p>Click the link in that email to verify your account, then log in.</p>
+		<p class="switch-link"><a th:href="@{/login}">Back to login</a></p>
 	</main>
 </body>
 </html>

@@ -4,29 +4,32 @@
 	<meta charset="UTF-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>Register — DeltaBrief</title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
 <body>
-	<main>
+	<main class="auth-card">
 		<h1>Create an account</h1>
+		<p class="subtitle">Start tracking what actually changes.</p>
 		<form th:action="@{/register}" th:object="${registrationRequest}" method="post">
-			<div>
-				<label for="email">Email</label>
-				<input type="email" id="email" th:field="*{email}"/>
-				<span th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
-			</div>
-			<div>
-				<label for="password">Password</label>
-				<input type="password" id="password" th:field="*{password}"/>
-				<span th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
-			</div>
-			<div>
-				<label for="confirmPassword">Confirm password</label>
-				<input type="password" id="confirmPassword" th:field="*{confirmPassword}"/>
-				<span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></span>
-			</div>
+			<label for="email">Email
+				<input type="email" id="email" th:field="*{email}" autocomplete="email"
+					th:aria-invalid="${#fields.hasErrors('email')} ? 'true' : null"/>
+				<small class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></small>
+			</label>
+			<label for="password">Password
+				<input type="password" id="password" th:field="*{password}" autocomplete="new-password"
+					th:aria-invalid="${#fields.hasErrors('password')} ? 'true' : null"/>
+				<small class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></small>
+			</label>
+			<label for="confirmPassword">Confirm password
+				<input type="password" id="confirmPassword" th:field="*{confirmPassword}" autocomplete="new-password"
+					th:aria-invalid="${#fields.hasErrors('confirmPassword')} ? 'true' : null"/>
+				<small class="field-error" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></small>
+			</label>
 			<button type="submit">Register</button>
 		</form>
-		<p><a th:href="@{/login}">Already have an account? Log in</a></p>
+		<p class="switch-link"><a th:href="@{/login}">Already have an account? Log in</a></p>
 	</main>
 </body>
 </html>
