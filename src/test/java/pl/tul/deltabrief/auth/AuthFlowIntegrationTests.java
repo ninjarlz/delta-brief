@@ -17,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
@@ -95,6 +97,85 @@ class AuthFlowIntegrationTests {
 			.andExpect(redirectedUrl("/login?logout"));
 	}
 
+	/**
+	 * Genuine proof, not the vacuous kind: MockMvc does not carry session state
+	 * across sequential {@code perform()} calls by default, so a follow-up
+	 * request against a *fresh* MockMvc call would be unauthenticated
+	 * regardless of what the app does. This test explicitly captures the
+	 * {@link MockHttpSession} used by the failed login attempt itself and
+	 * replays that *same* session on the follow-up — proving a wrong password
+	 * never establishes an authenticated session, not just that a brand-new
+	 * request looks unauthenticated.
+	 */
+	@Test
+	void wrongPasswordNeverEstablishesAnAuthenticatedSession() throws Exception {
+		String email = "session-wrongpw-" + UUID.randomUUID() + "@example.com";
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf())
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		String token = extractToken(email);
+		mockMvc.perform(get("/verify").param("token", token))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?verified"));
+
+		MockHttpSession session = (MockHttpSession) mockMvc.perform(post("/login").with(csrf())
+				.param("username", email)
+				.param("password", "wrong-password"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?error"))
+			.andReturn().getRequest().getSession(false);
+
+		mockMvc.perform(get("/some-protected-path").session(session))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
+	}
+
+	/**
+	 * Same genuine-proof technique as above, applied to logout: captures the
+	 * session from a *successful* login, invalidates it via {@code /logout}
+	 * using that exact session, then replays that same session again —
+	 * proving the specific session Spring Security invalidated can't be
+	 * reused, not just that a fresh request is unauthenticated.
+	 */
+	@Test
+	void sessionCapturedBeforeLogoutCannotBeReplayedAfterLogout() throws Exception {
+		String email = "session-logout-" + UUID.randomUUID() + "@example.com";
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf())
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		String token = extractToken(email);
+		mockMvc.perform(get("/verify").param("token", token))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?verified"));
+
+		MockHttpSession session = (MockHttpSession) mockMvc.perform(post("/login").with(csrf())
+				.param("username", email)
+				.param("password", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/"))
+			.andReturn().getRequest().getSession(false);
+
+		mockMvc.perform(post("/logout").with(csrf()).session(session))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?logout"));
+
+		mockMvc.perform(get("/some-protected-path").session(session))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
+	}
+
 	@Test
 	void unverifiedAccountCannotLogIn() throws Exception {
 		String email = "unverified-" + UUID.randomUUID() + "@example.com";
@@ -149,6 +230,91 @@ class AuthFlowIntegrationTests {
 		mockMvc.perform(get("/").with(user("someone@example.com")))
 			.andExpect(status().isOk())
 			.andExpect(view().name("placeholder"));
+	}
+
+	/**
+	 * Proves the rate limiter is actually wired into the real HTTP path and
+	 * returns 429. Uses a dedicated simulated remote address, not MockMvc's
+	 * default (shared by every other test in this suite), so this test's
+	 * deliberate bucket exhaustion can't affect unrelated tests sharing the
+	 * same cached Spring context.
+	 * <p>
+	 * {@code @RateLimiting}'s method-level key resolution always scopes the
+	 * cache key by the declaring method's name (confirmed empirically — not
+	 * documented), so {@code register()} and {@code resendVerification()}
+	 * each get their own independent 5/15min bucket rather than sharing one
+	 * budget; see {@code register()}'s own bucket-exhaustion test below.
+	 */
+	@Test
+	void rateLimiterRejectsRapidRepeatedResendForTheSameEmail() throws Exception {
+		String email = "ratelimit-resend-" + UUID.randomUUID() + "@example.com";
+		RequestPostProcessor uniqueIp = withRemoteAddr("10.0.0.50");
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		// resend-verification has its own bucket, independent of register()'s
+		// above; five successful calls exhaust its 5/15min limit, so the sixth
+		// (the one after this loop) is rejected.
+		for (int i = 0; i < 5; i++) {
+			mockMvc.perform(post("/resend-verification").with(csrf()).with(uniqueIp)
+					.param("email", email))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/check-email"));
+		}
+
+		mockMvc.perform(post("/resend-verification").with(csrf()).with(uniqueIp)
+				.param("email", email))
+			.andExpect(status().is(429));
+	}
+
+	/**
+	 * Same proof as above, for {@code register()}'s own independent bucket —
+	 * both endpoints must be protected individually since they don't share a
+	 * budget (see the class-level note on the previous test).
+	 */
+	@Test
+	void rateLimiterRejectsRapidRepeatedRegisterAttemptsForTheSameEmail() throws Exception {
+		String email = "ratelimit-register-" + UUID.randomUUID() + "@example.com";
+		RequestPostProcessor uniqueIp = withRemoteAddr("10.0.0.60");
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		// The rate-limit check runs before the "already registered" business
+		// logic, so repeat attempts with the same email still consume tokens
+		// even though each one re-shows the registration form.
+		for (int i = 0; i < 4; i++) {
+			mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+					.param("email", email)
+					.param("password", password)
+					.param("confirmPassword", password))
+				.andExpect(status().isOk())
+				.andExpect(view().name("register"));
+		}
+
+		mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is(429));
+	}
+
+	private static RequestPostProcessor withRemoteAddr(String ip) {
+		return request -> {
+			request.setRemoteAddr(ip);
+			return request;
+		};
 	}
 
 	private String extractToken(String email) {

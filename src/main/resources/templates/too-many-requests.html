@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Too many attempts — DeltaBrief</title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+	<main class="auth-card">
+		<h1>Too many attempts</h1>
+		<p class="subtitle">Please wait a few minutes and try again.</p>
+		<p class="switch-link"><a th:href="@{/login}">Back to login</a></p>
+	</main>
+</body>
+</html>
