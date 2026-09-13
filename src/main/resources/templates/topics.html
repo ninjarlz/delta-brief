@@ -8,37 +8,36 @@
 	<link rel="stylesheet" th:href="@{/css/app.css}"/>
 </head>
 <body>
-	<main class="container">
-		<h1>Your topics</h1>
+	<main class="page">
+		<header class="page-header">
+			<div>
+				<h1>Your topics</h1>
+				<p class="subtitle">What's changed, tracked in one place.</p>
+			</div>
+			<div class="page-header__actions">
+				<a th:if="${!#lists.isEmpty(topics)}" th:href="@{/topics/new}" role="button">Create topic</a>
+				<form th:action="@{/logout}" method="post">
+					<button type="submit" class="secondary outline">Sign out</button>
+				</form>
+			</div>
+		</header>
 
-		<div th:if="${#lists.isEmpty(topics)}">
+		<div class="empty-state" th:if="${#lists.isEmpty(topics)}">
 			<p>You're not watching any topics yet.</p>
 			<a th:href="@{/topics/new}" role="button">Create your first topic</a>
 		</div>
 
-		<div th:unless="${#lists.isEmpty(topics)}">
-			<table>
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Category</th>
-						<th></th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr th:each="topic : ${topics}">
-						<td th:text="${topic.name}"></td>
-						<td th:text="${topic.categoryName}"></td>
-						<td>
-							<form th:action="@{/topics/{id}/delete(id=${topic.id})}" method="post">
-								<button type="submit" class="secondary">Delete</button>
-							</form>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-			<a th:href="@{/topics/new}" role="button">Create topic</a>
-		</div>
+		<ul class="topic-list" th:unless="${#lists.isEmpty(topics)}">
+			<li class="topic-card" th:each="topic : ${topics}">
+				<div class="topic-card__info">
+					<span class="topic-card__name" th:text="${topic.name}"></span>
+					<span class="topic-card__category" th:text="${topic.categoryName}"></span>
+				</div>
+				<form th:action="@{/topics/{id}/delete(id=${topic.id})}" method="post">
+					<button type="submit" class="topic-card__delete secondary outline">Delete</button>
+				</form>
+			</li>
+		</ul>
 	</main>
 </body>
 </html>
