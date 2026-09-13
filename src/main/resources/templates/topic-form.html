@@ -10,9 +10,10 @@
 <body>
 	<main class="auth-card">
 		<h1>Create a topic</h1>
+		<p class="subtitle">Pick a name and a category — DeltaBrief tracks that category's preset sources for you.</p>
 		<form th:action="@{/topics}" th:object="${createTopicRequest}" method="post">
 			<label for="name">Topic name
-				<input type="text" id="name" th:field="*{name}"
+				<input type="text" id="name" th:field="*{name}" placeholder="e.g. War in Ukraine"
 					th:aria-invalid="${#fields.hasErrors('name')} ? 'true' : null"/>
 				<small class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
 			</label>
@@ -24,11 +25,16 @@
 				</select>
 				<small class="field-error" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}"></small>
 			</label>
-			<p>
-				<button type="button" disabled title="Coming soon">Customize sources</button>
-				<small>Picking a category now selects all of its preset sources. Choosing individual sources is
-					coming in a future update.</small>
-			</p>
+
+			<div class="coming-soon-panel">
+				<div class="coming-soon-panel__header">
+					<span>Custom sources</span>
+					<span class="coming-soon-panel__badge">Coming soon</span>
+				</div>
+				<p class="coming-soon-panel__text">Your category brings all of its preset sources along
+					automatically. Picking individual sources will be available in a future update.</p>
+			</div>
+
 			<small class="field-error" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></small>
 			<button type="submit">Create topic</button>
 		</form>
