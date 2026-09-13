@@ -41,6 +41,12 @@ public class TopicService {
 		if (topicRepository.existsByUserIdAndNameIgnoreCase(userId, name)) {
 			throw new DuplicateTopicNameException(name);
 		}
+		// Check-then-act, not DB-enforced like the uniqueness check above — a
+		// deliberate, accepted tradeoff. Two concurrent requests from the same
+		// user could race past this and land slightly over the cap; unlike the
+		// duplicate-name case, this is a soft UX guardrail against accidental
+		// topic-spam, not a security or data-integrity boundary, so the small
+		// window isn't worth a locking/trigger-based fix at this project's scale.
 		if (topicRepository.countByUserId(userId) >= MAX_TOPICS_PER_USER) {
 			throw new TopicLimitReachedException(userId);
 		}
