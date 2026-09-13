@@ -267,17 +267,17 @@ Three new Flyway migrations (`V5`–`V7`), continuing directly from `V4__timesta
 
 #### Automated
 
-- [x] 1.1 `./gradlew test --no-daemon` passes, including all new domain and persistence-adapter tests
-- [x] 1.2 `./gradlew build --no-daemon` passes end-to-end
-- [x] 1.3 Flyway migrations apply cleanly against a fresh local Postgres
+- [x] 1.1 `./gradlew test --no-daemon` passes, including all new domain and persistence-adapter tests — 3fbe41c
+- [x] 1.2 `./gradlew build --no-daemon` passes end-to-end — 3fbe41c
+- [x] 1.3 Flyway migrations apply cleanly against a fresh local Postgres — 3fbe41c
 
 ### Phase 2: Application layer
 
 #### Automated
 
-- [ ] 2.1 `./gradlew test --no-daemon` passes, including the new `TopicServiceTests`
-- [ ] 2.2 `./gradlew build --no-daemon` passes end-to-end
-- [ ] 2.3 Existing `AuthFlowIntegrationTests` still passes unchanged
+- [x] 2.1 `./gradlew test --no-daemon` passes, including the new `TopicServiceTests`
+- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 2.3 Existing `AuthFlowIntegrationTests` still passes unchanged
 
 ### Phase 3: Web layer, placeholder retirement, and end-to-end coverage
 
