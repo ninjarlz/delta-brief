@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Your topics — DeltaBrief</title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+	<main class="container">
+		<h1>Your topics</h1>
+
+		<div th:if="${#lists.isEmpty(topics)}">
+			<p>You're not watching any topics yet.</p>
+			<a th:href="@{/topics/new}" role="button">Create your first topic</a>
+		</div>
+
+		<div th:unless="${#lists.isEmpty(topics)}">
+			<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Category</th>
+						<th></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="topic : ${topics}">
+						<td th:text="${topic.name}"></td>
+						<td th:text="${topic.categoryName}"></td>
+						<td>
+							<form th:action="@{/topics/{id}/delete(id=${topic.id})}" method="post">
+								<button type="submit" class="secondary">Delete</button>
+							</form>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<a th:href="@{/topics/new}" role="button">Create topic</a>
+		</div>
+	</main>
+</body>
+</html>

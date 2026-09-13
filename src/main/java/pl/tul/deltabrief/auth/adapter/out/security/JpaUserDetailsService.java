@@ -23,7 +23,7 @@ public class JpaUserDetailsService implements UserDetailsService {
 	public UserDetails loadUserByUsername(String email) {
 		User user = userRepository.findByEmail(email)
 				.orElseThrow(() -> new UsernameNotFoundException("No user: " + email));
-		return new AppUserDetails(user.email(), user.passwordHash(), user.emailVerified());
+		return new AppUserDetails(user.id(), user.email(), user.passwordHash(), user.emailVerified());
 	}
 
 }

@@ -1,0 +1,11 @@
+CREATE TABLE categories (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE sources (
+    id BIGSERIAL PRIMARY KEY,
+    category_id BIGINT NOT NULL REFERENCES categories(id),
+    name VARCHAR(255) NOT NULL,
+    feed_url VARCHAR(2048) NOT NULL
+);
