@@ -141,4 +141,29 @@ class TopicRepositoryAdapterTests {
 		assertThat(topicRepository.findAllByUserId(owner)).isEmpty();
 	}
 
+	@Test
+	void findCategoryIdByIdAndUserIdReturnsTheCategoryForTheOwner() {
+		UserId owner = newUser();
+		CategoryId categoryId = anyCategoryId();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
+
+		assertThat(topicRepository.findCategoryIdByIdAndUserId(topic.id(), owner)).contains(categoryId);
+	}
+
+	@Test
+	void findCategoryIdByIdAndUserIdIsEmptyForAnotherUsersTopic() {
+		UserId owner = newUser();
+		UserId otherUser = newUser();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
+
+		assertThat(topicRepository.findCategoryIdByIdAndUserId(topic.id(), otherUser)).isEmpty();
+	}
+
+	@Test
+	void findCategoryIdByIdAndUserIdIsEmptyForAnUnknownId() {
+		UserId owner = newUser();
+
+		assertThat(topicRepository.findCategoryIdByIdAndUserId(new TopicId(999_999L), owner)).isEmpty();
+	}
+
 }
