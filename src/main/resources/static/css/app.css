@@ -60,3 +60,38 @@ body {
 	background: color-mix(in srgb, var(--pico-ins-color) 15%, transparent);
 	color: var(--pico-ins-color);
 }
+
+.coming-soon-panel {
+	border: 1px dashed var(--pico-muted-border-color);
+	border-radius: var(--pico-border-radius);
+	background: var(--pico-code-background-color);
+	padding: 0.85rem 1rem;
+	margin: 1.25rem 0 1.5rem;
+}
+
+.coming-soon-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	font-weight: 600;
+	font-size: 0.95rem;
+}
+
+.coming-soon-panel__badge {
+	flex-shrink: 0;
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--pico-muted-color);
+	background: var(--pico-muted-border-color);
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+}
+
+.coming-soon-panel__text {
+	color: var(--pico-muted-color);
+	font-size: 0.85rem;
+	margin: 0.4rem 0 0;
+}
