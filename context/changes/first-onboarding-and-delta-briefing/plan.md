@@ -391,24 +391,24 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 
 #### Automated
 
-- [x] 4.1 `./gradlew build` compiles
-- [x] 4.2 `BriefingServiceTests` pass
-- [x] 4.3 `BriefingFlowIntegrationTests` pass
-- [x] 4.4 Full suite passes (`./gradlew test`)
+- [x] 4.1 `./gradlew build` compiles — 23c9450
+- [x] 4.2 `BriefingServiceTests` pass — 23c9450
+- [x] 4.3 `BriefingFlowIntegrationTests` pass — 23c9450
+- [x] 4.4 Full suite passes (`./gradlew test`) — 23c9450
 
 #### Manual
 
-- [x] 4.5 Generate onboarding briefing in running app, confirm rendering
-- [x] 4.6 Generate delta briefing, confirm delta content + history list
-- [x] 4.7 Simulate generation failure, confirm error+retry UX
+- [x] 4.5 Generate onboarding briefing in running app, confirm rendering — 23c9450
+- [x] 4.6 Generate delta briefing, confirm delta content + history list — 23c9450
+- [x] 4.7 Simulate generation failure, confirm error+retry UX — 23c9450
 
 ### Phase 4 Addendum: Optional topic description (FR-004)
 
 #### Automated
 
-- [x] 4.8 `./gradlew build` compiles; full suite passes (76 tests)
+- [x] 4.8 `./gradlew build` compiles; full suite passes (76 tests) — 23c9450
 
 #### Manual
 
-- [x] 4.9 Create a topic with a description, generate a briefing, confirm it doesn't break anything and the description reads as considered
-- [x] 4.10 Create a topic without a description, confirm creation + generation both work exactly as before
+- [x] 4.9 Create a topic with a description, generate a briefing, confirm it doesn't break anything and the description reads as considered — 23c9450
+- [x] 4.10 Create a topic without a description, confirm creation + generation both work exactly as before — 23c9450
