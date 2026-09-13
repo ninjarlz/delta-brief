@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,15 +27,11 @@ import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
 @Controller
+@RequiredArgsConstructor
 public class TopicController {
 
 	private final TopicService topicService;
 	private final CategoryRepository categoryRepository;
-
-	public TopicController(TopicService topicService, CategoryRepository categoryRepository) {
-		this.topicService = topicService;
-		this.categoryRepository = categoryRepository;
-	}
 
 	/**
 	 * Populated in the model for every handler below — used by

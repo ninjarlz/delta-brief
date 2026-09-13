@@ -1,21 +1,18 @@
 package pl.tul.deltabrief.auth.adapter.out.persistence;
 
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.tul.deltabrief.auth.application.port.out.UserRepository;
 import pl.tul.deltabrief.auth.domain.User;
 import pl.tul.deltabrief.auth.domain.UserId;
 
 @Component
+@RequiredArgsConstructor
 class UserRepositoryAdapter implements UserRepository {
 
 	private final UserJpaRepository jpaRepository;
 	private final UserEntityMapper mapper;
-
-	UserRepositoryAdapter(UserJpaRepository jpaRepository, UserEntityMapper mapper) {
-		this.jpaRepository = jpaRepository;
-		this.mapper = mapper;
-	}
 
 	@Override
 	public User save(User user) {

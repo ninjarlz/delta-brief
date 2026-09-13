@@ -6,6 +6,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * JPA mapping for the {@code sources} table. No repository/adapter reads
@@ -14,6 +18,9 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "sources")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class SourceJpaEntity {
 
 	@Id
@@ -27,31 +34,5 @@ public class SourceJpaEntity {
 
 	@Column(name = "feed_url", nullable = false)
 	private String feedUrl;
-
-	protected SourceJpaEntity() {
-	}
-
-	public SourceJpaEntity(Long id, Long categoryId, String name, String feedUrl) {
-		this.id = id;
-		this.categoryId = categoryId;
-		this.name = name;
-		this.feedUrl = feedUrl;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getCategoryId() {
-		return categoryId;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public String getFeedUrl() {
-		return feedUrl;
-	}
 
 }

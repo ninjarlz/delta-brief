@@ -2,6 +2,7 @@ package pl.tul.deltabrief.auth.application;
 
 import java.time.Instant;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.tul.deltabrief.auth.application.port.out.UserRepository;
 import pl.tul.deltabrief.auth.domain.User;
@@ -10,13 +11,10 @@ import pl.tul.deltabrief.auth.domain.User;
  * Handles a verification-link click.
  */
 @Service
+@RequiredArgsConstructor
 public class EmailVerificationService {
 
 	private final UserRepository userRepository;
-
-	public EmailVerificationService(UserRepository userRepository) {
-		this.userRepository = userRepository;
-	}
 
 	/**
 	 * @return whether verification succeeded — false for an unknown or

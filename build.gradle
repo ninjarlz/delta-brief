@@ -65,6 +65,12 @@ dependencies {
 	runtimeOnly 'org.postgresql:postgresql'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+	// Bridges Lombok's generated accessors/constructors into MapStruct's
+	// annotation-processing round — without it, MapStruct's processor can't
+	// see Lombok-generated methods on mapper source/target types (e.g.
+	// UserJpaEntity's @Getter-generated getId()), only whatever was
+	// hand-written before Lombok ran.
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testCompileOnly 'org.projectlombok:lombok'

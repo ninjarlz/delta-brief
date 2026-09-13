@@ -4,18 +4,22 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /**
  * The auth aggregate: an account's email, password hash, and email
  * verification state. Password hashing itself is the application layer's
  * concern — this aggregate only ever stores an already-hashed value.
  */
+@Getter
+@Accessors(fluent = true)
 public class User {
 
 	private UserId id;
 	private Long version;
-	private String email;
-	private String passwordHash;
+	private final String email;
+	private final String passwordHash;
 	private boolean emailVerified;
 	private String verificationToken;
 	private Instant verificationTokenExpiresAt;
@@ -66,44 +70,12 @@ public class User {
 		return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
 	}
 
-	public UserId id() {
-		return id;
-	}
-
 	public void assignId(UserId id) {
 		this.id = Objects.requireNonNull(id);
 	}
 
-	public Long version() {
-		return version;
-	}
-
 	public void assignVersion(Long version) {
 		this.version = version;
-	}
-
-	public String email() {
-		return email;
-	}
-
-	public String passwordHash() {
-		return passwordHash;
-	}
-
-	public boolean emailVerified() {
-		return emailVerified;
-	}
-
-	public String verificationToken() {
-		return verificationToken;
-	}
-
-	public Instant verificationTokenExpiresAt() {
-		return verificationTokenExpiresAt;
-	}
-
-	public Instant createdAt() {
-		return createdAt;
 	}
 
 }

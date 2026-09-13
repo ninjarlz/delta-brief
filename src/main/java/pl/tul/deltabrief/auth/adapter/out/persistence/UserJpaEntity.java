@@ -8,6 +8,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * JPA mapping for the {@code users} table, kept separate from the domain
@@ -16,6 +20,9 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "users")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class UserJpaEntity {
 
 	@Id
@@ -42,52 +49,5 @@ public class UserJpaEntity {
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
-
-	protected UserJpaEntity() {
-	}
-
-	public UserJpaEntity(Long id, Long version, String email, String passwordHash, boolean emailVerified,
-			String verificationToken, Instant verificationTokenExpiresAt, Instant createdAt) {
-		this.id = id;
-		this.version = version;
-		this.email = email;
-		this.passwordHash = passwordHash;
-		this.emailVerified = emailVerified;
-		this.verificationToken = verificationToken;
-		this.verificationTokenExpiresAt = verificationTokenExpiresAt;
-		this.createdAt = createdAt;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getVersion() {
-		return version;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public String getPasswordHash() {
-		return passwordHash;
-	}
-
-	public boolean isEmailVerified() {
-		return emailVerified;
-	}
-
-	public String getVerificationToken() {
-		return verificationToken;
-	}
-
-	public Instant getVerificationTokenExpiresAt() {
-		return verificationTokenExpiresAt;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
-	}
 
 }

@@ -1,5 +1,9 @@
 package pl.tul.deltabrief.topic.domain;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
+
 /**
  * A preset RSS/Atom source belonging to a {@link Category}, seeded via
  * migration. Plain reference data — no behavior or invariants beyond its
@@ -8,34 +12,14 @@ package pl.tul.deltabrief.topic.domain;
  * categories for topic creation; source ingestion arrives with briefing
  * generation.
  */
+@Getter
+@Accessors(fluent = true)
+@RequiredArgsConstructor
 public class Source {
 
 	private final SourceId id;
 	private final CategoryId categoryId;
 	private final String name;
 	private final String feedUrl;
-
-	public Source(SourceId id, CategoryId categoryId, String name, String feedUrl) {
-		this.id = id;
-		this.categoryId = categoryId;
-		this.name = name;
-		this.feedUrl = feedUrl;
-	}
-
-	public SourceId id() {
-		return id;
-	}
-
-	public CategoryId categoryId() {
-		return categoryId;
-	}
-
-	public String name() {
-		return name;
-	}
-
-	public String feedUrl() {
-		return feedUrl;
-	}
 
 }

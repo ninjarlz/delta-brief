@@ -3,10 +3,14 @@ package pl.tul.deltabrief.topic.application.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * The validated create-topic form shape.
  */
+@Getter
+@Setter
 public class CreateTopicRequest {
 
 	@NotBlank
@@ -15,21 +19,5 @@ public class CreateTopicRequest {
 
 	@NotNull
 	private Long categoryId;
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Long getCategoryId() {
-		return categoryId;
-	}
-
-	public void setCategoryId(Long categoryId) {
-		this.categoryId = categoryId;
-	}
 
 }

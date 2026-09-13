@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import java.util.Objects;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
@@ -21,13 +22,10 @@ import pl.tul.deltabrief.auth.application.dto.RegistrationRequest;
 
 @Validated
 @Controller
+@RequiredArgsConstructor
 public class RegistrationController {
 
 	private final RegistrationService registrationService;
-
-	public RegistrationController(RegistrationService registrationService) {
-		this.registrationService = registrationService;
-	}
 
 	@GetMapping("/register")
 	public String showForm(@ModelAttribute("registrationRequest") RegistrationRequest form) {
