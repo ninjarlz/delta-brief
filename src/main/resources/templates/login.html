@@ -6,29 +6,33 @@
 	<title>Log in — DeltaBrief</title>
 	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
 	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
 </head>
 <body>
-	<main class="auth-card">
-		<h1>Log in</h1>
-		<p class="subtitle">Welcome back to DeltaBrief.</p>
-		<p class="notice notice-error" th:if="${param.error}">Invalid email or password.</p>
-		<p class="notice notice-success" th:if="${param.verified}">Your email is verified — please log in.</p>
-		<p class="notice notice-error" th:if="${param.verification_error}">That verification link is invalid or has expired.</p>
-		<p class="notice notice-success" th:if="${param.logout}">You've been logged out.</p>
-		<p class="notice notice-error" th:if="${param.unverified}">
-			Please verify your email before logging in.
-			<a th:href="@{/resend-verification}">Resend verification email</a>
-		</p>
-		<form th:action="@{/login}" method="post">
-			<label for="username">Email
-				<input type="email" id="username" name="username" autocomplete="email" required/>
-			</label>
-			<label for="password">Password
-				<input type="password" id="password" name="password" autocomplete="current-password" required/>
-			</label>
-			<button type="submit">Log in</button>
-		</form>
-		<p class="switch-link"><a th:href="@{/register}">Need an account? Register</a></p>
-	</main>
+	<div class="center-content">
+		<main class="auth-card">
+			<p class="wordmark">DeltaBrief</p>
+			<h1>Log in</h1>
+			<p class="subtitle">Track what actually changed, not just what's new.</p>
+			<p class="notice notice-error" th:if="${param.error}">Invalid email or password.</p>
+			<p class="notice notice-success" th:if="${param.verified}">Your email is verified — please log in.</p>
+			<p class="notice notice-error" th:if="${param.verification_error}">That verification link is invalid or has expired.</p>
+			<p class="notice notice-success" th:if="${param.logout}">You've been logged out.</p>
+			<p class="notice notice-error" th:if="${param.unverified}">
+				Please verify your email before logging in.
+				<a th:href="@{/resend-verification}">Resend verification email</a>
+			</p>
+			<form th:action="@{/login}" method="post">
+				<label for="username">Email
+					<input type="email" id="username" name="username" autocomplete="email" required/>
+				</label>
+				<label for="password">Password
+					<input type="password" id="password" name="password" autocomplete="current-password" required/>
+				</label>
+				<button type="submit">Log in</button>
+			</form>
+			<p class="switch-link"><a th:href="@{/register}">Need an account? Register</a></p>
+		</main>
+	</div>
 </body>
 </html>

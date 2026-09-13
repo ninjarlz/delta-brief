@@ -6,39 +6,43 @@
 	<title>Create a topic — DeltaBrief</title>
 	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
 	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
 </head>
 <body>
-	<main class="auth-card">
-		<h1>Create a topic</h1>
-		<p class="subtitle">Pick a name and a category — DeltaBrief tracks that category's preset sources for you.</p>
-		<form th:action="@{/topics}" th:object="${createTopicRequest}" method="post">
-			<label for="name">Topic name
-				<input type="text" id="name" th:field="*{name}" placeholder="e.g. War in Ukraine"
-					th:aria-invalid="${#fields.hasErrors('name')} ? 'true' : null"/>
-				<small class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
-			</label>
-			<label for="categoryId">Category
-				<select id="categoryId" th:field="*{categoryId}"
-					th:aria-invalid="${#fields.hasErrors('categoryId')} ? 'true' : null">
-					<option th:each="category : ${categories}" th:value="${category.id.value}"
-						th:text="${category.name}"></option>
-				</select>
-				<small class="field-error" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}"></small>
-			</label>
+	<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+	<main class="app-content">
+		<div class="auth-card">
+			<h1>Create a topic</h1>
+			<p class="subtitle">Pick a name and a category — DeltaBrief tracks that category's preset sources for you.</p>
+			<form th:action="@{/topics}" th:object="${createTopicRequest}" method="post">
+				<label for="name">Topic name
+					<input type="text" id="name" th:field="*{name}" placeholder="e.g. War in Ukraine"
+						th:aria-invalid="${#fields.hasErrors('name')} ? 'true' : null"/>
+					<small class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
+				</label>
+				<label for="categoryId">Category
+					<select id="categoryId" th:field="*{categoryId}"
+						th:aria-invalid="${#fields.hasErrors('categoryId')} ? 'true' : null">
+						<option th:each="category : ${categories}" th:value="${category.id.value}"
+							th:text="${category.name}"></option>
+					</select>
+					<small class="field-error" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}"></small>
+				</label>
 
-			<div class="coming-soon-panel">
-				<div class="coming-soon-panel__header">
-					<span>Custom sources</span>
-					<span class="coming-soon-panel__badge">Coming soon</span>
+				<div class="coming-soon-panel">
+					<div class="coming-soon-panel__header">
+						<span>Custom sources</span>
+						<span class="coming-soon-panel__badge">Coming soon</span>
+					</div>
+					<p class="coming-soon-panel__text">Your category brings all of its preset sources along
+						automatically. Picking individual sources will be available in a future update.</p>
 				</div>
-				<p class="coming-soon-panel__text">Your category brings all of its preset sources along
-					automatically. Picking individual sources will be available in a future update.</p>
-			</div>
 
-			<small class="field-error" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></small>
-			<button type="submit">Create topic</button>
-		</form>
-		<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>
+				<small class="field-error" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></small>
+				<button type="submit">Create topic</button>
+			</form>
+			<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>
+		</div>
 	</main>
 </body>
 </html>
