@@ -44,8 +44,12 @@ public class TopicController {
 	}
 
 	@GetMapping("/")
-	public String listTopics(Authentication authentication, Model model) {
-		Map<Long, String> categoryNamesById = categories().stream()
+	public String listTopics(Authentication authentication, Model model,
+			@ModelAttribute("categories") List<Category> categories) {
+		// Reuses the value the @ModelAttribute("categories") method above already
+		// populated for this request — avoids a second categoryRepository.findAll()
+		// call that a bare categories() invocation here would otherwise cause.
+		Map<Long, String> categoryNamesById = categories.stream()
 				.collect(Collectors.toMap(category -> category.id().value(), Category::name));
 		List<TopicView> topics = topicService.listTopics(currentUserId(authentication)).stream()
 				.map(topic -> toView(topic, categoryNamesById))

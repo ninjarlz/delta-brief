@@ -40,7 +40,8 @@ public class RegistrationController {
 	// @RateLimiting always scopes the cache key by the declaring method name
 	// internally (confirmed empirically, not documented) — so this endpoint
 	// gets its own independent 5/15min bucket, not a budget shared with
-	// resendVerification(). See RateLimitExceededAdvice for the 429 response.
+	// resendVerification(). See shared's RateLimitExceededAdvice for the
+	// 429 response.
 	@RateLimiting(name = "registration", cacheKey = "#form.email + ':' + #request.remoteAddr")
 	public String register(@Valid @ModelAttribute("registrationRequest") RegistrationRequest form,
 			BindingResult bindingResult, HttpServletRequest request) {
