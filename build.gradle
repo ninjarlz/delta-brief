@@ -48,6 +48,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+	// RSS/Atom parsing for briefing content ingestion (briefing.adapter.out.rss).
+	implementation 'com.rometools:rome:1.7.2'
 	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
 	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
 	// Annotation-driven (@RateLimiting, AOP) rate limiting for /register and
@@ -73,6 +75,10 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	// Stubs outbound HTTP (RSS fetch, OpenAI chat completions) in tests so no
+	// automated test ever makes a real network call to either — see
+	// briefing.adapter.out.rss / adapter.out.ai test classes.
+	testImplementation 'org.wiremock.integrations:wiremock-spring-boot:4.2.2'
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	// testcontainers-bom doesn't resolve reliably through io.spring.dependency-management

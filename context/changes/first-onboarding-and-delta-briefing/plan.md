@@ -324,26 +324,26 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 
 #### Automated
 
-- [x] 1.1 `./gradlew build` compiles cleanly
-- [x] 1.2 Domain unit tests pass
-- [x] 1.3 `BriefingRepositoryAdapterTests` pass
-- [x] 1.4 `TopicRepositoryAdapterTests` (extended) pass
+- [x] 1.1 `./gradlew build` compiles cleanly — 8470f61
+- [x] 1.2 Domain unit tests pass — 8470f61
+- [x] 1.3 `BriefingRepositoryAdapterTests` pass — 8470f61
+- [x] 1.4 `TopicRepositoryAdapterTests` (extended) pass — 8470f61
 
 #### Manual
 
-- [x] 1.5 Confirm `briefings`/`ingested_items` schema via psql/DBeaver
+- [x] 1.5 Confirm `briefings`/`ingested_items` schema via psql/DBeaver — 8470f61
 
 ### Phase 2: Content Ingestion
 
 #### Automated
 
-- [ ] 2.1 `./gradlew build` compiles with Rome
-- [ ] 2.2 `RomeSourceContentFetcherTests` pass
-- [ ] 2.3 `FeedSourceCatalogAdapterTests` pass
+- [x] 2.1 `./gradlew build` compiles with Rome
+- [x] 2.2 `RomeSourceContentFetcherTests` pass
+- [x] 2.3 `FeedSourceCatalogAdapterTests` pass
 
 #### Manual
 
-- [ ] 2.4 Verify Rome against one real live source feed
+- [x] 2.4 Verify Rome against one real live source feed
 
 ### Phase 3: AI Generation
 
