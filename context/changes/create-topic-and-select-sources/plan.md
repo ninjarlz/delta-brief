@@ -275,19 +275,19 @@ Three new Flyway migrations (`V5`–`V7`), continuing directly from `V4__timesta
 
 #### Automated
 
-- [x] 2.1 `./gradlew test --no-daemon` passes, including the new `TopicServiceTests`
-- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end
-- [x] 2.3 Existing `AuthFlowIntegrationTests` still passes unchanged
+- [x] 2.1 `./gradlew test --no-daemon` passes, including the new `TopicServiceTests` — a585e86
+- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end — a585e86
+- [x] 2.3 Existing `AuthFlowIntegrationTests` still passes unchanged — a585e86
 
 ### Phase 3: Web layer, placeholder retirement, and end-to-end coverage
 
 #### Automated
 
-- [ ] 3.1 `./gradlew test --no-daemon` passes, including the new `TopicFlowIntegrationTests`
-- [ ] 3.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 3.1 `./gradlew test --no-daemon` passes, including the new `TopicFlowIntegrationTests`
+- [x] 3.2 `./gradlew build --no-daemon` passes end-to-end
 - [ ] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
 
 #### Manual
 
-- [ ] 3.4 Local: full create/browse/delete flow across all 4 categories
+- [x] 3.4 Local: full create/browse/delete flow across all 4 categories
 - [ ] 3.5 Post-deploy: same flow against the deployed app, confirming the seed migration ran correctly

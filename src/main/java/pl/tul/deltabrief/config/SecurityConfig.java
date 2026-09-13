@@ -10,10 +10,13 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import pl.tul.deltabrief.auth.adapter.out.security.AppUserDetails;
 
 /**
- * App-wide security wiring. Public paths are the placeholder landing page,
- * Render's health check, and the registration/verification/login pages;
- * everything else defaults to authenticated — this is intentional so newly
- * added endpoints are secure-by-default rather than accidentally public.
+ * App-wide security wiring. Public paths are Render's health check and the
+ * registration/verification/login pages; everything else — including
+ * {@code /}, the topic list — defaults to authenticated, so an
+ * unauthenticated visitor is redirected to {@code /login} by Spring
+ * Security itself rather than a controller-level check. This is
+ * intentional so newly added endpoints are secure-by-default rather than
+ * accidentally public.
  */
 @Configuration
 public class SecurityConfig {
@@ -21,7 +24,7 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests(authorize -> authorize
-				.requestMatchers("/", "/actuator/health", "/register", "/check-email", "/verify", "/login",
+				.requestMatchers("/actuator/health", "/register", "/check-email", "/verify", "/login",
 						"/resend-verification", "/css/**")
 				.permitAll()
 				.anyRequest().authenticated())

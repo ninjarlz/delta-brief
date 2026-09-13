@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Create a topic — DeltaBrief</title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+</head>
+<body>
+	<main class="auth-card">
+		<h1>Create a topic</h1>
+		<form th:action="@{/topics}" th:object="${createTopicRequest}" method="post">
+			<label for="name">Topic name
+				<input type="text" id="name" th:field="*{name}"
+					th:aria-invalid="${#fields.hasErrors('name')} ? 'true' : null"/>
+				<small class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
+			</label>
+			<label for="categoryId">Category
+				<select id="categoryId" th:field="*{categoryId}"
+					th:aria-invalid="${#fields.hasErrors('categoryId')} ? 'true' : null">
+					<option th:each="category : ${categories}" th:value="${category.id.value}"
+						th:text="${category.name}"></option>
+				</select>
+				<small class="field-error" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}"></small>
+			</label>
+			<p>
+				<button type="button" disabled title="Coming soon">Customize sources</button>
+				<small>Picking a category now selects all of its preset sources. Choosing individual sources is
+					coming in a future update.</small>
+			</p>
+			<small class="field-error" th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}"></small>
+			<button type="submit">Create topic</button>
+		</form>
+		<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>
+	</main>
+</body>
+</html>
