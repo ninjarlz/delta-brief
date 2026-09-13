@@ -18,6 +18,7 @@ import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 import pl.tul.deltabrief.topic.application.port.out.CategoryRepository;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
+import pl.tul.deltabrief.topic.application.port.out.TopicSummary;
 import pl.tul.deltabrief.topic.domain.CategoryId;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
@@ -142,28 +143,40 @@ class TopicRepositoryAdapterTests {
 	}
 
 	@Test
-	void findCategoryIdByIdAndUserIdReturnsTheCategoryForTheOwner() {
+	void findSummaryByIdAndUserIdReturnsNameAndCategoryForTheOwner() {
 		UserId owner = newUser();
 		CategoryId categoryId = anyCategoryId();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
 
-		assertThat(topicRepository.findCategoryIdByIdAndUserId(topic.id(), owner)).contains(categoryId);
+		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
+				.contains(new TopicSummary("War in Ukraine", categoryId, null));
 	}
 
 	@Test
-	void findCategoryIdByIdAndUserIdIsEmptyForAnotherUsersTopic() {
+	void findSummaryByIdAndUserIdIncludesTheDescriptionWhenSet() {
+		UserId owner = newUser();
+		CategoryId categoryId = anyCategoryId();
+		Topic topic = topicRepository.save(
+				Topic.create(owner, "War in Ukraine", categoryId, "Tracking the humanitarian angle", Instant.now()));
+
+		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
+				.contains(new TopicSummary("War in Ukraine", categoryId, "Tracking the humanitarian angle"));
+	}
+
+	@Test
+	void findSummaryByIdAndUserIdIsEmptyForAnotherUsersTopic() {
 		UserId owner = newUser();
 		UserId otherUser = newUser();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
 
-		assertThat(topicRepository.findCategoryIdByIdAndUserId(topic.id(), otherUser)).isEmpty();
+		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), otherUser)).isEmpty();
 	}
 
 	@Test
-	void findCategoryIdByIdAndUserIdIsEmptyForAnUnknownId() {
+	void findSummaryByIdAndUserIdIsEmptyForAnUnknownId() {
 		UserId owner = newUser();
 
-		assertThat(topicRepository.findCategoryIdByIdAndUserId(new TopicId(999_999L), owner)).isEmpty();
+		assertThat(topicRepository.findSummaryByIdAndUserId(new TopicId(999_999L), owner)).isEmpty();
 	}
 
 }

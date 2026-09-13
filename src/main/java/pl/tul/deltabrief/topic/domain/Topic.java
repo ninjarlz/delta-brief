@@ -19,18 +19,36 @@ public class Topic {
 	private final UserId userId;
 	private final String name;
 	private final CategoryId categoryId;
+	private final String description;
 	private final Instant createdAt;
 
-	public Topic(TopicId id, UserId userId, String name, CategoryId categoryId, Instant createdAt) {
+	public Topic(TopicId id, UserId userId, String name, CategoryId categoryId, String description,
+			Instant createdAt) {
 		this.id = id;
 		this.userId = userId;
 		this.name = name;
 		this.categoryId = categoryId;
+		this.description = description;
 		this.createdAt = createdAt;
 	}
 
+	/**
+	 * @param description the user's optional observation-goal note (FR-004)
+	 * — {@code null} if not provided. Fed into the briefing generation
+	 * prompt as extra context once set; purely descriptive otherwise.
+	 */
+	public static Topic create(UserId userId, String name, CategoryId categoryId, String description,
+			Instant createdAt) {
+		return new Topic(null, userId, name, categoryId, description, createdAt);
+	}
+
+	/**
+	 * Convenience overload for the common case of no description — most
+	 * existing call sites (and every test that doesn't care about FR-004)
+	 * use this rather than passing {@code null} explicitly everywhere.
+	 */
 	public static Topic create(UserId userId, String name, CategoryId categoryId, Instant createdAt) {
-		return new Topic(null, userId, name, categoryId, createdAt);
+		return create(userId, name, categoryId, null, createdAt);
 	}
 
 	public void assignId(TopicId id) {

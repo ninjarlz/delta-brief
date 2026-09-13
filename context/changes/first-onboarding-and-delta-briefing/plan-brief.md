@@ -29,10 +29,11 @@ From the topics list, a user clicks "Generate briefing." The app fetches the top
 | Test strategy for AI/RSS calls | WireMock record/replay style stubs | Higher-fidelity than hand-written fakes; Spring AI's `base-url` override makes this practical | Plan |
 | Post-generation UI scope | Latest briefing + a minimal inline history list | Delivers more of US-01 sooner while staying clearly smaller than S-05's real history page | Plan |
 | Cross-module data access | `briefing` owns its own `FeedSource`/`FeedSourceCatalog` read model over the `sources` table; never imports `topic.domain.Source`/`Topic` | Keeps AGENTS.md's "ID-only cross-module reference" rule intact without inventing a heavier anti-corruption layer | Plan |
+| Topic description (FR-004) | Unparked and added mid-Phase-4: optional `Topic.description`, fed into the generation prompt as extra context | The roadmap's original deferral reason ("AI doesn't use it, dead field") no longer applies once generation exists; user explicitly asked to fold it in rather than open a separate change | Plan (addendum) |
 
 ## Scope
 
-**In scope:** RSS/Atom ingestion (Rome), `Briefing`/`IngestedItem` domain + persistence, OpenAI structured-output generation with anti-hallucination prompt design, manual-trigger web flow, minimal inline history list, WireMock-backed automated tests.
+**In scope:** RSS/Atom ingestion (Rome), `Briefing`/`IngestedItem` domain + persistence, OpenAI structured-output generation with anti-hallucination prompt design, manual-trigger web flow, minimal inline history list, WireMock-backed automated tests, an optional topic-description field (FR-004) feeding the generation prompt.
 
 **Out of scope:** Scheduled generation (S-04), email delivery (S-06), rating (S-07), full history browsing (S-05), per-topic source customization (parked), HTMX/SSE live progress, automatic retry-with-backoff, model-switching automation.
 
@@ -57,6 +58,7 @@ From the topics list, a user clicks "Generate briefing." The app fetches the top
 - Real RSS feeds may have quirks (malformed XML, missing publish dates, paywalled/truncated content) that only Phase 2's manual live-feed check will surface.
 - `gpt-4o-mini`'s actual classification quality (genuine change vs. trend vs. noise) is unverified until Phase 3's manual real-API check — if it's not good enough, this plan doesn't include an automated fallback, only a manual model-config change later.
 - The cross-module `FeedSourceCatalog` design (a second, `briefing`-owned read model over the `sources` table) is a genuine architectural judgment call, not dictated by precedent — flagged explicitly for review.
+- User-authored free text (topic name, and now the optional description) is interpolated into the generation prompt — a real prompt-injection surface, mitigated via an explicit "verbatim data, not instructions" guardrail + delimited blocks (added during Phase 3's impl-review), but not a hard guarantee against a sufficiently adversarial input.
 
 ## Success Criteria (Summary)
 

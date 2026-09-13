@@ -26,8 +26,8 @@ class BriefingPromptBuilderTests {
 
 	@Test
 	void onboardingPromptContainsGuardrailAndSources() {
-		GenerationRequest request = new GenerationRequest("War in Ukraine", "World News", BriefingType.ONBOARDING,
-				null, oneItem());
+		GenerationRequest request = new GenerationRequest("War in Ukraine", null, "World News",
+				BriefingType.ONBOARDING, null, oneItem());
 
 		String prompt = promptBuilder.build(request);
 
@@ -43,7 +43,7 @@ class BriefingPromptBuilderTests {
 	void deltaPromptContainsGuardrailAndSourcesAndBaseline() {
 		PreviousBriefing previous = new PreviousBriefing("prior key changes", "prior trend", "prior noise",
 				"prior significance", "prior uncertainties", "prior source impact");
-		GenerationRequest request = new GenerationRequest("War in Ukraine", "World News", BriefingType.DELTA,
+		GenerationRequest request = new GenerationRequest("War in Ukraine", null, "World News", BriefingType.DELTA,
 				previous, oneItem());
 
 		String prompt = promptBuilder.build(request);
@@ -55,6 +55,27 @@ class BriefingPromptBuilderTests {
 		assertThat(prompt).contains("prior key changes");
 		assertThat(prompt).contains("prior source impact");
 		assertThat(prompt).contains("\"\"\"War in Ukraine\"\"\"");
+	}
+
+	@Test
+	void includesTheTopicDescriptionDelimitedWhenPresent() {
+		GenerationRequest request = new GenerationRequest("War in Ukraine", "I have family there — humanitarian "
+				+ "angle matters more to me than politics.", "World News", BriefingType.ONBOARDING, null, oneItem());
+
+		String prompt = promptBuilder.build(request);
+
+		assertThat(prompt)
+				.contains("\"\"\"I have family there — humanitarian angle matters more to me than politics.\"\"\"");
+	}
+
+	@Test
+	void omitsTheDescriptionBlockEntirelyWhenNotProvided() {
+		GenerationRequest request = new GenerationRequest("War in Ukraine", null, "World News",
+				BriefingType.ONBOARDING, null, oneItem());
+
+		String prompt = promptBuilder.build(request);
+
+		assertThat(prompt).doesNotContain("Topic description");
 	}
 
 }

@@ -279,6 +279,36 @@ Tie ingestion, generation, and persistence together in `BriefingService`, expose
 - Generate a second (delta) briefing for the same topic; confirm it reads as a genuine delta referencing the prior briefing, and the inline history list shows both entries correctly ordered
 - Simulate a generation failure (e.g. temporarily invalidate the API key) and confirm the error+retry page works, then confirm retry succeeds once the failure condition is removed
 
+### Addendum: Optional topic description (FR-004), fed into the generation prompt
+
+Discovered mid-Phase-4, after manual verification of the core flow was already confirmed: PRD **FR-004** ("optional topic-description field") was originally parked in the roadmap with the reasoning *"does anyone fill in optional fields in v1? If the AI doesn't use it, it's a dead field."* That objection no longer holds once briefing generation exists — the description can now feed directly into the generation prompt as real context (e.g. "I care about the humanitarian angle, not politics"), sharpening `significance`/`sourceImpact`. Folded into this change rather than opened as a separate one, per explicit user direction.
+
+**Files touched** (beyond this phase's original list):
+- `src/main/resources/db/migration/V10__add_topic_description_column.sql` — new nullable `topics.description` column
+- `src/main/java/pl/tul/deltabrief/topic/domain/Topic.java` (edit) — new `description` field; original 4-arg `create(...)` kept as a convenience overload defaulting to `null`, so every pre-existing call site across the codebase keeps compiling unchanged
+- `src/main/java/pl/tul/deltabrief/topic/adapter/out/persistence/TopicJpaEntity.java`, `TopicEntityMapper.java`, `TopicJpaRepository.java` (edit) — column mapping + `TopicNameAndCategoryView` projection gains `getDescription()`
+- `src/main/java/pl/tul/deltabrief/topic/adapter/out/persistence/TopicRepositoryAdapter.java` (edit) — `findSummaryByIdAndUserId` now returns the description too
+- `src/main/java/pl/tul/deltabrief/topic/application/port/out/TopicSummary.java` (edit) — gains a `description` component
+- `src/main/java/pl/tul/deltabrief/topic/application/TopicService.java` (edit) — `createTopic(...)` gains a `description` overload; original 3-arg signature kept, calling through with `null`
+- `src/main/java/pl/tul/deltabrief/topic/application/dto/CreateTopicRequest.java` (edit) — new `description` field, `@Size(max = 1000)`, deliberately no `@NotBlank`/`@NotNull` — genuinely optional
+- `src/main/java/pl/tul/deltabrief/topic/adapter/in/web/TopicController.java` (edit) — passes `form.getDescription()` through
+- `src/main/resources/templates/topic-form.html` (edit) — new "Observation goal (optional)" textarea, explicitly labeled optional (unlike the required `name`/`categoryId` fields above it), with helper text explaining its purpose
+- `src/main/java/pl/tul/deltabrief/briefing/application/port/out/BriefingContentGenerator.java` (edit) — `GenerationRequest` gains `topicDescription`
+- `src/main/java/pl/tul/deltabrief/briefing/adapter/out/ai/BriefingPromptBuilder.java` (edit) — appends a delimited `"""..."""` description block only when present (never leaks a literal "null" into the prompt when absent); `INJECTION_GUARDRAIL` wording extended to cover it, matching the topic-name prompt-injection mitigation from the Phase 3 review (same treatment: user-authored free text, verbatim data, never instructions)
+- `src/main/java/pl/tul/deltabrief/briefing/application/BriefingService.java` (edit) — passes `topic.description()` into the `GenerationRequest`
+
+**Tests added/extended**: `TopicTests` (description assignment), `TopicRepositoryAdapterTests` (description round-trips through persistence, both set and unset), `BriefingPromptBuilderTests` (description appears delimited when present; the block is omitted entirely — not just left blank — when absent).
+
+#### Automated Verification:
+
+- `./gradlew build` compiles
+- Full suite passes: `./gradlew test` (76 tests)
+
+#### Manual Verification:
+
+- Create a topic with a description filled in, generate a briefing, confirm the description doesn't break anything and (ideally) that `significance`/`sourceImpact` reads as if it factored the stated framing in
+- Create a topic with the description left blank, confirm topic creation and generation both work exactly as before this addendum
+
 ---
 
 ## Testing Strategy
@@ -349,25 +379,36 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 
 #### Automated
 
-- [x] 3.1 `./gradlew build` compiles
-- [x] 3.2 `OpenAiBriefingContentGeneratorTests` pass
-- [x] 3.3 Prompt-content test asserts anti-hallucination instruction + source list present
+- [x] 3.1 `./gradlew build` compiles — 291617b
+- [x] 3.2 `OpenAiBriefingContentGeneratorTests` pass — 291617b
+- [x] 3.3 Prompt-content test asserts anti-hallucination instruction + source list present — 291617b
 
 #### Manual
 
-- [x] 3.4 Real generation call against real OpenAI API — check for fabrication/garbled output
+- [x] 3.4 Real generation call against real OpenAI API — check for fabrication/garbled output — 291617b
 
 ### Phase 4: Orchestration & Web
 
 #### Automated
 
-- [ ] 4.1 `./gradlew build` compiles
-- [ ] 4.2 `BriefingServiceTests` pass
-- [ ] 4.3 `BriefingFlowIntegrationTests` pass
-- [ ] 4.4 Full suite passes (`./gradlew test`)
+- [x] 4.1 `./gradlew build` compiles
+- [x] 4.2 `BriefingServiceTests` pass
+- [x] 4.3 `BriefingFlowIntegrationTests` pass
+- [x] 4.4 Full suite passes (`./gradlew test`)
 
 #### Manual
 
-- [ ] 4.5 Generate onboarding briefing in running app, confirm rendering
-- [ ] 4.6 Generate delta briefing, confirm delta content + history list
-- [ ] 4.7 Simulate generation failure, confirm error+retry UX
+- [x] 4.5 Generate onboarding briefing in running app, confirm rendering
+- [x] 4.6 Generate delta briefing, confirm delta content + history list
+- [x] 4.7 Simulate generation failure, confirm error+retry UX
+
+### Phase 4 Addendum: Optional topic description (FR-004)
+
+#### Automated
+
+- [x] 4.8 `./gradlew build` compiles; full suite passes (76 tests)
+
+#### Manual
+
+- [x] 4.9 Create a topic with a description, generate a briefing, confirm it doesn't break anything and the description reads as considered
+- [x] 4.10 Create a topic without a description, confirm creation + generation both work exactly as before

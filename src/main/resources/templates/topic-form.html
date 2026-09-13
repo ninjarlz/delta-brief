@@ -28,6 +28,13 @@
 					</select>
 					<small class="field-error" th:if="${#fields.hasErrors('categoryId')}" th:errors="*{categoryId}"></small>
 				</label>
+				<label for="description">Observation goal (optional)
+					<textarea id="description" th:field="*{description}" rows="3"
+						placeholder="e.g. I'm tracking this because I have family there — I care about the humanitarian angle more than the politics."
+						th:aria-invalid="${#fields.hasErrors('description')} ? 'true' : null"></textarea>
+					<small class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></small>
+					<small>Helps DeltaBrief tailor what counts as significant when generating your briefings.</small>
+				</label>
 
 				<div class="coming-soon-panel">
 					<div class="coming-soon-panel__header">

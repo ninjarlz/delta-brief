@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Briefing generation failed — DeltaBrief</title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+	<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+	<main class="app-content">
+		<div class="auth-card">
+			<h1>Briefing generation failed</h1>
+			<p class="subtitle">Something went wrong generating this briefing. This is usually temporary —
+				try again.</p>
+			<form th:action="@{/topics/{id}/briefings(id=${topicId})}" method="post">
+				<button type="submit">Try again</button>
+			</form>
+			<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>
+		</div>
+	</main>
+</body>
+</html>

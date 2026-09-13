@@ -63,7 +63,7 @@ class OpenAiBriefingContentGeneratorTests {
 		Instant now = Instant.now();
 		List<IngestedItem> items = List.of(new IngestedItem("BBC News", "Headline", "https://example.com/1", now,
 				now));
-		return new GenerationRequest("War in Ukraine", "World News", BriefingType.ONBOARDING, null, items);
+		return new GenerationRequest("War in Ukraine", null, "World News", BriefingType.ONBOARDING, null, items);
 	}
 
 	@Test

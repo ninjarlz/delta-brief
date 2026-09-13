@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
+import pl.tul.deltabrief.topic.application.port.out.TopicSummary;
 import pl.tul.deltabrief.topic.domain.CategoryId;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
@@ -40,8 +41,10 @@ class TopicRepositoryAdapter implements TopicRepository {
 	}
 
 	@Override
-	public Optional<CategoryId> findCategoryIdByIdAndUserId(TopicId id, UserId userId) {
-		return jpaRepository.findCategoryIdByIdAndUserId(id.value(), userId.value()).map(CategoryId::new);
+	public Optional<TopicSummary> findSummaryByIdAndUserId(TopicId id, UserId userId) {
+		return jpaRepository.findByIdAndUserId(id.value(), userId.value())
+				.map(view -> new TopicSummary(view.getName(), new CategoryId(view.getCategoryId()),
+						view.getDescription()));
 	}
 
 	@Override

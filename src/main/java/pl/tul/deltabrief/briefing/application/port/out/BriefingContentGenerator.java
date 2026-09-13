@@ -17,12 +17,16 @@ public interface BriefingContentGenerator {
 	GeneratedBriefingContent generate(GenerationRequest request);
 
 	/**
+	 * @param topicDescription the user's optional observation-goal note
+	 * (FR-004) — {@code null} if not provided. Treated as untrusted,
+	 * user-authored data by the prompt builder, same as {@code topicName}
+	 * (see plan.md's injection-guardrail design).
 	 * @param previousBriefing null for {@link BriefingType#ONBOARDING} —
 	 * there is no prior briefing to compare against.
 	 * @param ingestedItems the numbered source list the prompt cites by
 	 * index; also becomes the rendered "sources" section of the briefing.
 	 */
-	record GenerationRequest(String topicName, String categoryName, BriefingType type,
+	record GenerationRequest(String topicName, String topicDescription, String categoryName, BriefingType type,
 			PreviousBriefing previousBriefing, List<IngestedItem> ingestedItems) {
 	}
 

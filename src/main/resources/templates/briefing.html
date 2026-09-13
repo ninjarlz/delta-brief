@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title th:text="${briefing.typeLabel} + ' — DeltaBrief'"></title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+	<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+	<main class="app-content">
+		<header class="page-header">
+			<div>
+				<h1 th:text="${briefing.typeLabel}"></h1>
+				<p class="subtitle" th:text="${briefing.generatedAt}"></p>
+			</div>
+			<form th:action="@{/topics/{id}/briefings(id=${topicId})}" method="post">
+				<button type="submit" class="secondary outline">Generate new briefing</button>
+			</form>
+		</header>
+
+		<section class="briefing-section">
+			<h2>Key changes</h2>
+			<p th:text="${briefing.keyChanges}"></p>
+		</section>
+		<section class="briefing-section">
+			<h2>Trend continuation</h2>
+			<p th:text="${briefing.trendContinuation}"></p>
+		</section>
+		<section class="briefing-section">
+			<h2>Noise &amp; speculation</h2>
+			<p th:text="${briefing.noiseSpeculation}"></p>
+		</section>
+		<section class="briefing-section">
+			<h2>Significance</h2>
+			<p th:text="${briefing.significance}"></p>
+		</section>
+		<section class="briefing-section">
+			<h2>Uncertainties</h2>
+			<p th:text="${briefing.uncertainties}"></p>
+		</section>
+		<section class="briefing-section">
+			<h2>Source impact on scenarios</h2>
+			<p th:text="${briefing.sourceImpact}"></p>
+		</section>
+		<section class="briefing-section">
+			<h2>Sources</h2>
+			<ol class="briefing-sources">
+				<li th:each="source : ${briefing.sources}">
+					<span class="briefing-sources__name" th:text="${source.sourceName}"></span>
+					<a th:href="${source.link}" th:text="${source.title}" target="_blank" rel="noopener"></a>
+				</li>
+			</ol>
+		</section>
+
+		<section class="briefing-history" th:if="${!#lists.isEmpty(history)}">
+			<h2>History</h2>
+			<ul class="briefing-history__list">
+				<li th:each="entry : ${history}">
+					<a th:unless="${entry.current}"
+						th:href="@{/topics/{topicId}/briefings/{briefingId}(topicId=${topicId},briefingId=${entry.id})}"
+						th:text="${entry.generatedAt} + ' — ' + ${entry.typeLabel}"></a>
+					<span th:if="${entry.current}" class="briefing-history__current"
+						th:text="${entry.generatedAt} + ' — ' + ${entry.typeLabel} + ' (viewing)'"></span>
+				</li>
+			</ul>
+		</section>
+
+		<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>
+	</main>
+</body>
+</html>

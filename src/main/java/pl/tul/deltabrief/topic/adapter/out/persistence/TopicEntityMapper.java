@@ -24,6 +24,7 @@ interface TopicEntityMapper {
 	@Mapping(target = "userId", expression = "java(topic.userId().value())")
 	@Mapping(target = "name", expression = "java(topic.name())")
 	@Mapping(target = "categoryId", expression = "java(topic.categoryId().value())")
+	@Mapping(target = "description", expression = "java(topic.description())")
 	@Mapping(target = "createdAt", expression = "java(topic.createdAt())")
 	TopicJpaEntity toEntity(Topic topic);
 

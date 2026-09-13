@@ -26,6 +26,16 @@ public class TopicService {
 	private final CategoryRepository categoryRepository;
 
 	/**
+	 * Convenience overload for the common case of no description.
+	 */
+	public Topic createTopic(UserId userId, String name, CategoryId categoryId) {
+		return createTopic(userId, name, categoryId, null);
+	}
+
+	/**
+	 * @param description the user's optional observation-goal note (FR-004),
+	 *         fed into future briefing generation prompts for this topic —
+	 *         {@code null} if not provided.
 	 * @throws CategoryNotFoundException if {@code categoryId} doesn't exist —
 	 *         only reachable via a tampered form value, since the UI picker is
 	 *         DB-populated
@@ -34,7 +44,7 @@ public class TopicService {
 	 * @throws TopicLimitReachedException if the user already has
 	 *         {@value #MAX_TOPICS_PER_USER} topics
 	 */
-	public Topic createTopic(UserId userId, String name, CategoryId categoryId) {
+	public Topic createTopic(UserId userId, String name, CategoryId categoryId, String description) {
 		if (!categoryRepository.existsById(categoryId)) {
 			throw new CategoryNotFoundException(categoryId);
 		}
@@ -50,7 +60,7 @@ public class TopicService {
 		if (topicRepository.countByUserId(userId) >= MAX_TOPICS_PER_USER) {
 			throw new TopicLimitReachedException(userId);
 		}
-		return topicRepository.save(Topic.create(userId, name, categoryId, Instant.now()));
+		return topicRepository.save(Topic.create(userId, name, categoryId, description, Instant.now()));
 	}
 
 	public List<Topic> listTopics(UserId userId) {
