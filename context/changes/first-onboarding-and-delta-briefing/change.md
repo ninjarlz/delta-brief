@@ -3,7 +3,7 @@ change_id: first-onboarding-and-delta-briefing
 title: First onboarding and delta briefing
 status: implementing
 created: 2026-09-13
-updated: 2026-09-13
+updated: 2026-09-14
 archived_at: null
 ---
 

@@ -337,25 +337,25 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 
 #### Automated
 
-- [x] 2.1 `./gradlew build` compiles with Rome
-- [x] 2.2 `RomeSourceContentFetcherTests` pass
-- [x] 2.3 `FeedSourceCatalogAdapterTests` pass
+- [x] 2.1 `./gradlew build` compiles with Rome — 6a8e4e2
+- [x] 2.2 `RomeSourceContentFetcherTests` pass — 6a8e4e2
+- [x] 2.3 `FeedSourceCatalogAdapterTests` pass — 6a8e4e2
 
 #### Manual
 
-- [x] 2.4 Verify Rome against one real live source feed
+- [x] 2.4 Verify Rome against one real live source feed — 6a8e4e2
 
 ### Phase 3: AI Generation
 
 #### Automated
 
-- [ ] 3.1 `./gradlew build` compiles
-- [ ] 3.2 `OpenAiBriefingContentGeneratorTests` pass
-- [ ] 3.3 Prompt-content test asserts anti-hallucination instruction + source list present
+- [x] 3.1 `./gradlew build` compiles
+- [x] 3.2 `OpenAiBriefingContentGeneratorTests` pass
+- [x] 3.3 Prompt-content test asserts anti-hallucination instruction + source list present
 
 #### Manual
 
-- [ ] 3.4 Real generation call against real OpenAI API — check for fabrication/garbled output
+- [x] 3.4 Real generation call against real OpenAI API — check for fabrication/garbled output
 
 ### Phase 4: Orchestration & Web
 

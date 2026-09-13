@@ -1,0 +1,69 @@
+package pl.tul.deltabrief.briefing.adapter.out.ai;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.springframework.stereotype.Component;
+import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.GenerationRequest;
+import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.PreviousBriefing;
+import pl.tul.deltabrief.briefing.domain.BriefingType;
+import pl.tul.deltabrief.briefing.domain.IngestedItem;
+
+/**
+ * Builds the generation prompt text. The anti-hallucination instruction and
+ * the numbered source list are always present, regardless of {@link
+ * BriefingType} — see plan.md's "Anti-hallucination via numbered citation".
+ * Structured-output field instructions live on {@link
+ * pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.GeneratedBriefingContent}'s
+ * {@code @JsonPropertyDescription}s, not here — this class only builds the
+ * user-turn context (topic, sources, baseline).
+ */
+@Component
+class BriefingPromptBuilder {
+
+	static final String ANTI_HALLUCINATION_INSTRUCTION = "CRITICAL RULE: Base every claim ONLY on the numbered "
+			+ "sources listed below. Cite the sources you draw from inline using their number in square "
+			+ "brackets, e.g. [1] or [2][3]. Never state anything that is not attributable to one of these "
+			+ "numbered sources. If the sources don't say enough to fill a section, say so plainly rather "
+			+ "than inventing detail.";
+
+	static final String NUMBERED_SOURCES_HEADER = "Numbered sources:";
+
+	String build(GenerationRequest request) {
+		StringBuilder prompt = new StringBuilder();
+		prompt.append("You are generating briefing sections for a news-tracking app called DeltaBrief.\n");
+		prompt.append("Topic: %s (category: %s)\n\n".formatted(request.topicName(), request.categoryName()));
+		prompt.append(ANTI_HALLUCINATION_INSTRUCTION).append("\n\n");
+		prompt.append(numberedSources(request.ingestedItems())).append('\n');
+
+		if (request.type() == BriefingType.ONBOARDING) {
+			prompt.append("This is the FIRST briefing for this topic — there is no prior briefing to compare "
+					+ "against. Write an initial state summary describing the current situation based on the "
+					+ "sources above. Since there is no baseline, the trend-continuation and noise/speculation "
+					+ "sections should note that there is no prior briefing to compare against, rather than "
+					+ "being left blank.\n");
+		} else {
+			prompt.append(previousBriefingSection(request.previousBriefing()));
+			prompt.append("Compare the numbered sources above against the prior briefing above. Classify what "
+					+ "you find into: genuine changes to the situation, continuation of an already-known trend, "
+					+ "and noise or unverified speculation.\n");
+		}
+
+		return prompt.toString();
+	}
+
+	private static String numberedSources(List<IngestedItem> items) {
+		return IntStream.range(0, items.size())
+				.mapToObj(i -> "[%d] %s — %s".formatted(i + 1, items.get(i).title(), items.get(i).link()))
+				.collect(Collectors.joining("\n", NUMBERED_SOURCES_HEADER + "\n", "\n"));
+	}
+
+	private static String previousBriefingSection(PreviousBriefing previous) {
+		return ("Prior briefing (the baseline the user already knows):\n" + "Key changes: %s\n"
+				+ "Trend continuation: %s\n" + "Noise/speculation: %s\n" + "Significance: %s\n"
+				+ "Uncertainties: %s\n" + "Source impact on scenarios: %s\n\n").formatted(previous.keyChanges(),
+				previous.trendContinuation(), previous.noiseSpeculation(), previous.significance(),
+				previous.uncertainties(), previous.sourceImpact());
+	}
+
+}
