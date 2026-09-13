@@ -231,6 +231,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Optional topic-description field (FR-004)** — Why parked: the PRD itself deferred this to v2 ("does anyone fill in optional fields in v1? If the AI doesn't use it, it's a dead field").
 - **Deactivate / stop watching a topic (FR-014)** — Why parked: the sole `nice-to-have` priority FR in the PRD; speed-focused sequencing defers non-essentials rather than sequencing them late.
 - **Custom RSS feed management** — Why parked: PRD Non-Goal — removes feed-parsing/validation complexity; source curation is manual for v1.
+- **Source customization (pick individual preset sources per topic, not just a whole category)** — Why parked: deferred to post-MVP during S-02 planning; v1 keeps topic → category → all-of-that-category's-sources for the simplest data model (`context/changes/create-topic-and-select-sources/plan.md`). Distinct from "Custom RSS feed management" above — sources stay curated/preset, only the *granularity* of selection would change. The create-topic form already carries a disabled "Customize sources — coming soon" affordance signaling this.
 - **Real-time alerts or push notifications** — Why parked: PRD Non-Goal — contradicts the reduce-noise mission; briefings are periodic by design.
 - **Multi-user collaboration or shared topics** — Why parked: PRD Non-Goal — keeps the data model and access control simple for MVP.
 - **Source bias or credibility scoring** — Why parked: PRD Non-Goal — a separate hard problem; attempting it in MVP risks misleading users.
