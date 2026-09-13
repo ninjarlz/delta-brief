@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-09-12
+> Last updated: 2026-09-13
 
 ## 1. Strategy
 
@@ -74,7 +74,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Auth boundary & abuse-resistance coverage | Prove session integrity after logout/failed login, make the registration-throttle gap and log/error credential-leakage risk observable | #1, #4, #5 | unit + integration | researched | `context/changes/testing-auth-boundary-abuse-resistance/` |
+| 1 | Auth boundary & abuse-resistance coverage | Prove session integrity after logout/failed login, make the registration-throttle gap and log/error credential-leakage risk observable | #1, #4, #5 | unit + integration | implementing | `context/changes/testing-auth-boundary-abuse-resistance/` |
 | 2 | Deployed-environment regression net | Turn today's one-time manual health/mail verification into an automated, repeatable regression test | #3 | integration (fast Spring context test) | not started | — |
 | 3 | Authorization foundation for per-user data | Establish an ownership-check testing pattern the moment the first per-user resource (topics) exists | #2 | integration (two-user) | not started | — |
 
@@ -139,6 +139,7 @@ the relevant rollout phase ships; before that, the sub-section reads
 - **Reference test**: `src/test/java/pl/tul/deltabrief/auth/AuthFlowIntegrationTests.java`.
 - **Run locally**: `./gradlew test --tests "pl.tul.deltabrief.auth.AuthFlowIntegrationTests"`.
 - **Critical constraint**: any new `@SpringBootTest` class must match the existing annotation signature (manually-built `MockMvc` via `MockMvcBuilders`, not `@AutoConfigureMockMvc`) to share the cached Spring context. A differently-annotated class forces a second Testcontainers container onto the same fixed local host-network port and collides. This is an established convention, not a tested risk — see §2 Challenger findings.
+- **Session-threading technique** (proving real session invalidation, not a vacuous "fresh request is unauthenticated" check): `MockMvc` does not carry session/cookie state across sequential `perform()` calls by default. To genuinely prove a session is dead after a failed login or after logout, explicitly capture the `MockHttpSession` from the triggering request's `MvcResult` — `(MockHttpSession) result.getRequest().getSession(false)` — and reuse that *same* object on the follow-up request via `.session(capturedSession)`. Reference: `AuthFlowIntegrationTests.wrongPasswordNeverEstablishesAnAuthenticatedSession()` and `.sessionCapturedBeforeLogoutCannotBeReplayedAfterLogout()` (§3 Phase 1, `testing-auth-boundary-abuse-resistance`).
 
 ### 6.3 Adding a persistence/adapter test
 
@@ -154,7 +155,34 @@ the relevant rollout phase ships; before that, the sub-section reads
 
 - TBD — see §3 Phase 2.
 
-### 6.6 Per-rollout-phase notes
+### 6.6 Adding rate-limiter coverage for an endpoint
+
+- **Unit layer** (bucket logic itself, no Spring context): plain JUnit, instantiate the limiter directly (e.g. `new RegistrationRateLimiter()` — no framework dependencies, nothing to mock). Cover: single-dimension exhaustion (e.g. same email, distinct IPs each time), the other dimension's independent cap (e.g. same IP, distinct emails each time), and that unrelated key pairs don't interfere. Explicitly skip refill/recovery-after-window behavior unless a fake clock convention already exists in this project — capacity exhaustion is what the abuse risk actually cares about. Reference: `src/test/java/pl/tul/deltabrief/auth/adapter/in/web/RegistrationRateLimiterTests.java`.
+- **Integration layer** (proving the wiring, not re-testing bucket logic): use a `RequestPostProcessor` to set a unique simulated remote address per test method — `request.setRemoteAddr(ip)` — so a test's deliberate bucket exhaustion can't bleed into other tests sharing the same cached Spring context/singleton rate-limiter bean. Drive the endpoint past its configured limit and assert the final response status is `429` (note: `HttpServletResponse.SC_TOO_MANY_REQUESTS` is not defined in this project's Jakarta Servlet API version — use the literal `429`). Reference: `AuthFlowIntegrationTests.rateLimiterRejectsRapidRepeatedResendForTheSameEmail()` (§3 Phase 1, `testing-auth-boundary-abuse-resistance`).
+- **Production wiring convention**: a package-private `@Component` holding per-key `ConcurrentHashMap<String, Bucket>` fields (Bucket4j), checked as the very first statement in the controller method — before Bean Validation or any service call — so malformed submissions are throttled too. Reference: `RegistrationRateLimiter` + `RegistrationController`.
+
+### 6.7 Adding a log-output regression guardrail (no raw exception/PII ever logged)
+
+- **Technique**: this project uses Log4j2 (`spring-boot-starter-log4j2`), not Logback, so there is no `ListAppender` available — attach a hand-rolled `AbstractAppender` directly to the target class's logger instead. Pattern:
+  ```java
+  Logger logger = (Logger) LogManager.getLogger(TargetClass.class);
+  CapturingAppender appender = new CapturingAppender(); // extends AbstractAppender,
+      // constructed via super("name", null, null, true, Property.EMPTY_ARRAY)
+      // and overriding append(LogEvent event) to record events
+  appender.start();
+  logger.addAppender(appender);
+  try {
+      // ...trigger the code path under test...
+      assertThat(appender.events).allSatisfy(event -> assertThat(event.getThrown()).isNull());
+  } finally {
+      logger.removeAppender(appender);
+  }
+  ```
+- **What to assert**: that the captured `LogEvent`'s `getThrown()` is `null` (or, if a specific field/message is the leak vector, assert that field never appears in the rendered message) — not just that logging happened.
+- **Simulating the failure path without touching real infra**: if the code path being tested depends on an external adapter (e.g. outbound email), give the test double a one-shot "fail next call" toggle rather than mocking with a framework — matches this project's mocking-only-at-the-true-external-edge policy (§6.2). Reference: `FakeEmailSender.failNextSendWith(...)`.
+- **Reference test**: `RegistrationServiceTests.mailFailureLogNeverReceivesARawException()` (§3 Phase 1, `testing-auth-boundary-abuse-resistance`).
+
+### 6.8 Per-rollout-phase notes
 
 (Empty — fills in as each phase ships.)
 

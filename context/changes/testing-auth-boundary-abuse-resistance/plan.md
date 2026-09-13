@@ -326,13 +326,13 @@ Not applicable — no schema changes in this phase.
 
 #### Automated
 
-- [x] 3.1 `./gradlew test --no-daemon` passes, including `RegistrationRateLimiterTests` and the new integration test
-- [x] 3.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 3.1 `./gradlew test --no-daemon` passes, including `RegistrationRateLimiterTests` and the new integration test — d691cca
+- [x] 3.2 `./gradlew build --no-daemon` passes end-to-end — d691cca
 - [ ] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
 
 #### Manual
 
-- [x] 3.4 Local `curl` loop: 6th rapid `/resend-verification` request for the same email returns 429 with the styled page
+- [x] 3.4 Local `curl` loop: 6th rapid `/resend-verification` request for the same email returns 429 with the styled page — d691cca
 - [ ] 3.5 Post-deploy: normal registration/resend works from a real browser against the deployed app
 
 ### Phase 4: Close out the rollout phase
