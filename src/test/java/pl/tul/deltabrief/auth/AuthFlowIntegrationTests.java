@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
@@ -229,6 +230,50 @@ class AuthFlowIntegrationTests {
 		mockMvc.perform(get("/").with(user("someone@example.com")))
 			.andExpect(status().isOk())
 			.andExpect(view().name("placeholder"));
+	}
+
+	/**
+	 * Proves the rate limiter is actually wired into the real HTTP path and
+	 * returns 429 — the integration-level complement to
+	 * {@code RegistrationRateLimiterTests}, which already covers the bucket
+	 * algorithm's edge cases in isolation. Uses a dedicated simulated remote
+	 * address, not MockMvc's default (shared by every other test in this
+	 * suite), so this test's deliberate IP-bucket exhaustion can't affect
+	 * unrelated tests sharing the same cached Spring context.
+	 */
+	@Test
+	void rateLimiterRejectsRapidRepeatedResendForTheSameEmail() throws Exception {
+		String email = "ratelimit-" + UUID.randomUUID() + "@example.com";
+		RequestPostProcessor uniqueIp = withRemoteAddr("10.0.0.50");
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		// register() already consumed one email-bucket token (5/15min limit);
+		// four more resend attempts exhaust it, so the sixth request overall
+		// (the one after this loop) is rejected.
+		for (int i = 0; i < 4; i++) {
+			mockMvc.perform(post("/resend-verification").with(csrf()).with(uniqueIp)
+					.param("email", email))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/check-email"));
+		}
+
+		mockMvc.perform(post("/resend-verification").with(csrf()).with(uniqueIp)
+				.param("email", email))
+			.andExpect(status().is(429));
+	}
+
+	private static RequestPostProcessor withRemoteAddr(String ip) {
+		return request -> {
+			request.setRemoteAddr(ip);
+			return request;
+		};
 	}
 
 	private String extractToken(String email) {

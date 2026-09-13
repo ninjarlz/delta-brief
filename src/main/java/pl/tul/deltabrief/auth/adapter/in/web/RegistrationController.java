@@ -1,5 +1,7 @@
 package pl.tul.deltabrief.auth.adapter.in.web;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -22,9 +24,11 @@ import pl.tul.deltabrief.auth.application.dto.RegistrationRequest;
 public class RegistrationController {
 
 	private final RegistrationService registrationService;
+	private final RegistrationRateLimiter rateLimiter;
 
-	public RegistrationController(RegistrationService registrationService) {
+	public RegistrationController(RegistrationService registrationService, RegistrationRateLimiter rateLimiter) {
 		this.registrationService = registrationService;
+		this.rateLimiter = rateLimiter;
 	}
 
 	@GetMapping("/register")
@@ -34,7 +38,14 @@ public class RegistrationController {
 
 	@PostMapping("/register")
 	public String register(@Valid @ModelAttribute("registrationRequest") RegistrationRequest form,
-			BindingResult bindingResult) {
+			BindingResult bindingResult, HttpServletRequest request, HttpServletResponse response) {
+		// Checked first, before validation or any service work, so even a flood
+		// of malformed submissions is throttled.
+		String email = form.getEmail() != null ? form.getEmail() : "";
+		if (!rateLimiter.tryConsume(email, request.getRemoteAddr())) {
+			response.setStatus(429); // HTTP 429 Too Many Requests — not a constant in this Jakarta Servlet version
+			return "too-many-requests";
+		}
 		if (!Objects.equals(form.getPassword(), form.getConfirmPassword())) {
 			bindingResult.rejectValue("confirmPassword", "password.mismatch", "Passwords do not match");
 		}
@@ -67,7 +78,12 @@ public class RegistrationController {
 	}
 
 	@PostMapping("/resend-verification")
-	public String resendVerification(@RequestParam("email") @Email @Size(max = 255) String email) {
+	public String resendVerification(@RequestParam("email") @Email @Size(max = 255) String email,
+			HttpServletRequest request, HttpServletResponse response) {
+		if (!rateLimiter.tryConsume(email, request.getRemoteAddr())) {
+			response.setStatus(429); // HTTP 429 Too Many Requests — not a constant in this Jakarta Servlet version
+			return "too-many-requests";
+		}
 		registrationService.resendVerification(email);
 		return "redirect:/check-email";
 	}

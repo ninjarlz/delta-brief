@@ -49,6 +49,9 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
 	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+	// In-memory rate limiting for /register and /resend-verification (no
+	// Redis/Hazelcast backend needed — single Render instance).
+	implementation 'com.bucket4j:bucket4j_jdk17-core:8.19.0'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
 	compileOnly 'org.projectlombok:lombok'

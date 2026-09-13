@@ -319,20 +319,20 @@ Not applicable — no schema changes in this phase.
 
 #### Automated
 
-- [x] 2.1 `./gradlew test --no-daemon` passes, including the new log-guardrail test
-- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 2.1 `./gradlew test --no-daemon` passes, including the new log-guardrail test — c57186d
+- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end — c57186d
 
 ### Phase 3: Rate limit `/register` and `/resend-verification`
 
 #### Automated
 
-- [ ] 3.1 `./gradlew test --no-daemon` passes, including `RegistrationRateLimiterTests` and the new integration test
-- [ ] 3.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 3.1 `./gradlew test --no-daemon` passes, including `RegistrationRateLimiterTests` and the new integration test
+- [x] 3.2 `./gradlew build --no-daemon` passes end-to-end
 - [ ] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
 
 #### Manual
 
-- [ ] 3.4 Local `curl` loop: 6th rapid `/resend-verification` request for the same email returns 429 with the styled page
+- [x] 3.4 Local `curl` loop: 6th rapid `/resend-verification` request for the same email returns 429 with the styled page
 - [ ] 3.5 Post-deploy: normal registration/resend works from a real browser against the deployed app
 
 ### Phase 4: Close out the rollout phase
