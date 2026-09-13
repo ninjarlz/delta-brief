@@ -12,6 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.wiremock.spring.EnableWireMock;
 import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator;
 import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.GeneratedBriefingContent;
@@ -19,6 +20,8 @@ import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.
 import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.GenerationRequest;
 import pl.tul.deltabrief.briefing.domain.BriefingType;
 import pl.tul.deltabrief.briefing.domain.IngestedItem;
+import pl.tul.deltabrief.config.SynchronousAsyncConfig;
+import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 
 /**
  * Stubs OpenAI's chat-completions endpoint via WireMock — no real call to
@@ -30,9 +33,18 @@ import pl.tul.deltabrief.briefing.domain.IngestedItem;
  * context and other already-cached contexts in the same test JVM (Caffeine's
  * JCache provider is a JVM-singleton keyed by URI, not context-scoped) —
  * caching/rate-limiting is irrelevant to what this test exercises.
+ *
+ * <p>Still needs {@link TestcontainersDatasourceConfig} even though this
+ * test never touches the database directly: booting the full Spring context
+ * (required for the real {@code ChatClient.Builder} autoconfiguration)
+ * pulls in JPA/Flyway too, which would otherwise fall through to the app's
+ * default datasource — {@code localhost:5433}, only reachable via a local
+ * dev docker-compose Postgres, not present in CI. Missing this import here
+ * passed locally by accident and only surfaced as a CI failure.
  */
 @SpringBootTest(properties = {"app.async.email.enabled=false", "bucket4j.enabled=false", "spring.cache.type=none",
 		"spring.ai.openai.base-url=${wiremock.server.baseUrl}"})
+@Import({TestcontainersDatasourceConfig.class, SynchronousAsyncConfig.class})
 @EnableWireMock
 class OpenAiBriefingContentGeneratorTests {
 
