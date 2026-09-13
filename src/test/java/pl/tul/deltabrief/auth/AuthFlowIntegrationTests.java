@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -93,6 +94,85 @@ class AuthFlowIntegrationTests {
 		mockMvc.perform(post("/logout").with(csrf()))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/login?logout"));
+	}
+
+	/**
+	 * Genuine proof, not the vacuous kind: MockMvc does not carry session state
+	 * across sequential {@code perform()} calls by default, so a follow-up
+	 * request against a *fresh* MockMvc call would be unauthenticated
+	 * regardless of what the app does. This test explicitly captures the
+	 * {@link MockHttpSession} used by the failed login attempt itself and
+	 * replays that *same* session on the follow-up — proving a wrong password
+	 * never establishes an authenticated session, not just that a brand-new
+	 * request looks unauthenticated.
+	 */
+	@Test
+	void wrongPasswordNeverEstablishesAnAuthenticatedSession() throws Exception {
+		String email = "session-wrongpw-" + UUID.randomUUID() + "@example.com";
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf())
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		String token = extractToken(email);
+		mockMvc.perform(get("/verify").param("token", token))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?verified"));
+
+		MockHttpSession session = (MockHttpSession) mockMvc.perform(post("/login").with(csrf())
+				.param("username", email)
+				.param("password", "wrong-password"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?error"))
+			.andReturn().getRequest().getSession(false);
+
+		mockMvc.perform(get("/some-protected-path").session(session))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
+	}
+
+	/**
+	 * Same genuine-proof technique as above, applied to logout: captures the
+	 * session from a *successful* login, invalidates it via {@code /logout}
+	 * using that exact session, then replays that same session again —
+	 * proving the specific session Spring Security invalidated can't be
+	 * reused, not just that a fresh request is unauthenticated.
+	 */
+	@Test
+	void sessionCapturedBeforeLogoutCannotBeReplayedAfterLogout() throws Exception {
+		String email = "session-logout-" + UUID.randomUUID() + "@example.com";
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf())
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		String token = extractToken(email);
+		mockMvc.perform(get("/verify").param("token", token))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?verified"));
+
+		MockHttpSession session = (MockHttpSession) mockMvc.perform(post("/login").with(csrf())
+				.param("username", email)
+				.param("password", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/"))
+			.andReturn().getRequest().getSession(false);
+
+		mockMvc.perform(post("/logout").with(csrf()).session(session))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login?logout"));
+
+		mockMvc.perform(get("/some-protected-path").session(session))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/login"));
 	}
 
 	@Test
