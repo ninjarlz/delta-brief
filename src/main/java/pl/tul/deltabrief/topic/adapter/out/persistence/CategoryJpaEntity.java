@@ -5,6 +5,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * JPA mapping for the {@code categories} table, kept separate from the
@@ -13,6 +17,9 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "categories")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class CategoryJpaEntity {
 
 	@Id
@@ -20,21 +27,5 @@ public class CategoryJpaEntity {
 	private Long id;
 
 	private String name;
-
-	protected CategoryJpaEntity() {
-	}
-
-	public CategoryJpaEntity(Long id, String name) {
-		this.id = id;
-		this.name = name;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public String getName() {
-		return name;
-	}
 
 }

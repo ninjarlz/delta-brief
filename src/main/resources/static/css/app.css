@@ -125,8 +125,8 @@ body {
 
 .navbar__inner {
 	position: relative;
-	max-width: 40rem;
-	margin: 0 auto;
+	width: 100%;
+	box-sizing: border-box;
 	padding: 0.85rem 1.5rem;
 	display: flex;
 	align-items: center;

@@ -2,6 +2,7 @@ package pl.tul.deltabrief.topic.application;
 
 import java.time.Instant;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.topic.application.port.out.CategoryRepository;
@@ -16,17 +17,13 @@ import pl.tul.deltabrief.topic.domain.TopicId;
  * guarantees {@link TopicRepository}'s adapter already provides.
  */
 @Service
+@RequiredArgsConstructor
 public class TopicService {
 
 	private static final int MAX_TOPICS_PER_USER = 20;
 
 	private final TopicRepository topicRepository;
 	private final CategoryRepository categoryRepository;
-
-	public TopicService(TopicRepository topicRepository, CategoryRepository categoryRepository) {
-		this.topicRepository = topicRepository;
-		this.categoryRepository = categoryRepository;
-	}
 
 	/**
 	 * @throws CategoryNotFoundException if {@code categoryId} doesn't exist —

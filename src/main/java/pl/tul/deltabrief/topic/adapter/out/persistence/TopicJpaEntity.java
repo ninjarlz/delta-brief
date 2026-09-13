@@ -7,6 +7,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * JPA mapping for the {@code topics} table, kept separate from the domain
@@ -15,6 +19,9 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "topics")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class TopicJpaEntity {
 
 	@Id
@@ -32,36 +39,5 @@ public class TopicJpaEntity {
 
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
-
-	protected TopicJpaEntity() {
-	}
-
-	public TopicJpaEntity(Long id, Long userId, String name, Long categoryId, Instant createdAt) {
-		this.id = id;
-		this.userId = userId;
-		this.name = name;
-		this.categoryId = categoryId;
-		this.createdAt = createdAt;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public Long getUserId() {
-		return userId;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public Long getCategoryId() {
-		return categoryId;
-	}
-
-	public Instant getCreatedAt() {
-		return createdAt;
-	}
 
 }

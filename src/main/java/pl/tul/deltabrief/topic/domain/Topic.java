@@ -2,6 +2,8 @@ package pl.tul.deltabrief.topic.domain;
 
 import java.time.Instant;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import pl.tul.deltabrief.auth.domain.UserId;
 
 /**
@@ -9,6 +11,8 @@ import pl.tul.deltabrief.auth.domain.UserId;
  * whose sources it draws from. Category is fixed at creation for v1 — no
  * behavior here to change it.
  */
+@Getter
+@Accessors(fluent = true)
 public class Topic {
 
 	private TopicId id;
@@ -29,28 +33,8 @@ public class Topic {
 		return new Topic(null, userId, name, categoryId, createdAt);
 	}
 
-	public TopicId id() {
-		return id;
-	}
-
 	public void assignId(TopicId id) {
 		this.id = Objects.requireNonNull(id);
-	}
-
-	public UserId userId() {
-		return userId;
-	}
-
-	public String name() {
-		return name;
-	}
-
-	public CategoryId categoryId() {
-		return categoryId;
-	}
-
-	public Instant createdAt() {
-		return createdAt;
 	}
 
 }

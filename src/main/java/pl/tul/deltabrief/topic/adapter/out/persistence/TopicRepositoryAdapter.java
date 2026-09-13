@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.topic.adapter.out.persistence;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
@@ -8,15 +9,11 @@ import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
 @Component
+@RequiredArgsConstructor
 class TopicRepositoryAdapter implements TopicRepository {
 
 	private final TopicJpaRepository jpaRepository;
 	private final TopicEntityMapper mapper;
-
-	TopicRepositoryAdapter(TopicJpaRepository jpaRepository, TopicEntityMapper mapper) {
-		this.jpaRepository = jpaRepository;
-		this.mapper = mapper;
-	}
 
 	@Override
 	public Topic save(Topic topic) {
