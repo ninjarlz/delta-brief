@@ -44,7 +44,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | ---- | -------------------------------- | ------------------------------------------------------------------- | -------------- | ----------------------- | -------- | ------ |
 | F-01 | wire-database-connectivity       | (foundation) app connects to a real Postgres DB, locally and deployed | —              | Access Control, NFR: user data privacy | done | [#5](https://github.com/ninjarlz/delta-brief/issues/5) |
 | S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | in-progress | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
-| S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | in-progress  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
+| S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | done  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | proposed | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
 | S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | proposed | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
 | S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | proposed | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
@@ -120,7 +120,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - What are the preset source lists per topic category (the actual curated feeds/sources)? — Owner: user. Block: yes.
 - **Risk:** Blocked on a real content decision only the user can make (source curation). Sequencing it right after auth surfaces that gap now, rather than discovering it mid-build of the north star, which needs real source content to generate anything against.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-03: First onboarding and delta briefing
 
@@ -243,3 +243,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 ## Done
 
 - **F-01: (foundation) The app connects to a real Postgres (Supabase) database, both locally and in the deployed Render environment, with a schema-migration mechanism in place so future slices can add tables incrementally.** — Archived 2026-09-11 → `context/archive/2026-09-10-wire-database-connectivity/`. Lesson: —.
+- **S-02: User can create a watched topic, pick its sources from presets, and browse their topic list.** — Archived 2026-09-13 → `context/archive/2026-09-13-create-topic-and-select-sources/`. Lesson: —.
