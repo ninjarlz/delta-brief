@@ -6,20 +6,17 @@
 	<title>Your topics — DeltaBrief</title>
 	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
 	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
 </head>
 <body>
-	<main class="page">
+	<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+	<main class="app-content">
 		<header class="page-header">
 			<div>
 				<h1>Your topics</h1>
 				<p class="subtitle">What's changed, tracked in one place.</p>
 			</div>
-			<div class="page-header__actions">
-				<a th:if="${!#lists.isEmpty(topics)}" th:href="@{/topics/new}" role="button">Create topic</a>
-				<form th:action="@{/logout}" method="post">
-					<button type="submit" class="secondary outline">Sign out</button>
-				</form>
-			</div>
+			<a th:if="${!#lists.isEmpty(topics)}" th:href="@{/topics/new}" role="button">Create topic</a>
 		</header>
 
 		<div class="empty-state" th:if="${#lists.isEmpty(topics)}">

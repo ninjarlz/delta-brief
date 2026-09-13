@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+	<!--/* Shared top nav for authenticated pages — brand on the left, sign-out
+	       on the right. Included via th:replace, e.g.:
+	       <nav th:replace="~{fragments/navbar :: navbar}"></nav> */-->
+	<nav th:fragment="navbar" class="navbar">
+		<div class="navbar__inner">
+			<a th:href="@{/}" class="navbar__brand">DeltaBrief</a>
+			<form th:action="@{/logout}" method="post">
+				<button type="submit" class="secondary outline">Sign out</button>
+			</form>
+		</div>
+	</nav>
+</body>
+</html>

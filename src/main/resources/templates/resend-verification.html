@@ -6,18 +6,21 @@
 	<title>Resend verification email — DeltaBrief</title>
 	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
 	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
 </head>
 <body>
-	<main class="auth-card">
-		<h1>Resend verification email</h1>
-		<p class="subtitle">Enter your email and, if an unverified account exists, we'll send a new link.</p>
-		<form th:action="@{/resend-verification}" method="post">
-			<label for="email">Email
-				<input type="email" id="email" name="email" autocomplete="email" required/>
-			</label>
-			<button type="submit">Resend link</button>
-		</form>
-		<p class="switch-link"><a th:href="@{/login}">Back to login</a></p>
-	</main>
+	<div class="center-content">
+		<main class="auth-card">
+			<h1>Resend verification email</h1>
+			<p class="subtitle">Enter your email and, if an unverified account exists, we'll send a new link.</p>
+			<form th:action="@{/resend-verification}" method="post">
+				<label for="email">Email
+					<input type="email" id="email" name="email" autocomplete="email" required/>
+				</label>
+				<button type="submit">Resend link</button>
+			</form>
+			<p class="switch-link"><a th:href="@{/login}">Back to login</a></p>
+		</main>
+	</div>
 </body>
 </html>
