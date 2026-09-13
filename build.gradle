@@ -27,6 +27,7 @@ ext {
 	springAiVersion = '2.0.0'
 	testcontainersVersion = '2.0.5'
 	mapstructVersion = '1.6.3'
+	bucket4jStarterVersion = '0.14.0'
 }
 
 dependencyManagement {
@@ -49,9 +50,17 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
 	implementation "org.mapstruct:mapstruct:${mapstructVersion}"
 	annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
-	// In-memory rate limiting for /register and /resend-verification (no
-	// Redis/Hazelcast backend needed — single Render instance).
-	implementation 'com.bucket4j:bucket4j_jdk17-core:8.19.0'
+	// Annotation-driven (@RateLimiting, AOP) rate limiting for /register and
+	// /resend-verification — see RegistrationController. Caffeine (via
+	// JCache) backs the buckets in-memory with its own bounded eviction, so
+	// no Redis/Hazelcast is needed for this single Render instance, and the
+	// bucket cache can't grow unbounded under abuse.
+	implementation "com.giffing.bucket4j.spring.boot.starter:bucket4j-spring-boot-starter:${bucket4jStarterVersion}"
+	implementation 'org.springframework.boot:spring-boot-starter-aspectj'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	implementation 'com.github.ben-manes.caffeine:caffeine'
+	implementation 'com.github.ben-manes.caffeine:jcache:3.2.4'
+	implementation 'javax.cache:cache-api:1.1.1'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.postgresql:postgresql'
 	compileOnly 'org.projectlombok:lombok'

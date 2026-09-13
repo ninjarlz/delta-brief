@@ -215,6 +215,27 @@ static RequestPostProcessor withRemoteAddr(String ip) {
 ```
 One test: repeat `POST /resend-verification` with the same email past the configured email limit (using a unique IP for this test method), assert the final request's status is `429`.
 
+### Addendum: post-review redesign (superseded the hand-rolled implementation above)
+
+After Phase 3 and Phase 4 first landed (commits `d691cca`, `9c4eb80`) and were pushed as PR #29, user code review raised four concerns about the hand-rolled `RegistrationRateLimiter` design above: (1) limits as class constants instead of externalized config, (2) manual `if (!rateLimiter.tryConsume(...))` boilerplate duplicated in both controller methods instead of a generic mechanism, (3) the two `ConcurrentHashMap` fields growing unbounded under sustained, identity-rotating abuse — an OOM risk in exactly the scenario the limiter exists to defend against, and (4) the class not generalizing to future controllers without copy-pasting a new limiter class per endpoint.
+
+Research into `bucket4j-spring-boot-starter` (`com.giffing.bucket4j.spring.boot.starter`, current release 0.14.0, targets Spring Boot 4.0.3+) confirmed it addresses all four — but also surfaced two undocumented constraints that reshaped the final design:
+
+- `@RateLimiting`'s method config supports exactly one `cacheKey` per named config (confirmed via the annotation's source — not `@Repeatable`), so the originally-approved **independent** per-email AND per-IP dimensions could not be expressed in annotation mode. **Resolved**: after presenting the tradeoff, chose a composite key (`#email + ':' + #request.remoteAddr`) instead — a materially weaker property (rotating either value resets the other's budget) that the user explicitly accepted in exchange for the annotation-based design.
+- `@RateLimiting`'s key resolution unconditionally scopes the cache key by the declaring method's name (confirmed empirically via debug logging — not documented), so `register()` and `resendVerification()` cannot share one bucket via this mechanism, no matter the config. **Resolved**: accepted per-endpoint independent buckets (5/15min each, effectively a 10/15min combined ceiling across both endpoints) rather than the originally-planned single shared 5-request budget — presented and explicitly accepted by the user as a second, smaller deviation from the original design.
+
+**What actually shipped, replacing items 1, 3, 6 above (items 2, 5, 7 changed as described, not replaced):**
+
+- `build.gradle`: removed the direct `com.bucket4j:bucket4j_jdk17-core` dependency; added `com.giffing.bucket4j.spring.boot.starter:bucket4j-spring-boot-starter:0.14.0`, `org.springframework.boot:spring-boot-starter-aspectj` (Spring Boot 4's replacement for the older `spring-boot-starter-aop` — confirmed via Maven Central version history), `spring-boot-starter-cache`, `com.github.ben-manes.caffeine:caffeine`, `com.github.ben-manes.caffeine:jcache:3.2.4`, `javax.cache:cache-api:1.1.1`.
+- `application.properties`: added `bucket4j.*` and `spring.cache.*` properties — Caffeine (via the JCache SPI, `com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider`) backs the `buckets` cache with `maximumSize=10000,expireAfterAccess=900s`, directly closing the OOM concern (bounded, self-evicting, instead of unbounded `ConcurrentHashMap`s). One named method config (`bucket4j.methods[0].name=registration`, capacity 5 / 15 minutes) referenced by both endpoints.
+- `DeltaBriefApplication.java`: added `@EnableCaching` and `@EnableAspectJAutoProxy` (both required for the starter's AOP interception and cache wiring to activate).
+- Deleted `RegistrationRateLimiter.java` and `RegistrationRateLimiterTests.java` — no hand-rolled limiter or its unit tests exist anymore; the bucket logic is entirely the library's.
+- `RegistrationController.java`: both `register()` and `resendVerification()` now carry `@RateLimiting(name = "registration", cacheKey = "...")` instead of manual `if` checks; no more `HttpServletResponse` parameter on either method (the 429 response is centralized, see next item).
+- New `RateLimitExceededAdvice.java`: a `@ControllerAdvice` mapping the library's `RateLimitException` to the existing `too-many-requests` view + HTTP 429 — one handler covers any future `@RateLimiting`-annotated endpoint in the app, directly closing concern (4).
+- `AuthFlowIntegrationTests.java`: `rateLimiterRejectsRapidRepeatedResendForTheSameEmail()` rewritten for the corrected per-endpoint bucket math (5 successful resends, not 4, before the 6th is rejected); added `rateLimiterRejectsRapidRepeatedRegisterAttemptsForTheSameEmail()` proving `register()`'s own independent bucket, since the two endpoints no longer share one.
+
+Re-verified: `./gradlew test --no-daemon` and `./gradlew build --no-daemon` both pass; local `curl` loop against a running `bootRun` instance confirms register + 5 resends succeed and the 6th resend returns 429 with the styled page (see Progress 3.4).
+
 ### Success Criteria:
 
 #### Automated Verification:

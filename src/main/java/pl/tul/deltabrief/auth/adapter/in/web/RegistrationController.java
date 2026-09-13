@@ -1,7 +1,7 @@
 package pl.tul.deltabrief.auth.adapter.in.web;
 
+import com.giffing.bucket4j.spring.boot.starter.context.RateLimiting;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -24,11 +24,9 @@ import pl.tul.deltabrief.auth.application.dto.RegistrationRequest;
 public class RegistrationController {
 
 	private final RegistrationService registrationService;
-	private final RegistrationRateLimiter rateLimiter;
 
-	public RegistrationController(RegistrationService registrationService, RegistrationRateLimiter rateLimiter) {
+	public RegistrationController(RegistrationService registrationService) {
 		this.registrationService = registrationService;
-		this.rateLimiter = rateLimiter;
 	}
 
 	@GetMapping("/register")
@@ -37,15 +35,17 @@ public class RegistrationController {
 	}
 
 	@PostMapping("/register")
+	// Rate-limited before validation or any service work runs (AOP wraps the
+	// whole method), so even a flood of malformed submissions is throttled.
+	// Uses the same "registration" bucket4j.methods[] config as
+	// resendVerification() below (application.properties), but
+	// @RateLimiting always scopes the cache key by the declaring method name
+	// internally (confirmed empirically, not documented) — so this endpoint
+	// gets its own independent 5/15min bucket, not a budget shared with
+	// resendVerification(). See RateLimitExceededAdvice for the 429 response.
+	@RateLimiting(name = "registration", cacheKey = "#form.email + ':' + #request.remoteAddr")
 	public String register(@Valid @ModelAttribute("registrationRequest") RegistrationRequest form,
-			BindingResult bindingResult, HttpServletRequest request, HttpServletResponse response) {
-		// Checked first, before validation or any service work, so even a flood
-		// of malformed submissions is throttled.
-		String email = form.getEmail() != null ? form.getEmail() : "";
-		if (!rateLimiter.tryConsume(email, request.getRemoteAddr())) {
-			response.setStatus(429); // HTTP 429 Too Many Requests — not a constant in this Jakarta Servlet version
-			return "too-many-requests";
-		}
+			BindingResult bindingResult, HttpServletRequest request) {
 		if (!Objects.equals(form.getPassword(), form.getConfirmPassword())) {
 			bindingResult.rejectValue("confirmPassword", "password.mismatch", "Passwords do not match");
 		}
@@ -78,12 +78,9 @@ public class RegistrationController {
 	}
 
 	@PostMapping("/resend-verification")
+	@RateLimiting(name = "registration", cacheKey = "#email + ':' + #request.remoteAddr")
 	public String resendVerification(@RequestParam("email") @Email @Size(max = 255) String email,
-			HttpServletRequest request, HttpServletResponse response) {
-		if (!rateLimiter.tryConsume(email, request.getRemoteAddr())) {
-			response.setStatus(429); // HTTP 429 Too Many Requests — not a constant in this Jakarta Servlet version
-			return "too-many-requests";
-		}
+			HttpServletRequest request) {
 		registrationService.resendVerification(email);
 		return "redirect:/check-email";
 	}

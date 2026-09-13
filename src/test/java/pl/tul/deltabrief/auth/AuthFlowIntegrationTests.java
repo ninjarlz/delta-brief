@@ -234,16 +234,20 @@ class AuthFlowIntegrationTests {
 
 	/**
 	 * Proves the rate limiter is actually wired into the real HTTP path and
-	 * returns 429 — the integration-level complement to
-	 * {@code RegistrationRateLimiterTests}, which already covers the bucket
-	 * algorithm's edge cases in isolation. Uses a dedicated simulated remote
-	 * address, not MockMvc's default (shared by every other test in this
-	 * suite), so this test's deliberate IP-bucket exhaustion can't affect
-	 * unrelated tests sharing the same cached Spring context.
+	 * returns 429. Uses a dedicated simulated remote address, not MockMvc's
+	 * default (shared by every other test in this suite), so this test's
+	 * deliberate bucket exhaustion can't affect unrelated tests sharing the
+	 * same cached Spring context.
+	 * <p>
+	 * {@code @RateLimiting}'s method-level key resolution always scopes the
+	 * cache key by the declaring method's name (confirmed empirically — not
+	 * documented), so {@code register()} and {@code resendVerification()}
+	 * each get their own independent 5/15min bucket rather than sharing one
+	 * budget; see {@code register()}'s own bucket-exhaustion test below.
 	 */
 	@Test
 	void rateLimiterRejectsRapidRepeatedResendForTheSameEmail() throws Exception {
-		String email = "ratelimit-" + UUID.randomUUID() + "@example.com";
+		String email = "ratelimit-resend-" + UUID.randomUUID() + "@example.com";
 		RequestPostProcessor uniqueIp = withRemoteAddr("10.0.0.50");
 		String password = "correct-horse-battery-staple";
 
@@ -254,10 +258,10 @@ class AuthFlowIntegrationTests {
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/check-email"));
 
-		// register() already consumed one email-bucket token (5/15min limit);
-		// four more resend attempts exhaust it, so the sixth request overall
+		// resend-verification has its own bucket, independent of register()'s
+		// above; five successful calls exhaust its 5/15min limit, so the sixth
 		// (the one after this loop) is rejected.
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 5; i++) {
 			mockMvc.perform(post("/resend-verification").with(csrf()).with(uniqueIp)
 					.param("email", email))
 				.andExpect(status().is3xxRedirection())
@@ -266,6 +270,43 @@ class AuthFlowIntegrationTests {
 
 		mockMvc.perform(post("/resend-verification").with(csrf()).with(uniqueIp)
 				.param("email", email))
+			.andExpect(status().is(429));
+	}
+
+	/**
+	 * Same proof as above, for {@code register()}'s own independent bucket —
+	 * both endpoints must be protected individually since they don't share a
+	 * budget (see the class-level note on the previous test).
+	 */
+	@Test
+	void rateLimiterRejectsRapidRepeatedRegisterAttemptsForTheSameEmail() throws Exception {
+		String email = "ratelimit-register-" + UUID.randomUUID() + "@example.com";
+		RequestPostProcessor uniqueIp = withRemoteAddr("10.0.0.60");
+		String password = "correct-horse-battery-staple";
+
+		mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/check-email"));
+
+		// The rate-limit check runs before the "already registered" business
+		// logic, so repeat attempts with the same email still consume tokens
+		// even though each one re-shows the registration form.
+		for (int i = 0; i < 4; i++) {
+			mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+					.param("email", email)
+					.param("password", password)
+					.param("confirmPassword", password))
+				.andExpect(status().isOk())
+				.andExpect(view().name("register"));
+		}
+
+		mockMvc.perform(post("/register").with(csrf()).with(uniqueIp)
+				.param("email", email)
+				.param("password", password)
+				.param("confirmPassword", password))
 			.andExpect(status().is(429));
 	}
 
