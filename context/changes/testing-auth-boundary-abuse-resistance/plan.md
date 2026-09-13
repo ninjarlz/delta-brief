@@ -349,15 +349,15 @@ Not applicable — no schema changes in this phase.
 
 - [x] 3.1 `./gradlew test --no-daemon` passes, including `RegistrationRateLimiterTests` and the new integration test — 4bb75ac (re-verified after the post-review redesign; superseded d691cca)
 - [x] 3.2 `./gradlew build --no-daemon` passes end-to-end — 4bb75ac (re-verified after the post-review redesign; superseded d691cca)
-- [ ] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
+- [x] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes — 4bb75ac (confirmed green on PR #29 after the redesign push, and again on the merge-to-main run)
 
 #### Manual
 
 - [x] 3.4 Local `curl` loop: 6th rapid `/resend-verification` request for the same email returns 429 with the styled page — 4bb75ac (re-verified after the post-review redesign; superseded d691cca)
-- [ ] 3.5 Post-deploy: normal registration/resend works from a real browser against the deployed app
+- [x] 3.5 Post-deploy: normal registration/resend works from a real browser against the deployed app — e265a57
 
 ### Phase 4: Close out the rollout phase
 
 #### Manual
 
-- [ ] 4.1 `test-plan.md` §6 entries accurately describe what shipped; §3 Phase 1 row marked `complete`
+- [x] 4.1 `test-plan.md` §6 entries accurately describe what shipped; §3 Phase 1 row marked `complete` — e265a57

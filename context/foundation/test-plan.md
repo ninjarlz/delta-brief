@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-09-13
+> Last updated: 2026-09-13 (rollout Phase 1 complete)
 
 ## 1. Strategy
 
@@ -74,7 +74,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|---|---|---|---|---|---|
-| 1 | Auth boundary & abuse-resistance coverage | Prove session integrity after logout/failed login, make the registration-throttle gap and log/error credential-leakage risk observable | #1, #4, #5 | unit + integration | implementing | `context/changes/testing-auth-boundary-abuse-resistance/` |
+| 1 | Auth boundary & abuse-resistance coverage | Prove session integrity after logout/failed login, make the registration-throttle gap and log/error credential-leakage risk observable | #1, #4, #5 | unit + integration | complete | `context/changes/testing-auth-boundary-abuse-resistance/` |
 | 2 | Deployed-environment regression net | Turn today's one-time manual health/mail verification into an automated, repeatable regression test | #3 | integration (fast Spring context test) | not started | — |
 | 3 | Authorization foundation for per-user data | Establish an ownership-check testing pattern the moment the first per-user resource (topics) exists | #2 | integration (two-user) | not started | — |
 
