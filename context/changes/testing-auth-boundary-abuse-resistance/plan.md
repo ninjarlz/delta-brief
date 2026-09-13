@@ -308,19 +308,19 @@ Not applicable — no schema changes in this phase.
 
 #### Automated
 
-- [x] 1.1 `./gradlew test --no-daemon` passes, including both new session-boundary tests
-- [x] 1.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 1.1 `./gradlew test --no-daemon` passes, including both new session-boundary tests — c8b5ee8
+- [x] 1.2 `./gradlew build --no-daemon` passes end-to-end — c8b5ee8
 
 #### Manual
 
-- [x] 1.3 Temporarily disabling `invalidateHttpSession(true)` makes the new tests fail; restoring it makes them pass again
+- [x] 1.3 Temporarily disabling `invalidateHttpSession(true)` makes the new tests fail; restoring it makes them pass again — c8b5ee8
 
 ### Phase 2: Regression guardrail against credential/PII leakage in logs
 
 #### Automated
 
-- [ ] 2.1 `./gradlew test --no-daemon` passes, including the new log-guardrail test
-- [ ] 2.2 `./gradlew build --no-daemon` passes end-to-end
+- [x] 2.1 `./gradlew test --no-daemon` passes, including the new log-guardrail test
+- [x] 2.2 `./gradlew build --no-daemon` passes end-to-end
 
 ### Phase 3: Rate limit `/register` and `/resend-verification`
 

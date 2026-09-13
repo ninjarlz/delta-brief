@@ -3,9 +3,16 @@ package pl.tul.deltabrief.auth.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +24,7 @@ import pl.tul.deltabrief.auth.domain.User;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
+import pl.tul.deltabrief.shared.application.EmailDeliveryException;
 
 /**
  * Reuses the exact same context shape as {@code DeltaBriefApplicationTests}
@@ -129,6 +137,55 @@ class RegistrationServiceTests {
 		registrationService.resendVerification(unknownEmail);
 
 		assertThat(fakeEmailSender.sentEmails()).noneMatch(sent -> sent.to().equals(unknownEmail));
+	}
+
+	/**
+	 * Regression guardrail, not a test against a currently-exploitable leak —
+	 * research confirmed no leak exists today (EmailDeliveryException's
+	 * message is hardcoded, never derived from the wrapped MailException).
+	 * This locks in the structural guarantee: the mail-failure log call must
+	 * never be passed a raw exception/Throwable object, which the current
+	 * log4j2.xml pattern layout would auto-print (cause chain included) if
+	 * one ever were.
+	 */
+	@Test
+	void mailFailureLogNeverReceivesARawException() {
+		String email = uniqueEmail();
+		Logger logger = (Logger) LogManager.getLogger(RegistrationService.class);
+		CapturingAppender appender = new CapturingAppender();
+		appender.start();
+		logger.addAppender(appender);
+		try {
+			fakeEmailSender.failNextSendWith(new EmailDeliveryException("Failed to send email to " + email,
+					new RuntimeException("simulated SMTP failure")));
+
+			registrationService.register(requestFor(email));
+
+			assertThat(appender.events()).isNotEmpty();
+			assertThat(appender.events()).allSatisfy(event -> assertThat(event.getThrown()).isNull());
+		} finally {
+			logger.removeAppender(appender);
+			appender.stop();
+		}
+	}
+
+	private static final class CapturingAppender extends AbstractAppender {
+
+		private final List<LogEvent> events = new CopyOnWriteArrayList<>();
+
+		CapturingAppender() {
+			super("capturing-test-appender", null, null, true, Property.EMPTY_ARRAY);
+		}
+
+		@Override
+		public void append(LogEvent event) {
+			events.add(event.toImmutable());
+		}
+
+		List<LogEvent> events() {
+			return events;
+		}
+
 	}
 
 	private String extractToken(String email) {
