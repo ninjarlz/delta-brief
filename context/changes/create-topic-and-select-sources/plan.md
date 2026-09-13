@@ -283,11 +283,11 @@ Three new Flyway migrations (`V5`–`V7`), continuing directly from `V4__timesta
 
 #### Automated
 
-- [x] 3.1 `./gradlew test --no-daemon` passes, including the new `TopicFlowIntegrationTests`
-- [x] 3.2 `./gradlew build --no-daemon` passes end-to-end
-- [ ] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes
+- [x] 3.1 `./gradlew test --no-daemon` passes, including the new `TopicFlowIntegrationTests` — 69efc86
+- [x] 3.2 `./gradlew build --no-daemon` passes end-to-end — 69efc86
+- [x] 3.3 GitHub Actions `build-and-test` passes with no `ci-cd.yml` changes — 69efc86 (confirmed green on PR #31, and again on the merge-to-main run)
 
 #### Manual
 
-- [x] 3.4 Local: full create/browse/delete flow across all 4 categories
-- [ ] 3.5 Post-deploy: same flow against the deployed app, confirming the seed migration ran correctly
+- [x] 3.4 Local: full create/browse/delete flow across all 4 categories — 69efc86
+- [x] 3.5 Post-deploy: same flow against the deployed app, confirming the seed migration ran correctly — 15b82cc (user-confirmed against https://delta-brief.onrender.com)
