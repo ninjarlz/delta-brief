@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.topic.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.tul.deltabrief.topic.application.port.out.CategoryRepository;
@@ -22,6 +23,11 @@ class CategoryRepositoryAdapter implements CategoryRepository {
 	@Override
 	public boolean existsById(CategoryId id) {
 		return jpaRepository.existsById(id.value());
+	}
+
+	@Override
+	public Optional<String> findNameById(CategoryId id) {
+		return jpaRepository.findById(id.value()).map(CategoryJpaEntity::getName);
 	}
 
 }

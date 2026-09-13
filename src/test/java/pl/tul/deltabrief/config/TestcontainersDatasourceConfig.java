@@ -75,6 +75,19 @@ public class TestcontainersDatasourceConfig {
 	@Primary
 	@Profile("!CI")
 	public DataSource localDataSource() {
+		String jdbcUrl = "jdbc:postgresql://localhost:%d/%s".formatted(FIXED_LOCAL_PORT, DB_NAME);
+		// Some test classes need a distinct Spring context from the shared one
+		// (e.g. @EnableWireMock always forces a new context, regardless of
+		// properties) — when that happens mid-run, this bean method runs
+		// again. Reusing an already-RUNNING container (rather than always
+		// force-removing + recreating) is essential here: recreating would
+		// rip the container out from under whichever other already-cached
+		// context is still using it, corrupting its live connections.
+		if (isLocalContainerRunning()) {
+			log.info(">>> Reusing already-running local Testcontainers PostgreSQL (host network, fixed port {})...",
+					FIXED_LOCAL_PORT);
+			return buildDataSource(jdbcUrl, DB_USER, DB_PASSWORD);
+		}
 		log.info(">>> Starting local Testcontainers PostgreSQL (host network, fixed port {})...", FIXED_LOCAL_PORT);
 		removeStaleLocalContainer();
 		GenericContainer<?> container = new GenericContainer<>(POSTGRES_IMAGE)
@@ -93,9 +106,14 @@ public class TestcontainersDatasourceConfig {
 			}
 		}));
 		container.start();
-		String jdbcUrl = "jdbc:postgresql://localhost:%d/%s".formatted(FIXED_LOCAL_PORT, DB_NAME);
 		log.info(">>> Creating local datasource using fixed host-network JDBC URL: {}", jdbcUrl);
 		return buildDataSource(jdbcUrl, DB_USER, DB_PASSWORD);
+	}
+
+	private boolean isLocalContainerRunning() {
+		DockerClient client = DockerClientFactory.instance().client();
+		return !client.listContainersCmd().withShowAll(false).withNameFilter(List.of(LOCAL_CONTAINER_NAME)).exec()
+				.isEmpty();
 	}
 
 	/**
@@ -103,7 +121,8 @@ public class TestcontainersDatasourceConfig {
 	 * disabled for host-network mode, and a hard kill skips the shutdown hook
 	 * below) — without this, a leaked container would keep {@link
 	 * #FIXED_LOCAL_PORT} bound and fail every subsequent local test run until
-	 * removed manually.
+	 * removed manually. Only reached when {@link #isLocalContainerRunning()}
+	 * is false, so this never removes a container another context is using.
 	 */
 	private void removeStaleLocalContainer() {
 		DockerClient client = DockerClientFactory.instance().client();

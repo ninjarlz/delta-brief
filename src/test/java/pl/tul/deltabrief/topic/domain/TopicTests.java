@@ -20,7 +20,16 @@ class TopicTests {
 		assertThat(topic.userId()).isEqualTo(userId);
 		assertThat(topic.name()).isEqualTo("War in Ukraine");
 		assertThat(topic.categoryId()).isEqualTo(categoryId);
+		assertThat(topic.description()).isNull();
 		assertThat(topic.createdAt()).isEqualTo(now);
+	}
+
+	@Test
+	void createWithADescriptionAssignsIt() {
+		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L),
+				"Tracking the humanitarian angle", Instant.now());
+
+		assertThat(topic.description()).isEqualTo("Tracking the humanitarian angle");
 	}
 
 	@Test

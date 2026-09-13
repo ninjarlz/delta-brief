@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.topic.application.port.out;
 
 import java.util.List;
+import java.util.Optional;
 import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
@@ -21,6 +22,20 @@ public interface TopicRepository {
 	boolean existsByUserIdAndNameIgnoreCase(UserId userId, String name);
 
 	long countByUserId(UserId userId);
+
+	/**
+	 * Owner-scoped existence + name/category lookup in one query — used by
+	 * {@code briefing} to verify topic ownership and resolve the topic name
+	 * (for the generation prompt) and category (to resolve sources) without
+	 * ever loading the full {@link Topic} aggregate outside this module (see
+	 * plan.md's Critical Implementation Details for why {@code briefing}
+	 * never imports {@link Topic}).
+	 *
+	 * @return empty if the topic doesn't exist or isn't owned by {@code
+	 * userId} — both cases are indistinguishable to the caller, same
+	 * information-leak avoidance as {@link #deleteByIdAndUserId}.
+	 */
+	Optional<TopicSummary> findSummaryByIdAndUserId(TopicId id, UserId userId);
 
 	/**
 	 * @return whether a row was actually deleted — {@code false} means the

@@ -20,4 +20,12 @@ public class CreateTopicRequest {
 	@NotNull
 	private Long categoryId;
 
+	/**
+	 * Optional observation-goal note (FR-004) — fed into future briefing
+	 * generation prompts for this topic. No {@code @NotBlank}: unlike
+	 * {@code name}, this field is genuinely optional.
+	 */
+	@Size(max = 1000)
+	private String description;
+
 }

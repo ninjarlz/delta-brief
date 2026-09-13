@@ -71,7 +71,8 @@ public class TopicController {
 			return "topic-form";
 		}
 		try {
-			topicService.createTopic(currentUserId(authentication), form.getName(), new CategoryId(form.getCategoryId()));
+			topicService.createTopic(currentUserId(authentication), form.getName(), new CategoryId(form.getCategoryId()),
+					form.getDescription());
 		} catch (DuplicateTopicNameException alreadyExists) {
 			bindingResult.rejectValue("name", "name.duplicate", "You already have a topic with this name");
 			return "topic-form";

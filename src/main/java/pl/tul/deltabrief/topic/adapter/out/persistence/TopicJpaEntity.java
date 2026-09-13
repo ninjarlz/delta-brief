@@ -37,6 +37,8 @@ public class TopicJpaEntity {
 	@Column(name = "category_id", nullable = false)
 	private Long categoryId;
 
+	private String description;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
