@@ -22,6 +22,11 @@ dashboard you have to remember to open.
 Every claim in a generated briefing is traceable back to an ingested source — hallucination-free output is the
 product's non-negotiable trust guarantee, not an afterthought.
 
+> 📬 **Email delivery is core, not a bolt-on.** DeltaBrief is designed to work as your **delta newsletter**: once                                                                                                                     
+> you opt in, every generated briefing lands in your inbox on your topic's own schedule, with zero need to open                                                                                                                       
+> the app. The in-app view exists for browsing history and drilling into detail — the primary delivery channel                                                                                                                        
+> the product is built around is email.
+
 ### 🧭 Why "delta," not "digest"
 
 | Question a normal feed answers | Question DeltaBrief answers |
