@@ -426,15 +426,15 @@ conservative placeholder for existing rows.
 
 #### Automated
 
-- [x] 2.1 `CitationRendererTests` passes
-- [x] 2.2 `BriefingControllerTests` passes unchanged
-- [x] 2.3 `UserRepositoryAdapterTests` passes including the new `findEmailById` cases
-- [x] 2.4 `BriefingServiceTests` passes including opted-in/opted-out/onboarding cases
-- [x] 2.5 `ScheduledBriefingRunnerTests` passes including the scheduled-path email case
-- [x] 2.6 `./gradlew test` passes
+- [x] 2.1 `CitationRendererTests` passes — 7fed6e8
+- [x] 2.2 `BriefingControllerTests` passes unchanged — 7fed6e8
+- [x] 2.3 `UserRepositoryAdapterTests` passes including the new `findEmailById` cases — 7fed6e8
+- [x] 2.4 `BriefingServiceTests` passes including opted-in/opted-out/onboarding cases — 7fed6e8
+- [x] 2.5 `ScheduledBriefingRunnerTests` passes including the scheduled-path email case — 7fed6e8
+- [x] 2.6 `./gradlew test` passes — 7fed6e8
 
 #### Manual
 
-- [x] 2.7 Opted-in topic's generated briefing arrives by email with full content and a working link
-- [x] 2.8 Opted-out topic's generation sends no email
-- [x] 2.9 A scheduled (not just manual) generation for an opted-in topic also sends an email
+- [x] 2.7 Opted-in topic's generated briefing arrives by email with full content and a working link — 7fed6e8
+- [x] 2.8 Opted-out topic's generation sends no email — 7fed6e8
+- [x] 2.9 A scheduled (not just manual) generation for an opted-in topic also sends an email — 7fed6e8
