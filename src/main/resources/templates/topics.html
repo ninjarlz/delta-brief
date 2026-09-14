@@ -33,7 +33,7 @@
 							th:text="${topic.emailEnabled} ? '📬 Email on' : '🔕 Email off'"></span>
 					</div>
 					<div class="topic-card__meta">
-						<span class="topic-card__category" th:text="${topic.categoryName}"></span>
+						<span class="topic-card__category" th:classappend="${topic.categoryColorClass}" th:text="${topic.categoryName}"></span>
 						<span class="topic-card__schedule">Next briefing:
 							<span th:text="${topic.nextDueAt}" th:data-timestamp="${topic.nextDueAtIso}"></span>
 						</span>

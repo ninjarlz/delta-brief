@@ -160,8 +160,8 @@ public class TopicController {
 		String nextDueAt = topic.nextDueAt() == null ? "Not yet scheduled" : TIMESTAMP_FORMAT.format(topic.nextDueAt());
 		String nextDueAtIso = topic.nextDueAt() == null ? null : topic.nextDueAt().toString();
 		boolean lastRunFailed = topic.lastScheduledStatus() == ScheduledRunStatus.FAILURE;
-		return new TopicView(topic.id().value(), topic.name(), categoryName, nextDueAt, nextDueAtIso, lastRunFailed,
-				topic.emailEnabled());
+		return new TopicView(topic.id().value(), topic.name(), categoryName, categoryColorClass(categoryName),
+				nextDueAt, nextDueAtIso, lastRunFailed, topic.emailEnabled());
 	}
 
 	private static String frequencyLabel(Frequency frequency) {
@@ -169,6 +169,28 @@ public class TopicController {
 			case DAILY -> "Daily";
 			case EVERY_OTHER_DAY -> "Every other day";
 			case WEEKLY -> "Weekly";
+		};
+	}
+
+	/**
+	 * Maps a category name to a CSS modifier class (see {@code
+	 * .topic-card__category--*} in app.css) so topics are visually
+	 * distinguishable by category at a glance. Categories are fixed
+	 * reference data seeded by migration (V6), not user-editable, so a
+	 * hardcoded mapping is safe — {@code "topic-card__category--default"}
+	 * is a defensive fallback for a category added later without a
+	 * matching color, not an expected case today.
+	 */
+	private static String categoryColorClass(String categoryName) {
+		if (categoryName == null) {
+			return "topic-card__category--default";
+		}
+		return switch (categoryName) {
+			case "World News" -> "topic-card__category--world-news";
+			case "Technology" -> "topic-card__category--technology";
+			case "Business & Finance" -> "topic-card__category--business-finance";
+			case "Science" -> "topic-card__category--science";
+			default -> "topic-card__category--default";
 		};
 	}
 
@@ -181,8 +203,8 @@ public class TopicController {
 	 * "Not yet scheduled" fallback) is defensive only and should never
 	 * trigger in practice.
 	 */
-	public record TopicView(Long id, String name, String categoryName, String nextDueAt, String nextDueAtIso,
-			boolean lastRunFailed, boolean emailEnabled) {
+	public record TopicView(Long id, String name, String categoryName, String categoryColorClass, String nextDueAt,
+			String nextDueAtIso, boolean lastRunFailed, boolean emailEnabled) {
 	}
 
 	/**

@@ -33,6 +33,23 @@ class TopicControllerTests {
 		assertThat(view.nextDueAt()).contains("2026").contains("UTC");
 		assertThat(view.lastRunFailed()).isFalse();
 		assertThat(view.emailEnabled()).isTrue();
+		assertThat(view.categoryColorClass()).isEqualTo("topic-card__category--world-news");
+	}
+
+	@Test
+	void mapsEachSeededCategoryToADistinctColorClass() {
+		Topic topic = persisted(Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now()), 10L);
+
+		assertThat(TopicController.toView(topic, Map.of(2L, "World News")).categoryColorClass())
+				.isEqualTo("topic-card__category--world-news");
+		assertThat(TopicController.toView(topic, Map.of(2L, "Technology")).categoryColorClass())
+				.isEqualTo("topic-card__category--technology");
+		assertThat(TopicController.toView(topic, Map.of(2L, "Business & Finance")).categoryColorClass())
+				.isEqualTo("topic-card__category--business-finance");
+		assertThat(TopicController.toView(topic, Map.of(2L, "Science")).categoryColorClass())
+				.isEqualTo("topic-card__category--science");
+		assertThat(TopicController.toView(topic, Map.of(2L, "Some Future Category")).categoryColorClass())
+				.isEqualTo("topic-card__category--default");
 	}
 
 	@Test

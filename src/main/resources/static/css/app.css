@@ -315,6 +315,37 @@ body {
 	border-radius: 999px;
 }
 
+/* Category color-coding — reuses Pico's own theme-aware semantic hues
+   (never a raw hardcoded color) so light/dark mode both stay correct with
+   no manual override needed. Only 3 solid single-hue tokens exist in this
+   Pico build (primary/ins/del); the 4th is synthesized by mixing two of
+   them, same idea, no new color introduced. Categories are fixed seeded
+   reference data (V6 migration) — see TopicController.categoryColorClass. */
+.topic-card__category--world-news {
+	color: var(--pico-primary);
+	background: color-mix(in srgb, var(--pico-primary) 18%, transparent);
+}
+
+.topic-card__category--technology {
+	color: var(--pico-ins-color);
+	background: color-mix(in srgb, var(--pico-ins-color) 18%, transparent);
+}
+
+.topic-card__category--business-finance {
+	color: var(--pico-del-color);
+	background: color-mix(in srgb, var(--pico-del-color) 18%, transparent);
+}
+
+.topic-card__category--science {
+	/* Mixing "in srgb" (used everywhere else here) washes blue+coral out
+	   into a muddy grey-blue that barely reads as a distinct color —
+	   verified via computed style before landing on "in hsl" instead,
+	   which blends by hue and lands on a clear purple. */
+	--topic-card__science-mix: color-mix(in hsl, var(--pico-primary) 50%, var(--pico-del-color) 50%);
+	color: var(--topic-card__science-mix);
+	background: color-mix(in srgb, var(--topic-card__science-mix) 18%, transparent);
+}
+
 .topic-card__schedule {
 	font-size: 0.8rem;
 	color: var(--pico-muted-color);
