@@ -35,6 +35,19 @@ product's non-negotiable trust guarantee, not an afterthought.
 | What's trending? | What's a genuine development vs. trend continuation? |
 | What was said? | What's noise/speculation vs. what actually matters? |
 
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td align="center"><strong>Login — with the landing pitch</strong><br/><img src="readme_img/login_screenshot.png" width="400"/></td>
+    <td align="center"><strong>Create a topic</strong><br/><img src="readme_img/topic_creation_screenshot.png" width="400"/></td>
+  </tr>
+  <tr>
+    <td align="center"><strong>Your topics — color-coded by category</strong><br/><img src="readme_img/topics_screenshot.png" width="400"/></td>
+    <td align="center"><strong>A delta briefing</strong><br/><img src="readme_img/briefing_screenshot.png" width="400"/></td>
+  </tr>
+</table>
+
 ## ✨ Features
 
 ### Shipped
@@ -62,10 +75,13 @@ product's non-negotiable trust guarantee, not an afterthought.
   structured sections: key changes, trend continuation, noise/speculation, significance, uncertainties, source
   impact on scenarios, and sources. Empty sections render explicitly (e.g. "No noise detected") instead of being
   omitted, so the structure stays consistent and learnable across briefings.
-- **Manual and scheduled generation** — trigger a briefing on demand, or set a per-topic frequency
-  (manual, twice daily, daily, every other day, weekly). A background scheduler polls for due topics and
-  generates briefings automatically, capped to a small number of concurrent generations so scheduled runs never
-  starve interactive requests.
+- **On-demand and scheduled generation** — trigger a briefing anytime via "Generate briefing", or set a per-topic
+  automatic cadence (daily, every other day, or weekly) with an optional preferred time of day. The time is
+  picked in your own local timezone via a native time picker and converted to UTC automatically, so you never
+  have to think in UTC yourself — leave it blank and DeltaBrief defaults to 9:00 UTC. Both the cadence and the
+  email opt-in are editable anytime from a topic's "Edit schedule" page, no need to recreate the topic. A
+  background scheduler polls for due topics and generates briefings automatically, capped to a small number of
+  concurrent generations so scheduled runs never starve interactive requests.
 - **Live generation feedback** — generation runs synchronously; the "Generate briefing" button disables itself and
   shows a busy spinner for the duration of the request (and a clear failure state if generation fails), so you're
   never left wondering whether anything is happening.
@@ -268,6 +284,10 @@ editor. The `context/` directory
 in this repository is the durable record of that process (PRD, roadmap, tech-stack decision, infrastructure
 research, and one archived change folder per shipped slice) and is preserved as-is as the project's source of
 truth.
+
+<p align="center">
+  <img src="readme_img/Biore_Udzial_10xDevs.png" width="350"/>
+</p>
 
 ## 📄 License
 
