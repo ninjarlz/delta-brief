@@ -282,11 +282,11 @@ pause here for manual confirmation from the human.
 
 #### Automated
 
-- [x] 2.1 Topics list renders the "View briefings" link with the correct href
-- [x] 2.2 Full-path integration test (generate → topics list → history → detail) passes
-- [x] 2.3 `./gradlew test` passes
+- [x] 2.1 Topics list renders the "View briefings" link with the correct href — 00f2eb5
+- [x] 2.2 Full-path integration test (generate → topics list → history → detail) passes — 00f2eb5
+- [x] 2.3 `./gradlew test` passes — 00f2eb5
 
 #### Manual
 
-- [x] 2.4 "View briefings" link on the topics list works end to end
-- [x] 2.5 "View briefings" link visually matches the "Edit schedule"/"Delete" actions on the card
+- [x] 2.4 "View briefings" link on the topics list works end to end — 00f2eb5
+- [x] 2.5 "View briefings" link visually matches the "Edit schedule"/"Delete" actions on the card — 00f2eb5
