@@ -4,6 +4,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.tul.deltabrief.auth.domain.UserId;
@@ -80,29 +84,83 @@ public class BriefingService {
 	 * search feed ({@link TopicSearchFeedProvider}) built from the topic's
 	 * name — the category feeds are category-wide and carry no relevance
 	 * signal for this specific topic, so the search feed is what actually
-	 * biases ingestion toward what this topic is about. Skips (doesn't fail
-	 * on) any source that's unreachable — a deliberate, accepted tradeoff
-	 * (plan.md): one flaky public RSS feed shouldn't block the whole
-	 * feature. A source that fails here simply contributes no items; the
-	 * generated briefing is based on whatever did come through.
+	 * biases ingestion toward what this topic is about. Relevance judgment
+	 * for what to actually cite is left entirely to the LLM (see {@code
+	 * BriefingPromptBuilder}'s {@code ANTI_HALLUCINATION_INSTRUCTION} and
+	 * {@code CURATED_SOURCE_PRIORITY_GUIDANCE}) rather than pre-filtered
+	 * here with a local keyword heuristic — an earlier version of this
+	 * method did exactly that ({@code TopicRelevanceFilter}, since removed)
+	 * and it was both unreliable (missed paraphrases like "Kyiv" for a
+	 * "Ukraine" topic) and unnecessary in practice: the model already
+	 * demonstrated correctly citing only the genuinely relevant handful of
+	 * items even when fed the full unfiltered set.
+	 *
+	 * <p>Every source is fetched concurrently (each fetch is blocking I/O,
+	 * a natural fit for virtual threads) rather than one after another —
+	 * sequential fetching made total latency the <em>sum</em> of every
+	 * source's fetch time, so adding the search feed as one more source
+	 * added its full latency on top of everything else instead of a bounded
+	 * amount. Results are collected by iterating the futures in their
+	 * original submission order (not completion order), so {@code
+	 * ingestedItems}' ordering — which is also the prompt's {@code [n]}
+	 * citation numbering — stays exactly as deterministic as the old
+	 * sequential version, even though the fetches themselves race.
+	 *
+	 * <p>Skips (doesn't fail on) any source that's unreachable — a
+	 * deliberate, accepted tradeoff (plan.md): one flaky public RSS feed
+	 * shouldn't block the whole feature. A source that fails here simply
+	 * contributes no items; the generated briefing is based on whatever did
+	 * come through. An unexpected (non-{@link SourceUnavailableException})
+	 * failure still propagates and fails generation, same as the
+	 * sequential version would have — only the known, already-handled
+	 * per-source failure mode is swallowed.
 	 */
 	private List<IngestedItem> ingestSources(TopicSummary topic) {
 		Instant fetchedAt = Instant.now();
 		List<FeedSource> sources = new ArrayList<>(feedSourceCatalog.findByCategoryId(topic.categoryId()));
 		sources.add(topicSearchFeedProvider.searchFeedFor(topic.name()));
 
-		List<IngestedItem> ingestedItems = new ArrayList<>();
-		for (FeedSource source : sources) {
-			try {
-				for (FetchedItem item : sourceContentFetcher.fetch(source)) {
-					ingestedItems.add(new IngestedItem(source.name(), item.title(), item.link(), item.publishedAt(),
-							fetchedAt));
-				}
-			} catch (SourceUnavailableException skipped) {
-				// Intentionally swallowed — see method Javadoc.
+		try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+			List<Future<List<IngestedItem>>> futures = new ArrayList<>();
+			for (FeedSource source : sources) {
+				futures.add(executor.submit(() -> fetchOne(source, fetchedAt)));
 			}
+
+			List<IngestedItem> ingestedItems = new ArrayList<>();
+			for (Future<List<IngestedItem>> future : futures) {
+				ingestedItems.addAll(awaitResult(future));
+			}
+			return ingestedItems;
 		}
-		return ingestedItems;
+	}
+
+	private List<IngestedItem> fetchOne(FeedSource source, Instant fetchedAt) {
+		try {
+			List<IngestedItem> ingestedItems = new ArrayList<>();
+			for (FetchedItem item : sourceContentFetcher.fetch(source)) {
+				ingestedItems.add(new IngestedItem(source.name(), item.title(), item.link(), item.publishedAt(),
+						fetchedAt));
+			}
+			return ingestedItems;
+		} catch (SourceUnavailableException skipped) {
+			return List.of();
+		}
+	}
+
+	private static List<IngestedItem> awaitResult(Future<List<IngestedItem>> future) {
+		try {
+			return future.get();
+		} catch (ExecutionException e) {
+			// fetchOne only ever throws SourceUnavailableException, and
+			// that's already caught inside it — anything surfacing here is
+			// a genuine, unexpected failure, so it should fail generation
+			// loudly rather than silently vanish as if it were just
+			// another empty source.
+			throw new IllegalStateException("Unexpected failure fetching a briefing source", e.getCause());
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Interrupted while fetching briefing sources", e);
+		}
 	}
 
 	private static PreviousBriefing toPreviousBriefing(Briefing briefing) {
