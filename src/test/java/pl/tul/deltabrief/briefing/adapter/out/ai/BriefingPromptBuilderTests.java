@@ -32,9 +32,10 @@ class BriefingPromptBuilderTests {
 		String prompt = promptBuilder.build(request);
 
 		assertThat(prompt).contains(BriefingPromptBuilder.ANTI_HALLUCINATION_INSTRUCTION);
+		assertThat(prompt).contains(BriefingPromptBuilder.GOOGLE_NEWS_FILLER_GUIDANCE);
 		assertThat(prompt).contains(BriefingPromptBuilder.INJECTION_GUARDRAIL);
 		assertThat(prompt).contains(BriefingPromptBuilder.NUMBERED_SOURCES_HEADER);
-		assertThat(prompt).contains("[1] Headline — https://example.com/1");
+		assertThat(prompt).contains("[1] BBC News: Headline — https://example.com/1");
 		assertThat(prompt).contains("no prior briefing to compare against");
 		assertThat(prompt).contains("\"\"\"War in Ukraine\"\"\"");
 	}
@@ -49,13 +50,30 @@ class BriefingPromptBuilderTests {
 		String prompt = promptBuilder.build(request);
 
 		assertThat(prompt).contains(BriefingPromptBuilder.ANTI_HALLUCINATION_INSTRUCTION);
+		assertThat(prompt).contains(BriefingPromptBuilder.GOOGLE_NEWS_FILLER_GUIDANCE);
 		assertThat(prompt).contains(BriefingPromptBuilder.INJECTION_GUARDRAIL);
 		assertThat(prompt).contains(BriefingPromptBuilder.NUMBERED_SOURCES_HEADER);
 		assertThat(prompt).contains(BriefingPromptBuilder.DELTA_COMPARISON_INSTRUCTION);
-		assertThat(prompt).contains("[1] Headline — https://example.com/1");
+		assertThat(prompt).contains("[1] BBC News: Headline — https://example.com/1");
 		assertThat(prompt).contains("prior key changes");
 		assertThat(prompt).contains("prior source impact");
 		assertThat(prompt).contains("\"\"\"War in Ukraine\"\"\"");
+	}
+
+	@Test
+	void numberedSourceEntriesIncludeTheSourceNameSoTheModelCanTellCuratedFromGoogleNews() {
+		Instant now = Instant.now();
+		List<IngestedItem> items = List.of(
+				new IngestedItem("BBC News – World", "Curated headline", "https://example.com/curated", now, now),
+				new IngestedItem("Google News: War in Ukraine", "Search headline", "https://example.com/search",
+						now, now));
+		GenerationRequest request = new GenerationRequest("War in Ukraine", null, "World News",
+				BriefingType.ONBOARDING, null, items);
+
+		String prompt = promptBuilder.build(request);
+
+		assertThat(prompt).contains("[1] BBC News – World: Curated headline — https://example.com/curated");
+		assertThat(prompt).contains("[2] Google News: War in Ukraine: Search headline — https://example.com/search");
 	}
 
 	@Test

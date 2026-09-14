@@ -358,6 +358,36 @@ Discovered after S-03 shipped and was merged (PR #41, squashed to `main` as `db2
 - [ ] Generate a briefing for a topic with real-world news coverage and confirm at least one ingested item is sourced from "Google News: {topic name}"
 - [ ] Generate two briefings in a row for the same topic (onboarding, then delta) and confirm the delta briefing's key-changes section reports only what's actually new — not a restatement of the onboarding briefing's content — and, on a quiet news cycle, says so explicitly rather than inventing a change
 
+### Addendum 3: Source fetch parallelization and diversity improvements
+
+Discovered from real usage of Addendum 2's Google News integration: generation latency grew from ~5s to ~20s once the search feed was added, and the rendered Sources list skewed almost entirely toward Google News, with the curated category feeds barely contributing. Both trace to the same root causes, discussed with the user before implementing.
+
+1. **Latency — sequential-sum fetching.** `BriefingService.ingestSources` fetched every source (category feeds and the search feed) in one sequential `for` loop, each with its own 5s+5s timeout — total latency was the *sum* of every fetch, not the slowest one. Rewritten to fetch all sources concurrently via `Executors.newVirtualThreadPerTaskExecutor()` (Java 21 virtual threads — a natural fit since each fetch is blocking I/O), collecting results by iterating the futures in their original submission order rather than completion order, so `ingestedItems`' ordering (and therefore the prompt's `[n]` citation numbering) stays exactly as deterministic as the sequential version. An unexpected (non-`SourceUnavailableException`) failure still propagates and fails generation loudly, matching the sequential version's behavior — only the already-handled per-source failure mode is swallowed. Verified live: a real generation for "Ukraine war" dropped from ~8s (pre-parallelization baseline) to ~3-5s consistently across many subsequent live runs.
+2. **Diversity — three iterations before landing on what actually worked.**
+   - **Tried first: a local keyword pre-filter** (`TopicRelevanceFilter`, tokenized topic name vs. item title) applied to category-feed items only, paired with a soft "cite a mix when sources tie" prompt nudge. Live testing across several runs showed the tie-breaker essentially never fired — Google News items are almost always at least a little more specific than whatever a curated feed's current top-10 happens to contain, so a strict-equality bar was met basically never; **0 of 4 sampled runs cited any curated source.** The filter itself was also flagged directly by the user as too crude (misses paraphrases like "Kyiv" for a "Ukraine" topic) and was removed — live testing separately confirmed the model already judges relevance competently on the full unfiltered set, so the filter's actual job was redundant with what the LLM already does, while adding a real false-negative risk.
+   - **Tried second: capping Google News's item count** (10 → 5) to shrink its structural volume advantage, kept alongside a stronger-but-still-conditional priority instruction. Reverted before shipping, per explicit user direction — the user's framing was sharper than "shrink Google News": **Google News should be a pure filler**, used only for claims no curated source addresses at all, not a competing candidate whose relative volume needs tuning.
+   - **What shipped:** `BriefingPromptBuilder.GOOGLE_NEWS_FILLER_GUIDANCE` reframes the relationship entirely — for every claim, the model looks for a curated source first and cites it if it genuinely supports the claim *even when less specific than a Google News result*; a Google News citation is only used when no curated source addresses the claim in any way. Still gated on `ANTI_HALLUCINATION_INSTRUCTION` (never cite a curated source that doesn't actually support the claim just to avoid Google News). Paired with `V11__double_curated_sources_per_category.sql`, which doubles each category's curated feed count (World News 3→6, Technology 2→4, Business & Finance 2→4, Science 1→2 — new feeds live-verified as working RSS/Atom before adding, picked for editorial/geographic diversity, not just volume: NPR, DW, France24 alongside the existing BBC/Al Jazeera/Guardian). More curated coverage gives the filler framing more real chances to find a genuine curated match instead of falling through to Google News by default.
+   - **Verified live, dramatic reversal**: the same "Ukraine war"-style topic, run 3 more times after shipping — **0 of 3 successful runs cited a single Google News item**; every citation came from a curated outlet, with two runs citing 3-4 *different* curated outlets (BBC, Guardian, NPR, France24) corroborating the same story in one briefing.
+
+**Files touched:**
+- `src/main/java/pl/tul/deltabrief/briefing/application/BriefingService.java` (edit) — `ingestSources` parallelized via virtual threads; new `fetchOne`/`awaitResult` helpers (no per-source relevance filtering or item caps — tried both, reverted both)
+- `src/main/java/pl/tul/deltabrief/briefing/adapter/out/ai/BriefingPromptBuilder.java` (edit) — `GOOGLE_NEWS_FILLER_GUIDANCE` constant (final name/wording, after two prior iterations: `SOURCE_DIVERSITY_GUIDANCE` → `CURATED_SOURCE_PRIORITY_GUIDANCE` → this); `numberedSources` now includes each item's `sourceName` in every entry — a hard prerequisite for any curated-vs-Google-News instruction to work at all, since the model can't act on a distinction it can't see
+- `src/main/resources/db/migration/V11__double_curated_sources_per_category.sql` (new) — doubles curated sources per category
+
+**Tests added/extended:**
+- `src/test/java/pl/tul/deltabrief/briefing/application/BriefingServiceTests.java` (edit) — `ingestsEveryFetchedItemFromEveryConcurrentlyFetchedSourceWithNoLocalFiltering` (renamed/repurposed from the removed filter's test) proves no local filtering happens — an on-topic-looking, an off-topic-looking, and a search-feed item are all ingested unconditionally
+- `src/test/java/pl/tul/deltabrief/briefing/adapter/out/ai/BriefingPromptBuilderTests.java` (edit) — asserts `GOOGLE_NEWS_FILLER_GUIDANCE` present in both onboarding and delta prompts; new test asserts each numbered entry includes its source name in the `[n] sourceName: title — link` format
+
+#### Automated Verification:
+
+- [x] `./gradlew build` compiles; full suite passes
+- [x] `BriefingServiceTests` and `BriefingPromptBuilderTests` pass, including the new/renamed coverage above
+
+#### Manual Verification:
+
+- [x] Live generation latency measured — ~8s baseline down to ~3-5s consistently across many live runs
+- [x] Live generation's Sources list confirmed as curated-first: 0 of 3 post-ship runs cited any Google News item; several runs cited 3-4 distinct curated outlets together
+
 ---
 
 ## Testing Strategy
@@ -475,3 +505,14 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 - [x] 5.5 Google News topic-search feed confirmed contributing ingested items — 10 of 40 ingested items came from "Google News: Ukraine war", all genuinely on-topic (vs. only ~2 of 30 category-feed items actually being Ukraine-related), directly demonstrating the relevance improvement this addendum was written for
 - [x] 5.6 Delta-comparison prompt's anti-restatement + "no change" guidance confirmed against two real generations for the same topic — onboarding briefing's key-changes described a real event with citations; the delta briefing generated ~10s later (same underlying news pool, no genuine new development) read exactly "No significant change since the prior briefing." — the explicit no-change behavior working as designed, not a restatement of the onboarding content
 - [x] 4.10 Create a topic without a description, confirm creation + generation both work exactly as before — 23c9450
+
+### Addendum 3: Source fetch parallelization and diversity improvements
+
+#### Automated
+
+- [x] 6.1 `./gradlew build` compiles; full suite passes — includes `BriefingServiceTests`' no-local-filtering coverage and `BriefingPromptBuilderTests`' source-name/filler-guidance assertions — b650d12
+
+#### Manual
+
+- [x] 6.2 Live generation latency confirmed dropping from ~8s to ~3-5s consistently after parallelizing source fetches — b650d12
+- [x] 6.3 Live generation's Sources list confirmed curated-first after landing on the filler framing + doubled curated sources: 0 of 3 post-ship runs cited Google News; several cited 3-4 distinct curated outlets together — b650d12

@@ -182,7 +182,7 @@ class BriefingServiceTests {
 		UserId owner = newUser();
 		CategoryId categoryId = newCategoryWithFeedAt(categoryFeedPath);
 		Topic topic = topicRepository
-				.save(Topic.create(owner, "Unique Topic " + UUID.randomUUID(), categoryId, Instant.now()));
+				.save(Topic.create(owner, "Test Topic " + UUID.randomUUID(), categoryId, Instant.now()));
 		String googleNewsRss = """
 				<?xml version="1.0" encoding="UTF-8"?>
 				<rss version="2.0">
@@ -205,6 +205,68 @@ class BriefingServiceTests {
 				.containsExactlyInAnyOrder("Test Headline", "Targeted Headline");
 		assertThat(briefing.ingestedItems()).extracting(IngestedItem::sourceName)
 				.contains("Google News: " + topic.name());
+	}
+
+	/**
+	 * Relevance judgment for what to actually cite is left entirely to the
+	 * LLM (see {@code BriefingPromptBuilder.CURATED_SOURCE_PRIORITY_GUIDANCE})
+	 * rather than pre-filtered during ingestion — a local keyword filter was
+	 * tried and removed (unreliable, missed paraphrases like "Kyiv" for a
+	 * "Ukraine" topic). This seeds a category feed with an on-topic and an
+	 * off-topic-looking item, and a search feed with an off-topic-looking
+	 * item, to prove every fetched item from every concurrently-fetched
+	 * source is ingested — none of them dropped locally — regardless of how
+	 * relevant its title looks.
+	 */
+	@Test
+	void ingestsEveryFetchedItemFromEveryConcurrentlyFetchedSourceWithNoLocalFiltering() {
+		String categoryFeedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		String categoryRss = """
+				<?xml version="1.0" encoding="UTF-8"?>
+				<rss version="2.0">
+				  <channel>
+				    <title>Test Feed</title>
+				    <item>
+				      <title>Ukraine ceasefire talks resume</title>
+				      <link>https://example.com/on-topic</link>
+				      <pubDate>Tue, 02 Jan 2024 00:00:00 GMT</pubDate>
+				    </item>
+				    <item>
+				      <title>Local weather forecast for the weekend</title>
+				      <link>https://example.com/off-topic</link>
+				      <pubDate>Tue, 02 Jan 2024 00:00:00 GMT</pubDate>
+				    </item>
+				  </channel>
+				</rss>
+				""";
+		stubFor(get(urlEqualTo(categoryFeedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(categoryRss)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		CategoryId categoryId = newCategoryWithFeedAt(categoryFeedPath);
+		Topic topic = topicRepository
+				.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
+		String googleNewsRss = """
+				<?xml version="1.0" encoding="UTF-8"?>
+				<rss version="2.0">
+				  <channel>
+				    <title>Google News</title>
+				    <item>
+				      <title>Completely unrelated wire item</title>
+				      <link>https://example.com/search-result</link>
+				      <pubDate>Tue, 02 Jan 2024 00:00:00 GMT</pubDate>
+				    </item>
+				  </channel>
+				</rss>
+				""";
+		stubFor(get(urlPathEqualTo("/rss/search")).withQueryParam("q", equalTo(topic.name())).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(googleNewsRss)));
+
+		Briefing briefing = briefingService.generateBriefing(topic.id(), owner);
+
+		assertThat(briefing.ingestedItems()).extracting(IngestedItem::title).containsExactlyInAnyOrder(
+				"Ukraine ceasefire talks resume", "Local weather forecast for the weekend",
+				"Completely unrelated wire item");
 	}
 
 	@Test
