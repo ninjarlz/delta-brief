@@ -261,6 +261,17 @@ body {
 	border-radius: 999px;
 }
 
+.topic-card__schedule {
+	font-size: 0.8rem;
+	color: var(--pico-muted-color);
+}
+
+.topic-card__schedule-failed {
+	font-size: 0.8rem;
+	color: var(--pico-del-color, #c0392b);
+	font-weight: 600;
+}
+
 .topic-card__actions {
 	display: flex;
 	gap: 0.5rem;
@@ -272,7 +283,8 @@ body {
 }
 
 .topic-card__delete,
-.topic-card__generate {
+.topic-card__generate,
+.topic-card__edit {
 	width: auto;
 	margin: 0;
 	padding: 0.4rem 0.9rem;

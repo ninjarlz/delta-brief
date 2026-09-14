@@ -1,10 +1,13 @@
 package pl.tul.deltabrief.topic.application.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import pl.tul.deltabrief.topic.domain.Frequency;
 
 /**
  * The validated create-topic form shape.
@@ -27,5 +30,21 @@ public class CreateTopicRequest {
 	 */
 	@Size(max = 1000)
 	private String description;
+
+	/**
+	 * How often DeltaBrief should generate this topic's briefing
+	 * automatically (FR-008) — defaults to {@code DAILY} so the form starts
+	 * with the product default pre-selected.
+	 */
+	@NotNull
+	private Frequency frequency = Frequency.DAILY;
+
+	/**
+	 * Optional UTC hour-of-day (0-23) to nudge scheduled generation toward —
+	 * {@code null} means no preference.
+	 */
+	@Min(0)
+	@Max(23)
+	private Integer preferredHour;
 
 }

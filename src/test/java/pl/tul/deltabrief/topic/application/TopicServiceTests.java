@@ -19,6 +19,7 @@ import pl.tul.deltabrief.topic.application.TopicService.DuplicateTopicNameExcept
 import pl.tul.deltabrief.topic.application.TopicService.TopicLimitReachedException;
 import pl.tul.deltabrief.topic.application.port.out.CategoryRepository;
 import pl.tul.deltabrief.topic.domain.CategoryId;
+import pl.tul.deltabrief.topic.domain.Frequency;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
@@ -64,6 +65,37 @@ class TopicServiceTests {
 
 		assertThat(created.id()).isNotNull();
 		assertThat(topicService.listTopics(userId)).extracting(Topic::name).containsExactly("War in Ukraine");
+	}
+
+	@Test
+	void createsATopicWithTheDailyDefaultFrequencyAndAComputedNextDueAt() {
+		UserId userId = newUser();
+
+		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId());
+
+		assertThat(created.frequency()).isEqualTo(Frequency.DAILY);
+		assertThat(created.preferredHour()).isNull();
+		assertThat(created.nextDueAt()).isNotNull();
+	}
+
+	@Test
+	void createsATopicWithAnExplicitFrequencyAndPreferredHour() {
+		UserId userId = newUser();
+
+		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), "note", Frequency.WEEKLY, 9);
+
+		assertThat(created.frequency()).isEqualTo(Frequency.WEEKLY);
+		assertThat(created.preferredHour()).isEqualTo(9);
+		assertThat(created.nextDueAt()).isNotNull();
+	}
+
+	@Test
+	void createsAManualTopicWithNoNextDueAt() {
+		UserId userId = newUser();
+
+		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), null, Frequency.MANUAL, null);
+
+		assertThat(created.nextDueAt()).isNull();
 	}
 
 	@Test
@@ -135,6 +167,58 @@ class TopicServiceTests {
 		topicService.deleteTopic(owner, topic.id());
 
 		assertThat(topicService.listTopics(owner)).isEmpty();
+	}
+
+	@Test
+	void updateScheduleChangesFrequencyPreferredHourAndRecomputesNextDueAt() {
+		UserId owner = newUser();
+		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
+
+		topicService.updateSchedule(owner, topic.id(), Frequency.WEEKLY, 9);
+
+		Topic updated = topicService.findForSchedule(owner, topic.id()).orElseThrow();
+		assertThat(updated.frequency()).isEqualTo(Frequency.WEEKLY);
+		assertThat(updated.preferredHour()).isEqualTo(9);
+		assertThat(updated.nextDueAt()).isNotNull();
+	}
+
+	@Test
+	void updateScheduleToManualClearsNextDueAt() {
+		UserId owner = newUser();
+		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
+
+		topicService.updateSchedule(owner, topic.id(), Frequency.MANUAL, null);
+
+		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().nextDueAt()).isNull();
+	}
+
+	@Test
+	void updateScheduleIsANoOpForATopicOwnedByAnotherUser() {
+		UserId owner = newUser();
+		UserId otherUser = newUser();
+		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
+
+		topicService.updateSchedule(otherUser, topic.id(), Frequency.WEEKLY, 9);
+
+		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().frequency()).isEqualTo(Frequency.DAILY);
+	}
+
+	@Test
+	void updateScheduleIsANoOpForAnUnknownId() {
+		UserId owner = newUser();
+
+		topicService.updateSchedule(owner, new TopicId(999_999L), Frequency.WEEKLY, 9);
+
+		assertThat(topicService.listTopics(owner)).isEmpty();
+	}
+
+	@Test
+	void findForScheduleIsEmptyForAnotherUsersTopic() {
+		UserId owner = newUser();
+		UserId otherUser = newUser();
+		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
+
+		assertThat(topicService.findForSchedule(otherUser, topic.id())).isEmpty();
 	}
 
 }

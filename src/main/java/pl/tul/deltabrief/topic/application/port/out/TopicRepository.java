@@ -38,6 +38,16 @@ public interface TopicRepository {
 	Optional<TopicSummary> findSummaryByIdAndUserId(TopicId id, UserId userId);
 
 	/**
+	 * Full owner-scoped topic lookup — unlike {@link #findSummaryByIdAndUserId},
+	 * which returns only a lightweight cross-module view, this returns the
+	 * whole aggregate for callers (the schedule edit flow) that need to
+	 * mutate and re-save it via {@link #save}.
+	 *
+	 * @return empty if the topic doesn't exist or isn't owned by {@code userId}
+	 */
+	Optional<Topic> findByIdAndUserId(TopicId id, UserId userId);
+
+	/**
 	 * @return whether a row was actually deleted — {@code false} means the
 	 * topic either doesn't exist or isn't owned by {@code userId}; callers
 	 * must treat both cases identically (no information leak).

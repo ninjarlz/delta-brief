@@ -127,6 +127,57 @@ class TopicFlowIntegrationTests {
 	}
 
 	@Test
+	void aUserCanEditATopicsSchedule() throws Exception {
+		MockHttpSession session = loginAsNewVerifiedUser();
+		Long categoryId = categoryRepository.findAll().get(0).id().value();
+		mockMvc.perform(post("/topics").with(csrf()).session(session)
+				.param("name", "War in Ukraine")
+				.param("categoryId", categoryId.toString())
+				.param("frequency", "DAILY"))
+			.andExpect(status().is3xxRedirection());
+		String topicId = extractCreatedTopicId(session);
+
+		mockMvc.perform(get("/topics/" + topicId + "/edit").session(session))
+			.andExpect(status().isOk())
+			.andExpect(view().name("topic-edit"));
+
+		mockMvc.perform(post("/topics/" + topicId + "/edit").with(csrf()).session(session)
+				.param("frequency", "WEEKLY")
+				.param("preferredHour", "9"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/"));
+
+		mockMvc.perform(get("/topics/" + topicId + "/edit").session(session))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("selected")));
+	}
+
+	@Test
+	void aUserCannotEditAnotherUsersTopicSchedule() throws Exception {
+		MockHttpSession sessionA = loginAsNewVerifiedUser();
+		MockHttpSession sessionB = loginAsNewVerifiedUser();
+		Long categoryId = categoryRepository.findAll().get(0).id().value();
+		mockMvc.perform(post("/topics").with(csrf()).session(sessionA)
+				.param("name", "User A topic")
+				.param("categoryId", categoryId.toString())
+				.param("frequency", "DAILY"))
+			.andExpect(status().is3xxRedirection());
+		String userAsTopicId = extractCreatedTopicId(sessionA);
+
+		// No information leak — same convention as delete: redirects to "/"
+		// regardless of ownership, rather than a distinguishable 404/403.
+		mockMvc.perform(get("/topics/" + userAsTopicId + "/edit").session(sessionB))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/"));
+
+		mockMvc.perform(post("/topics/" + userAsTopicId + "/edit").with(csrf()).session(sessionB)
+				.param("frequency", "WEEKLY")
+				.param("preferredHour", "9"))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/"));
+	}
+
+	@Test
 	void aUserCannotDeleteAnotherUsersTopic() throws Exception {
 		MockHttpSession sessionA = loginAsNewVerifiedUser();
 		MockHttpSession sessionB = loginAsNewVerifiedUser();

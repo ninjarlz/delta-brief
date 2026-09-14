@@ -35,6 +35,19 @@
 					<small class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></small>
 					<small>Helps DeltaBrief tailor what counts as significant when generating your briefings.</small>
 				</label>
+				<label for="frequency">Briefing frequency
+					<select id="frequency" th:field="*{frequency}"
+						th:aria-invalid="${#fields.hasErrors('frequency')} ? 'true' : null">
+						<option th:each="option : ${frequencyOptions}" th:value="${option.value}" th:text="${option.label}"></option>
+					</select>
+					<small class="field-error" th:if="${#fields.hasErrors('frequency')}" th:errors="*{frequency}"></small>
+				</label>
+				<label for="preferredHour">Preferred hour (UTC, optional)
+					<input type="number" id="preferredHour" th:field="*{preferredHour}" min="0" max="23" placeholder="e.g. 9"
+						th:aria-invalid="${#fields.hasErrors('preferredHour')} ? 'true' : null"/>
+					<small class="field-error" th:if="${#fields.hasErrors('preferredHour')}" th:errors="*{preferredHour}"></small>
+					<small>DeltaBrief nudges automatic generation toward this hour when set. Leave blank for no preference.</small>
+				</label>
 
 				<div class="coming-soon-panel">
 					<div class="coming-soon-panel__header">

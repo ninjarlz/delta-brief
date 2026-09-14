@@ -46,7 +46,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | done | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
 | S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | done  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | done | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
-| S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | ready | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
+| S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | in-progress | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
 | S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | ready | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
 | S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | ready | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
 | S-07 | rate-a-briefing                  | rate a briefing with predefined categories                          | S-03           | FR-013                  | ready | [#12](https://github.com/ninjarlz/delta-brief/issues/12) |
@@ -147,7 +147,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Depends on S-03's generation logic already working manually — adding scheduling on top of unproven generation would compound two unknowns (does generation work? does the schedule fire reliably?) into one slice that's harder to debug if something goes wrong.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-05: Browse briefing history
 

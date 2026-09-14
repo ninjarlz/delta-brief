@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Edit briefing schedule — DeltaBrief</title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+	<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+	<main class="app-content">
+		<div class="auth-card">
+			<h1>Edit briefing schedule</h1>
+			<p class="subtitle">Choose how often DeltaBrief should generate a new delta briefing for this topic automatically.</p>
+			<form th:action="@{/topics/{id}/edit(id=${topicId})}" th:object="${editScheduleRequest}" method="post">
+				<label for="frequency">Briefing frequency
+					<select id="frequency" th:field="*{frequency}"
+						th:aria-invalid="${#fields.hasErrors('frequency')} ? 'true' : null">
+						<option th:each="option : ${frequencyOptions}" th:value="${option.value}" th:text="${option.label}"></option>
+					</select>
+					<small class="field-error" th:if="${#fields.hasErrors('frequency')}" th:errors="*{frequency}"></small>
+				</label>
+				<label for="preferredHour">Preferred hour (UTC, optional)
+					<input type="number" id="preferredHour" th:field="*{preferredHour}" min="0" max="23" placeholder="e.g. 9"
+						th:aria-invalid="${#fields.hasErrors('preferredHour')} ? 'true' : null"/>
+					<small class="field-error" th:if="${#fields.hasErrors('preferredHour')}" th:errors="*{preferredHour}"></small>
+					<small>DeltaBrief nudges automatic generation toward this hour when set. Leave blank for no preference.</small>
+				</label>
+				<button type="submit">Save schedule</button>
+			</form>
+			<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>
+		</div>
+	</main>
+</body>
+</html>

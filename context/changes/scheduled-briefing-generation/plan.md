@@ -252,21 +252,21 @@ Dispatch concurrency is explicitly bounded (`app.scheduling.max-concurrent-gener
 
 #### Automated
 
-- [x] 1.1 `ScheduleCalculatorTests` passes covering all frequencies and hour-nudge edge cases
-- [x] 1.2 `./gradlew build` succeeds (migration applies cleanly)
+- [x] 1.1 `ScheduleCalculatorTests` passes covering all frequencies and hour-nudge edge cases — 876205f
+- [x] 1.2 `./gradlew build` succeeds (migration applies cleanly) — 876205f
 
 ### Phase 2: Topic creation/edit UI + schedule visibility
 
 #### Automated
 
-- [ ] 2.1 `./gradlew test` passes including new `TopicService.updateSchedule` tests
-- [ ] 2.2 New edit-endpoint tests pass
+- [x] 2.1 `./gradlew test` passes including new `TopicService.updateSchedule` tests
+- [x] 2.2 New edit-endpoint tests pass
 
 #### Manual
 
-- [ ] 2.3 Create a topic, confirm frequency/hour fields render and persist
-- [ ] 2.4 Edit an existing topic's frequency, confirm "next briefing" updates
-- [ ] 2.5 Confirm failure indicator appears/disappears correctly
+- [x] 2.3 Create a topic, confirm frequency/hour fields render and persist
+- [x] 2.4 Edit an existing topic's frequency, confirm "next briefing" updates
+- [x] 2.5 Confirm failure indicator appears/disappears correctly
 
 ### Phase 3: The scheduler + manual-trigger schedule integration
 

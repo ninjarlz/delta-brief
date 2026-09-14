@@ -1,8 +1,12 @@
 package pl.tul.deltabrief.topic.adapter.in.web;
 
 import jakarta.validation.Valid;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -20,15 +24,21 @@ import pl.tul.deltabrief.topic.application.TopicService.CategoryNotFoundExceptio
 import pl.tul.deltabrief.topic.application.TopicService.DuplicateTopicNameException;
 import pl.tul.deltabrief.topic.application.TopicService.TopicLimitReachedException;
 import pl.tul.deltabrief.topic.application.dto.CreateTopicRequest;
+import pl.tul.deltabrief.topic.application.dto.EditScheduleRequest;
 import pl.tul.deltabrief.topic.application.port.out.CategoryRepository;
 import pl.tul.deltabrief.topic.domain.Category;
 import pl.tul.deltabrief.topic.domain.CategoryId;
+import pl.tul.deltabrief.topic.domain.Frequency;
+import pl.tul.deltabrief.topic.domain.ScheduledRunStatus;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
 @Controller
 @RequiredArgsConstructor
 public class TopicController {
+
+	private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm 'UTC'")
+			.withZone(ZoneOffset.UTC);
 
 	private final TopicService topicService;
 	private final CategoryRepository categoryRepository;
@@ -41,6 +51,16 @@ public class TopicController {
 	@ModelAttribute("categories")
 	public List<Category> categories() {
 		return categoryRepository.findAll();
+	}
+
+	/**
+	 * Populated in the model for every handler below — used by the frequency
+	 * pickers in both {@code topic-form.html} and {@code topic-edit.html},
+	 * same pattern as {@link #categories()}.
+	 */
+	@ModelAttribute("frequencyOptions")
+	public List<FrequencyOption> frequencyOptions() {
+		return Arrays.stream(Frequency.values()).map(f -> new FrequencyOption(f, frequencyLabel(f))).toList();
 	}
 
 	@GetMapping("/")
@@ -72,7 +92,7 @@ public class TopicController {
 		}
 		try {
 			topicService.createTopic(currentUserId(authentication), form.getName(), new CategoryId(form.getCategoryId()),
-					form.getDescription());
+					form.getDescription(), form.getFrequency(), form.getPreferredHour());
 		} catch (DuplicateTopicNameException alreadyExists) {
 			bindingResult.rejectValue("name", "name.duplicate", "You already have a topic with this name");
 			return "topic-form";
@@ -83,6 +103,38 @@ public class TopicController {
 			bindingResult.rejectValue("categoryId", "category.invalid", "Please select a valid category");
 			return "topic-form";
 		}
+		return "redirect:/";
+	}
+
+	@GetMapping("/topics/{id}/edit")
+	public String showEditForm(@PathVariable Long id, Authentication authentication, Model model) {
+		Optional<Topic> topic = topicService.findForSchedule(currentUserId(authentication), new TopicId(id));
+		if (topic.isEmpty()) {
+			return "redirect:/";
+		}
+		EditScheduleRequest form = new EditScheduleRequest();
+		form.setFrequency(topic.get().frequency());
+		form.setPreferredHour(topic.get().preferredHour());
+		model.addAttribute("topicId", id);
+		model.addAttribute("editScheduleRequest", form);
+		return "topic-edit";
+	}
+
+	/**
+	 * Redirects to {@code /} both on success and when {@code id} isn't
+	 * owned/doesn't exist ({@link TopicService#updateSchedule} silently
+	 * no-ops) — same no-information-leak convention as {@link #deleteTopic}.
+	 */
+	@PostMapping("/topics/{id}/edit")
+	public String updateSchedule(@PathVariable Long id,
+			@Valid @ModelAttribute("editScheduleRequest") EditScheduleRequest form, BindingResult bindingResult,
+			Authentication authentication, Model model) {
+		if (bindingResult.hasErrors()) {
+			model.addAttribute("topicId", id);
+			return "topic-edit";
+		}
+		topicService.updateSchedule(currentUserId(authentication), new TopicId(id), form.getFrequency(),
+				form.getPreferredHour());
 		return "redirect:/";
 	}
 
@@ -102,16 +154,42 @@ public class TopicController {
 		return ((AppUserDetails) authentication.getPrincipal()).userId();
 	}
 
-	private static TopicView toView(Topic topic, Map<Long, String> categoryNamesById) {
+	static TopicView toView(Topic topic, Map<Long, String> categoryNamesById) {
 		String categoryName = categoryNamesById.get(topic.categoryId().value());
-		return new TopicView(topic.id().value(), topic.name(), categoryName);
+		String nextDueAt = topic.nextDueAt() == null ? "Manual" : TIMESTAMP_FORMAT.format(topic.nextDueAt());
+		String nextDueAtIso = topic.nextDueAt() == null ? null : topic.nextDueAt().toString();
+		boolean lastRunFailed = topic.lastScheduledStatus() == ScheduledRunStatus.FAILURE;
+		return new TopicView(topic.id().value(), topic.name(), categoryName, nextDueAt, nextDueAtIso, lastRunFailed);
+	}
+
+	private static String frequencyLabel(Frequency frequency) {
+		return switch (frequency) {
+			case MANUAL -> "Manual only";
+			case TWICE_DAILY -> "Twice daily";
+			case DAILY -> "Daily";
+			case EVERY_OTHER_DAY -> "Every other day";
+			case WEEKLY -> "Weekly";
+		};
 	}
 
 	/**
 	 * Display-only shape for {@code topics.html} — resolves the category
 	 * name once here rather than making the template do a lookup.
+	 * {@code nextDueAtIso} carries the raw instant for {@code app.js} to
+	 * re-render in the viewer's local timezone (or {@code null} for a
+	 * {@code MANUAL} topic, which has no schedule); {@code nextDueAt} (UTC
+	 * text, or "Manual") is the no-JS fallback.
 	 */
-	public record TopicView(Long id, String name, String categoryName) {
+	public record TopicView(Long id, String name, String categoryName, String nextDueAt, String nextDueAtIso,
+			boolean lastRunFailed) {
+	}
+
+	/**
+	 * Display shape for the frequency `<select>` in {@code topic-form.html}
+	 * and {@code topic-edit.html} — pairs each {@link Frequency} with a
+	 * human-readable label.
+	 */
+	public record FrequencyOption(Frequency value, String label) {
 	}
 
 }
