@@ -26,31 +26,31 @@
 		</header>
 
 		<section class="briefing-section">
-			<h2>Key changes</h2>
+			<h2>🔑 Key changes</h2>
 			<p th:text="${briefing.keyChanges}"></p>
 		</section>
 		<section class="briefing-section">
-			<h2>Trend continuation</h2>
+			<h2>📈 Trend continuation</h2>
 			<p th:text="${briefing.trendContinuation}"></p>
 		</section>
 		<section class="briefing-section">
-			<h2>Noise &amp; speculation</h2>
+			<h2>🌀 Noise &amp; speculation</h2>
 			<p th:text="${briefing.noiseSpeculation}"></p>
 		</section>
 		<section class="briefing-section">
-			<h2>Significance</h2>
+			<h2>⭐ Significance</h2>
 			<p th:text="${briefing.significance}"></p>
 		</section>
 		<section class="briefing-section">
-			<h2>Uncertainties</h2>
+			<h2>❓ Uncertainties</h2>
 			<p th:text="${briefing.uncertainties}"></p>
 		</section>
 		<section class="briefing-section">
-			<h2>Source impact on scenarios</h2>
+			<h2>🔮 Source impact on scenarios</h2>
 			<p th:text="${briefing.sourceImpact}"></p>
 		</section>
 		<section class="briefing-section">
-			<h2>Sources</h2>
+			<h2>🔗 Sources</h2>
 			<ol class="briefing-sources" th:if="${!#lists.isEmpty(briefing.sources)}">
 				<li th:each="source : ${briefing.sources}">
 					<span class="briefing-sources__name" th:text="${source.sourceName}"></span>

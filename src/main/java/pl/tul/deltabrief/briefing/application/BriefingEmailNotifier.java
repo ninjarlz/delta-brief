@@ -75,12 +75,12 @@ public class BriefingEmailNotifier {
 		RenderedBriefing rendered = CitationRenderer.render(briefing);
 		StringBuilder body = new StringBuilder();
 		body.append(headline).append("\n\n");
-		appendSection(body, "Key changes", rendered.keyChanges());
-		appendSection(body, "Trend continuation", rendered.trendContinuation());
-		appendSection(body, "Noise & speculation", rendered.noiseSpeculation());
-		appendSection(body, "Significance", rendered.significance());
-		appendSection(body, "Uncertainties", rendered.uncertainties());
-		appendSection(body, "Source impact on scenarios", rendered.sourceImpact());
+		appendSection(body, "🔑 Key changes", rendered.keyChanges());
+		appendSection(body, "📈 Trend continuation", rendered.trendContinuation());
+		appendSection(body, "🌀 Noise & speculation", rendered.noiseSpeculation());
+		appendSection(body, "⭐ Significance", rendered.significance());
+		appendSection(body, "❓ Uncertainties", rendered.uncertainties());
+		appendSection(body, "🔮 Source impact on scenarios", rendered.sourceImpact());
 		appendSources(body, rendered.citedSources());
 		body.append("View this briefing online: ").append(baseUrl).append("/topics/")
 				.append(briefing.topicId().value()).append("/briefings/").append(briefing.id().value());
@@ -92,7 +92,7 @@ public class BriefingEmailNotifier {
 	}
 
 	private static void appendSources(StringBuilder body, List<IngestedItem> sources) {
-		body.append("Sources\n");
+		body.append("🔗 Sources\n");
 		if (sources.isEmpty()) {
 			body.append("No sources were explicitly cited in this briefing.\n\n");
 			return;
