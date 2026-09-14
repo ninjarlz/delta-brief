@@ -45,7 +45,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | F-01 | wire-database-connectivity       | (foundation) app connects to a real Postgres DB, locally and deployed | —              | Access Control, NFR: user data privacy | done | [#5](https://github.com/ninjarlz/delta-brief/issues/5) |
 | S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | done | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
 | S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | done  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
-| S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | in-progress | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
+| S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | done | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
 | S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | proposed | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
 | S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | proposed | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
 | S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | proposed | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
@@ -134,7 +134,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - How does the onboarding briefing differ from a delta briefing in structure and length? — Owner: user. Block: no.
 - **Risk:** This is the go/no-go slice for the whole product — if the delta-classification (genuine change vs. trend vs. noise/speculation) doesn't hold up, later slices would be automating and distributing something unproven. Deliberately scoped to a **manual** trigger, not the full `@Scheduled` automation — US-01 explicitly allows "manually or on schedule," so this shrinks the north star and gets an answer faster. Scheduling is deferred to S-04.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-04: Scheduled briefing generation
 
@@ -245,3 +245,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **F-01: (foundation) The app connects to a real Postgres (Supabase) database, both locally and in the deployed Render environment, with a schema-migration mechanism in place so future slices can add tables incrementally.** — Archived 2026-09-11 → `context/archive/2026-09-10-wire-database-connectivity/`. Lesson: —.
 - **S-02: User can create a watched topic, pick its sources from presets, and browse their topic list.** — Archived 2026-09-13 → `context/archive/2026-09-13-create-topic-and-select-sources/`. Lesson: —.
 - **S-01: User can create an account (email/password or OAuth) and log in and out.** — Archived 2026-09-14 → `context/archive/2026-09-11-user-registration-and-login/`. Lesson: —.
+- **S-03: User can trigger generation of an onboarding briefing for a new topic, then trigger a delta briefing that compares new content against it, and read both in the app.** — Archived 2026-09-14 → `context/archive/2026-09-13-first-onboarding-and-delta-briefing/`. Lesson: —.
