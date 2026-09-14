@@ -218,12 +218,18 @@ body {
 }
 
 .topic-list {
-	list-style: none;
 	margin: 0;
 	padding: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
+}
+
+/* Pico's own `ul li { list-style: square }` targets <li> directly, so it
+   always wins over an inherited `list-style: none` set on the parent <ul>
+   alone — the override has to target the <li> itself. */
+.topic-list li {
+	list-style: none;
 }
 
 .topic-card {
@@ -334,7 +340,6 @@ body {
 }
 
 .briefing-history__list {
-	list-style: none;
 	margin: 0;
 	padding: 0;
 	display: flex;
@@ -343,6 +348,65 @@ body {
 	font-size: 0.9rem;
 }
 
+/* Pico's own `ul li { list-style: square }` targets <li> directly, so it
+   always wins over an inherited `list-style: none` set on the parent <ul>
+   alone — the override has to target the <li> itself. */
+.briefing-history__list li {
+	list-style: none;
+}
+
 .briefing-history__current {
 	color: var(--pico-muted-color);
+}
+
+/* Landing pitch below the auth card on /login and /register (see
+   fragments/about.html) — sits as a sibling of .center-content, not inside
+   it, so it doesn't affect the auth card's own vertical centering. */
+.landing-about {
+	width: 100%;
+	max-width: 34rem;
+	margin: 0 auto;
+	padding: 0 1.5rem 3rem;
+}
+
+.landing-about h2 {
+	text-align: center;
+	font-size: 1.25rem;
+	margin-bottom: 0.75rem;
+}
+
+.landing-about__lede {
+	color: var(--pico-muted-color);
+	text-align: center;
+	margin-bottom: 1.5rem;
+}
+
+.landing-about__compare {
+	font-size: 0.85rem;
+	margin-bottom: 1.5rem;
+}
+
+.landing-about__features {
+	margin: 0 0 1.5rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	font-size: 0.9rem;
+}
+
+/* Pico's own `ul li { list-style: square }` targets <li> directly, so it
+   always wins over an inherited `list-style: none` set on the parent <ul>
+   alone — the override has to target the <li> itself. */
+.landing-about__features li {
+	list-style: none;
+}
+
+.landing-about__trust {
+	text-align: center;
+	font-size: 0.85rem;
+	color: var(--pico-muted-color);
+	border-top: 1px solid var(--pico-muted-border-color);
+	padding-top: 1.25rem;
+	margin: 0;
 }

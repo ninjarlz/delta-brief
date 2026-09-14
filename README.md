@@ -6,9 +6,9 @@ welcome.
 
 ## Description
 
-An agentically-developed web app built as part of the **10xDevs course** and the **10xBuilder certification**,
-exploring AI-agent-driven software delivery end to end — PRD, roadmap, planning, implementation, and tests all
-produced through an agentic workflow rather than hand-written from scratch.
+An agentically-developed web app built as part of the **[10xDevs](https://www.10xdevs.pl) course** and the
+**10xBuilder certification**, exploring AI-agent-driven software delivery end to end — PRD, roadmap, planning,
+implementation, and tests all produced through an agentic workflow rather than hand-written from scratch.
 
 DeltaBrief tracks long-running news topics (wars, politics, economics, regulations, international relations) and
 answers a different question than every feed or AI summarizer out there. Classic tools tell you **what's newest**.
@@ -61,8 +61,9 @@ product's non-negotiable trust guarantee, not an afterthought.
   (manual, twice daily, daily, every other day, weekly). A background scheduler polls for due topics and
   generates briefings automatically, capped to a small number of concurrent generations so scheduled runs never
   starve interactive requests.
-- **Live generation feedback** — an HTMX-polled progress view shows generation is running (and surfaces a clear
-  failure state) instead of leaving you wondering if anything is happening.
+- **Live generation feedback** — generation runs synchronously; the "Generate briefing" button disables itself and
+  shows a busy spinner for the duration of the request (and a clear failure state if generation fails), so you're
+  never left wondering whether anything is happening.
 - **Briefing history** — browse every past briefing for a topic, onboarding and delta alike, not just the latest.
 - **Email delivery (the delta newsletter)** — opt in per topic and every newly generated briefing — onboarding or
   delta — is delivered straight to your inbox via Resend's SMTP relay, on that topic's own schedule. This is the
@@ -133,7 +134,7 @@ Starts PostgreSQL on port `5433` locally, with Flyway migrating the schema autom
 ```bash
 ./gradlew bootRun
 ```
-The app serves server-rendered pages (Thymeleaf + HTMX fragments) at `http://localhost:8080`. There is no public
+The app serves server-rendered pages (Thymeleaf) at `http://localhost:8080`. There is no public
 JSON API — every route returns HTML, behind session-cookie auth with CSRF protection.
 
 ### Running tests
@@ -149,13 +150,14 @@ Run a single test class:
 ## 🏗 Architecture
 
 A **DDD modular monolith** under `pl.tul.deltabrief` — one package per bounded context, each internally layered
-`domain` → `application` → `adapter.in.web` (Thymeleaf controllers / HTMX fragments) / `adapter.out.<concern>`
+`domain` → `application` → `adapter.in.web` (Thymeleaf controllers) / `adapter.out.<concern>`
 (persistence, AI, email, RSS). Dependencies point inward only; modules reference each other by ID
 (e.g. `TopicId`, `UserId`), never by importing another module's domain aggregate.
 
 > 🖥️ **Spring Boot + server-side rendering, not an API.** DeltaBrief is a classic server-rendered web app
-> (Spring MVC + Thymeleaf, with HTMX for the few dynamic fragments like live generation progress) backed by
-> session-based auth. There is no public REST/JSON API — every route returns HTML behind the session cookie,
+> (Spring MVC + Thymeleaf; a small vanilla-JS helper disables and spinner-fies a form's submit button for the
+> duration of a slow synchronous request, like briefing generation — no HTMX, no client-side framework) backed
+> by session-based auth. There is no public REST/JSON API — every route returns HTML behind the session cookie,
 > and the only non-HTML endpoint is the `/actuator/health` check Render uses. This is a deliberate MVP choice
 > (see `tech-stack.md`), not a missing feature; a JSON API could be added later if a native app, SPA, or
 > third-party integration ever needed one.
@@ -211,7 +213,8 @@ Chosen for an always-on JVM process running in-process `@Scheduled` briefing job
 ### Database
 
 Schema is managed by Flyway migrations under `src/main/resources/db/migration/` — users, email verification,
-categories/sources (seeded), topics (with scheduling columns), briefings, and ingested items.
+categories/sources (seeded), topics (with scheduling columns and per-topic email opt-in), briefings, and
+ingested items.
 
 ### Sources
 
@@ -238,7 +241,7 @@ Redis needed for a single instance) to 5 requests / 15 min per (email, IP).
 - [Java 21](https://openjdk.org/) / [Spring Boot 4](https://spring.io/projects/spring-boot) — application framework
 - [Spring Security](https://spring.io/projects/spring-security) — session-based form login
 - [Spring AI](https://spring.io/projects/spring-ai) (OpenAI starter) — briefing generation
-- [Thymeleaf](https://www.thymeleaf.org/) + [HTMX](https://htmx.org/) — server-rendered pages with live dynamic fragments
+- [Thymeleaf](https://www.thymeleaf.org/) — server-rendered pages
 - [Spring Data JPA](https://spring.io/projects/spring-data-jpa) — persistence
 - [Flyway](https://flywaydb.org/) — database migrations
 - [PostgreSQL](https://www.postgresql.org/) ([Supabase](https://supabase.com/)) — relational datastore
@@ -252,10 +255,11 @@ Redis needed for a single instance) to 5 requests / 15 min per (email, IP).
 
 ## 🤖 Built agentically
 
-DeltaBrief was developed as part of the **10xDevs course** and the **10xBuilder certification**, using an
-agentic AI development workflow end to end: shaping the idea into a PRD, decomposing it into a dependency-ordered
-roadmap, planning and implementing each slice through reviewed, verifiable change contracts, and writing tests —
-all driven collaboratively with AI coding agents rather than written from a blank editor. The `context/` directory
+DeltaBrief was developed as part of the **[10xDevs](https://www.10xdevs.pl) course** and the **10xBuilder
+certification**, using an agentic AI development workflow end to end: shaping the idea into a PRD, decomposing it
+into a dependency-ordered roadmap, planning and implementing each slice through reviewed, verifiable change
+contracts, and writing tests — all driven collaboratively with AI coding agents rather than written from a blank
+editor. The `context/` directory
 in this repository is the durable record of that process (PRD, roadmap, tech-stack decision, infrastructure
 research, and one archived change folder per shipped slice) and is preserved as-is as the project's source of
 truth.
