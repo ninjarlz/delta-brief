@@ -51,6 +51,7 @@ class BriefingPromptBuilderTests {
 		assertThat(prompt).contains(BriefingPromptBuilder.ANTI_HALLUCINATION_INSTRUCTION);
 		assertThat(prompt).contains(BriefingPromptBuilder.INJECTION_GUARDRAIL);
 		assertThat(prompt).contains(BriefingPromptBuilder.NUMBERED_SOURCES_HEADER);
+		assertThat(prompt).contains(BriefingPromptBuilder.DELTA_COMPARISON_INSTRUCTION);
 		assertThat(prompt).contains("[1] Headline — https://example.com/1");
 		assertThat(prompt).contains("prior key changes");
 		assertThat(prompt).contains("prior source impact");

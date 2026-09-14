@@ -30,10 +30,12 @@ From the topics list, a user clicks "Generate briefing." The app fetches the top
 | Post-generation UI scope | Latest briefing + a minimal inline history list | Delivers more of US-01 sooner while staying clearly smaller than S-05's real history page | Plan |
 | Cross-module data access | `briefing` owns its own `FeedSource`/`FeedSourceCatalog` read model over the `sources` table; never imports `topic.domain.Source`/`Topic` | Keeps AGENTS.md's "ID-only cross-module reference" rule intact without inventing a heavier anti-corruption layer | Plan |
 | Topic description (FR-004) | Unparked and added mid-Phase-4: optional `Topic.description`, fed into the generation prompt as extra context | The roadmap's original deferral reason ("AI doesn't use it, dead field") no longer applies once generation exists; user explicitly asked to fold it in rather than open a separate change | Plan (addendum) |
+| Source relevance (post-merge) | Added a per-topic Google News RSS search feed alongside (not replacing) the curated category feeds | Category feeds carry zero topic-relevance signal; free and reuses the existing RSS pipeline unchanged, vs. a paid semantic-search API | Plan (addendum 2) |
+| Delta-comparison prompt (post-merge) | Strengthened the DELTA-mode instruction with explicit anti-restatement + "no genuine change" guidance | The original one-sentence instruction let the model restate old key-changes as if new, or leave "no change" vague — undermining the product's core "delta, not summary" premise | Plan (addendum 2) |
 
 ## Scope
 
-**In scope:** RSS/Atom ingestion (Rome), `Briefing`/`IngestedItem` domain + persistence, OpenAI structured-output generation with anti-hallucination prompt design, manual-trigger web flow, minimal inline history list, WireMock-backed automated tests, an optional topic-description field (FR-004) feeding the generation prompt.
+**In scope:** RSS/Atom ingestion (Rome), `Briefing`/`IngestedItem` domain + persistence, OpenAI structured-output generation with anti-hallucination prompt design, manual-trigger web flow, minimal inline history list, WireMock-backed automated tests, an optional topic-description field (FR-004) feeding the generation prompt, and (post-merge) a per-topic Google News search feed + cited-sources-only display + generation-feedback/navigation UX polish.
 
 **Out of scope:** Scheduled generation (S-04), email delivery (S-06), rating (S-07), full history browsing (S-05), per-topic source customization (parked), HTMX/SSE live progress, automatic retry-with-backoff, model-switching automation.
 
@@ -59,6 +61,7 @@ From the topics list, a user clicks "Generate briefing." The app fetches the top
 - `gpt-4o-mini`'s actual classification quality (genuine change vs. trend vs. noise) is unverified until Phase 3's manual real-API check — if it's not good enough, this plan doesn't include an automated fallback, only a manual model-config change later.
 - The cross-module `FeedSourceCatalog` design (a second, `briefing`-owned read model over the `sources` table) is a genuine architectural judgment call, not dictated by precedent — flagged explicitly for review.
 - User-authored free text (topic name, and now the optional description) is interpolated into the generation prompt — a real prompt-injection surface, mitigated via an explicit "verbatim data, not instructions" guardrail + delimited blocks (added during Phase 3's impl-review), but not a hard guarantee against a sufficiently adversarial input.
+- The Google News RSS search endpoint (post-merge addendum 2) is free and unauthenticated but *unofficial* — not a documented, stable API. It could change format or get rate-limited without notice; degrades the same as any other flaky source (skipped, contributes nothing) rather than failing generation, but is a materially different reliability posture than the hand-picked curated feeds.
 
 ## Success Criteria (Summary)
 

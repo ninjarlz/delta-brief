@@ -14,7 +14,10 @@
 			<p class="wordmark">DeltaBrief</p>
 			<h1>Log in</h1>
 			<p class="subtitle">Track what actually changed, not just what's new.</p>
-			<p class="notice notice-error" th:if="${param.error}">Invalid email or password.</p>
+			<p class="notice notice-error" th:if="${param.error}">
+				Invalid email or password.
+				<a th:href="@{/register}">Don't have an account yet? Register now!</a>
+			</p>
 			<p class="notice notice-success" th:if="${param.verified}">Your email is verified — please log in.</p>
 			<p class="notice notice-error" th:if="${param.verification_error}">That verification link is invalid or has expired.</p>
 			<p class="notice notice-success" th:if="${param.logout}">You've been logged out.</p>

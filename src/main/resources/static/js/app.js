@@ -4,9 +4,31 @@
 // confusing error on the second request instead of just being a no-op).
 // The browser has already captured the form data by the time this handler
 // runs, so disabling the button here doesn't affect what gets submitted.
+// Pico.css greys out any [disabled] button on its own (opacity + not-allowed
+// cursor); a button opting in via data-busy-text (slow, synchronous
+// server-side work — e.g. briefing generation) also gets aria-busy="true",
+// which Pico renders as a spinning circle icon, plus its label text swapped
+// to that busy text, so there's a visible indicator while the request is in
+// flight instead of the page just sitting there looking frozen.
 document.addEventListener('submit', function (event) {
 	var submitButton = event.target.querySelector('button[type="submit"]');
 	if (submitButton && !submitButton.disabled) {
 		submitButton.disabled = true;
+		var busyText = submitButton.getAttribute('data-busy-text');
+		if (busyText) {
+			submitButton.setAttribute('aria-busy', 'true');
+			submitButton.textContent = busyText;
+		}
 	}
 }, true);
+
+// The server renders timestamps in UTC (it has no way to know the viewer's
+// timezone) into a data-timestamp attribute alongside a UTC fallback text.
+// This script runs on the browser, so it can convert to the viewer's actual
+// local timezone; if JS is disabled, the UTC fallback text stays as-is.
+document.querySelectorAll('[data-timestamp]').forEach(function (el) {
+	var date = new Date(el.getAttribute('data-timestamp'));
+	if (!isNaN(date.getTime())) {
+		el.textContent = date.toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
+	}
+});
