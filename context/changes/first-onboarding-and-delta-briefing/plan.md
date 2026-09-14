@@ -309,6 +309,50 @@ Discovered mid-Phase-4, after manual verification of the core flow was already c
 - Create a topic with a description filled in, generate a briefing, confirm the description doesn't break anything and (ideally) that `significance`/`sourceImpact` reads as if it factored the stated framing in
 - Create a topic with the description left blank, confirm topic creation and generation both work exactly as before this addendum
 
+### Addendum 2: Post-merge UX and source-relevance refinements
+
+Discovered after S-03 shipped and was merged (PR #41, squashed to `main` as `db2bdb7`), during a follow-up review of the live app. Not opened as a separate change — same reasoning as Addendum 1: small, directly related refinements to an already-built feature, not new scope. **Not yet committed as of this writing** — see Progress below.
+
+1. **Cited-sources-only display.** `briefing.sources` showed every ingested item, not just the ones the model actually cited via `[n]` markers — undermining the point of the citation mechanism (grounding each claim in a specific source). `BriefingController` now scans the six generated sections for citation markers and displays only the cited items; every ingested item is still persisted for traceability (per the anti-hallucination hard rule in `AGENTS.md`) — only the *display* is filtered.
+2. **"Back to your topics" navigation.** Was a small, unstyled link at the bottom of a page that can run long — moved to a styled `← Back to your topics` link at the top, above the page header.
+3. **Page title.** Was just "Onboarding briefing"/"Delta briefing," giving no indication which topic this was. Now "{topic name} #{ordinal}" (e.g. "War in Ukraine #3" — ordinal is that topic's Nth-ever generated briefing, computed from the already-fetched history list, no extra query); the Onboarding/Delta label moved into the subtitle next to the timestamp.
+4. **Timestamp timezone.** Timestamps were rendered server-side, hardcoded to UTC — the server has no way to know the viewer's timezone. The server now emits the raw ISO instant into a `data-timestamp` attribute (UTC text stays as the no-JS fallback), and `app.js` converts it to the viewer's local timezone via `Date`/`toLocaleString` on page load.
+5. **Generation feedback.** The synchronous generate-briefing POST blocked the UI with no visual indicator. Pico.css's built-in `[aria-busy=true]` spinner (a rotating circle icon, shipped with the CSS framework already in use) is now toggled via a `data-busy-text` opt-in attribute on the three buttons that trigger generation (topic list, briefing page, failure-retry page); the existing generic submit-disable in `app.js` already greyed the button out and blocked a second click, this only adds the visible spinner + "Generating…" label on top of that.
+6. **Source relevance.** The original design fetches every source in the topic's *category* (e.g. all of "World News": BBC, Al Jazeera, Guardian World), with zero relevance filtering against the specific topic — "War in Ukraine" ingested whatever was trending across all of world news, most of it unrelated. Considered three options (discussed inline with the user, not pre-written in `research.md`): a keyword filter on the existing feeds, a topic-targeted search feed, or a paid semantic-search API (Tavily/Exa/Perplexity-style — rejected, new recurring cost + new paid dependency for an MVP already flagged for cost creep in `infrastructure.md`). Chose a topic-targeted search feed: free, reuses the existing `SourceContentFetcher`/Rome fetch-and-parse pipeline unchanged, added *alongside* (not replacing) the curated category feeds — keeps the curated feeds' publisher-quality/reliability anchor while fixing relevance.
+7. **Delta-comparison prompt quality.** The other half of the same discussion — the original DELTA-mode instruction was one generic sentence ("Compare the numbered sources above against the prior briefing above. Classify..."), with two real gaps: nothing told the model to explicitly say "no genuine change" when that's the honest answer, and nothing stopped it from restating the prior briefing's own key changes as if they were new — both directly undermine what "delta" is supposed to mean for this product. `BriefingPromptBuilder.DELTA_COMPARISON_INSTRUCTION` replaces it with explicit anti-restatement guidance (key-changes must report only what's genuinely new) and explicit "no significant change" handling for a quiet-news cycle.
+
+**Files touched:**
+- `src/main/java/pl/tul/deltabrief/briefing/adapter/out/ai/BriefingPromptBuilder.java` (edit) — new `DELTA_COMPARISON_INSTRUCTION` constant replaces the original one-sentence delta instruction with explicit anti-restatement + "no change" guidance
+- `src/main/java/pl/tul/deltabrief/briefing/application/port/out/TopicSearchFeedProvider.java` (new) — output port: `FeedSource searchFeedFor(String topicName)`
+- `src/main/java/pl/tul/deltabrief/briefing/adapter/out/rss/GoogleNewsSearchFeedProvider.java` (new) — Google News RSS search adapter; base URL externalized via `app.google-news.base-url` so tests point it at WireMock instead of a real network call
+- `src/main/resources/application.properties` (edit) — `app.google-news.base-url=https://news.google.com` default
+- `src/main/java/pl/tul/deltabrief/briefing/application/BriefingService.java` (edit) — `ingestSources` also fetches the topic search feed, same skip-on-failure handling as any other source; `findOne` now returns a new `BriefingDetail(Briefing, topicName)` record instead of bare `Briefing`, reusing the ownership-check query already made rather than a second lookup
+- `src/main/java/pl/tul/deltabrief/briefing/adapter/in/web/BriefingController.java` (edit) — citation-marker parsing for source filtering; title/ordinal computation; `generatedAtIso` field on both view records
+- `src/main/resources/templates/briefing.html` (edit) — back-link repositioned; title/subtitle restructured; `data-timestamp` spans
+- `src/main/resources/templates/topics.html`, `briefing-generation-failed.html` (edit) — `data-busy-text` attribute on generation-triggering buttons
+- `src/main/resources/static/js/app.js` (edit) — timestamp-localization block; `aria-busy`/label-swap logic on submit
+- `src/main/resources/static/css/app.css` (edit) — `.back-link` styles
+
+**Tests added/extended:**
+- `src/test/java/pl/tul/deltabrief/briefing/adapter/out/ai/BriefingPromptBuilderTests.java` (edit) — `deltaPromptContainsGuardrailAndSourcesAndBaseline` now also asserts `DELTA_COMPARISON_INSTRUCTION` is present verbatim
+- `src/test/java/pl/tul/deltabrief/briefing/adapter/out/rss/GoogleNewsSearchFeedProviderTests.java` (new) — pure unit test on URL construction/encoding, no network
+- `src/test/java/pl/tul/deltabrief/briefing/application/BriefingServiceTests.java` (edit) — `app.google-news.base-url` overridden to WireMock in `@SpringBootTest`; new test `alsoIngestsFromTheTopicTargetedGoogleNewsSearchFeed` stubs and asserts the search feed is actually queried (by topic name) and its items ingested alongside the category feed's
+- `src/test/java/pl/tul/deltabrief/briefing/BriefingFlowIntegrationTests.java` (edit) — same property override (so its unstubbed Google News request degrades gracefully via the existing `SourceUnavailableException` skip path, same as `aFailingSourceDoesNotBlockGeneration`, rather than attempting a real network call); chat-completion stub updated to include a `[1]` citation marker so the pre-existing "Test Headline" assertion still holds under the new cited-sources-only filtering
+
+#### Automated Verification:
+
+- [x] `./gradlew build` compiles — a8037fe
+- [x] Full suite passes: `./gradlew test` — a8037fe
+
+#### Manual Verification:
+
+- [ ] Generate a briefing, confirm the Sources section shows only items actually cited via `[n]` in the text, not every ingested item
+- [ ] Confirm "← Back to your topics" appears at the top of the briefing page, styled distinctly from body text
+- [ ] Confirm the page title reads "{topic name} #{ordinal}" and the subtitle shows the type label + a timestamp in the viewer's own local timezone
+- [ ] Click "Generate briefing" / "Generate new briefing" / "Try again" and confirm the button greys out, shows the spinning circle icon, and its label changes to "Generating…" while the request is in flight
+- [ ] Generate a briefing for a topic with real-world news coverage and confirm at least one ingested item is sourced from "Google News: {topic name}"
+- [ ] Generate two briefings in a row for the same topic (onboarding, then delta) and confirm the delta briefing's key-changes section reports only what's actually new — not a restatement of the onboarding briefing's content — and, on a quiet news cycle, says so explicitly rather than inventing a change
+
 ---
 
 ## Testing Strategy
@@ -411,4 +455,18 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 #### Manual
 
 - [x] 4.9 Create a topic with a description, generate a briefing, confirm it doesn't break anything and the description reads as considered — 23c9450
+
+### Post-Merge Refinements (see Addendum 2)
+
+#### Automated
+
+- [x] 5.1 `./gradlew build` compiles; full suite passes — a8037fe
+
+#### Manual
+
+- [ ] 5.2 Cited-sources-only filtering confirmed in a running briefing
+- [ ] 5.3 Back-link placement and title/subtitle restructure confirmed
+- [ ] 5.4 Generation spinner confirmed on all three trigger buttons
+- [ ] 5.5 Google News topic-search feed confirmed contributing ingested items
+- [ ] 5.6 Delta-comparison prompt's anti-restatement + "no change" guidance confirmed against two real generations for the same topic
 - [x] 4.10 Create a topic without a description, confirm creation + generation both work exactly as before — 23c9450

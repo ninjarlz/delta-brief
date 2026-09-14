@@ -2,8 +2,12 @@ package pl.tul.deltabrief.briefing.adapter.in.web;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -14,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import pl.tul.deltabrief.auth.adapter.out.security.AppUserDetails;
 import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.briefing.application.BriefingService;
+import pl.tul.deltabrief.briefing.application.BriefingService.BriefingDetail;
 import pl.tul.deltabrief.briefing.application.BriefingService.TopicNotFoundException;
 import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.GenerationFailedException;
 import pl.tul.deltabrief.briefing.application.port.out.BriefingSummary;
@@ -29,6 +34,14 @@ public class BriefingController {
 
 	private static final DateTimeFormatter TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy HH:mm 'UTC'")
 			.withZone(ZoneOffset.UTC);
+
+	/**
+	 * Matches the inline {@code [n]} citation markers the model is instructed
+	 * to use (see {@code BriefingPromptBuilder.ANTI_HALLUCINATION_INSTRUCTION}).
+	 * Used to show only the sources actually cited in this briefing's text,
+	 * not every item that was ingested for it.
+	 */
+	private static final Pattern CITATION_PATTERN = Pattern.compile("\\[(\\d+)]");
 
 	private final BriefingService briefingService;
 
@@ -76,16 +89,19 @@ public class BriefingController {
 	 * ownership-leak-avoidance convention. {@code history} is passed in
 	 * rather than re-fetched here — {@link #latest} already has it in hand
 	 * from its own ownership-scoped lookup, so re-deriving it would be a
-	 * redundant query (see impl-review.md F2).
+	 * redundant query (see impl-review.md F2). It's also reused to compute
+	 * this briefing's ordinal (its position among the topic's own briefings,
+	 * oldest = #1) for the page title, since {@code history} is already
+	 * ordered newest-first.
 	 */
 	private String showBriefing(TopicId topicId, BriefingId briefingId, UserId userId, List<BriefingSummary> history,
 			Model model) {
-		Optional<Briefing> briefing = briefingService.findOne(topicId, briefingId, userId);
-		if (briefing.isEmpty()) {
+		Optional<BriefingDetail> detail = briefingService.findOne(topicId, briefingId, userId);
+		if (detail.isEmpty()) {
 			return "redirect:/";
 		}
 		model.addAttribute("topicId", topicId.value());
-		model.addAttribute("briefing", toView(briefing.get()));
+		model.addAttribute("briefing", toView(detail.get(), ordinal(history, briefingId)));
 		model.addAttribute("history", history.stream()
 				.map(summary -> toHistoryEntryView(summary, briefingId))
 				.toList());
@@ -96,11 +112,46 @@ public class BriefingController {
 		return ((AppUserDetails) authentication.getPrincipal()).userId();
 	}
 
-	private static BriefingView toView(Briefing briefing) {
-		return new BriefingView(briefing.id().value(), typeLabel(briefing.type()),
-				TIMESTAMP_FORMAT.format(briefing.generatedAt()), briefing.keyChanges(), briefing.trendContinuation(),
+	private static int ordinal(List<BriefingSummary> newestFirstHistory, BriefingId briefingId) {
+		int descendingIndex = newestFirstHistory.stream().map(BriefingSummary::id).toList().indexOf(briefingId);
+		return newestFirstHistory.size() - descendingIndex;
+	}
+
+	private static BriefingView toView(BriefingDetail detail, int ordinal) {
+		Briefing briefing = detail.briefing();
+		return new BriefingView(briefing.id().value(), "%s #%d".formatted(detail.topicName(), ordinal),
+				typeLabel(briefing.type()), TIMESTAMP_FORMAT.format(briefing.generatedAt()),
+				briefing.generatedAt().toString(), briefing.keyChanges(), briefing.trendContinuation(),
 				briefing.noiseSpeculation(), briefing.significance(), briefing.uncertainties(),
-				briefing.sourceImpact(), briefing.ingestedItems().stream().map(BriefingController::toSourceView).toList());
+				briefing.sourceImpact(), citedSources(briefing));
+	}
+
+	/**
+	 * Only the sources the model actually cited inline (via {@code [n]}) are
+	 * shown — every item fetched for this briefing is still persisted (see
+	 * {@link Briefing#ingestedItems()}) for traceability, but most of what's
+	 * ingested per category is noise relative to a given topic, and showing
+	 * all of it undermines the citations' point of grounding each claim in a
+	 * specific source. {@code n} is 1-based and matches the numbering
+	 * {@code BriefingPromptBuilder} used when it built the prompt — both
+	 * derive from the same {@code ingestedItems} list in the same order (see
+	 * {@code BriefingService.generateBriefing}).
+	 */
+	private static List<SourceView> citedSources(Briefing briefing) {
+		List<IngestedItem> items = briefing.ingestedItems();
+		Set<Integer> citedInOrder = new LinkedHashSet<>();
+		for (String section : List.of(briefing.keyChanges(), briefing.trendContinuation(),
+				briefing.noiseSpeculation(), briefing.significance(), briefing.uncertainties(),
+				briefing.sourceImpact())) {
+			Matcher matcher = CITATION_PATTERN.matcher(section);
+			while (matcher.find()) {
+				citedInOrder.add(Integer.valueOf(matcher.group(1)));
+			}
+		}
+		return citedInOrder.stream()
+				.filter(n -> n >= 1 && n <= items.size())
+				.map(n -> toSourceView(items.get(n - 1)))
+				.toList();
 	}
 
 	private static SourceView toSourceView(IngestedItem item) {
@@ -109,7 +160,8 @@ public class BriefingController {
 
 	private static HistoryEntryView toHistoryEntryView(BriefingSummary summary, BriefingId currentBriefingId) {
 		return new HistoryEntryView(summary.id().value(), typeLabel(summary.type()),
-				TIMESTAMP_FORMAT.format(summary.generatedAt()), summary.id().equals(currentBriefingId));
+				TIMESTAMP_FORMAT.format(summary.generatedAt()), summary.generatedAt().toString(),
+				summary.id().equals(currentBriefingId));
 	}
 
 	private static String typeLabel(BriefingType type) {
@@ -119,17 +171,23 @@ public class BriefingController {
 	/**
 	 * Display-only shape for {@code briefing.html} — mirrors {@code
 	 * TopicController.TopicView}'s pattern of a controller-local record for
-	 * template rendering, resolving display labels once here.
+	 * template rendering, resolving display labels once here. {@code title}
+	 * is "{topic name} #{ordinal}" (e.g. "War in Ukraine #3"); {@code
+	 * typeLabel} (Onboarding/Delta) moved out of the page heading and into
+	 * the subtitle alongside the timestamp. {@code generatedAtIso} carries
+	 * the raw instant for {@code app.js} to re-render in the viewer's local
+	 * timezone; {@code generatedAt} (UTC) stays as the no-JS fallback.
 	 */
-	public record BriefingView(Long id, String typeLabel, String generatedAt, String keyChanges,
-			String trendContinuation, String noiseSpeculation, String significance, String uncertainties,
-			String sourceImpact, List<SourceView> sources) {
+	public record BriefingView(Long id, String title, String typeLabel, String generatedAt, String generatedAtIso,
+			String keyChanges, String trendContinuation, String noiseSpeculation, String significance,
+			String uncertainties, String sourceImpact, List<SourceView> sources) {
 	}
 
 	public record SourceView(String sourceName, String title, String link) {
 	}
 
-	public record HistoryEntryView(Long id, String typeLabel, String generatedAt, boolean current) {
+	public record HistoryEntryView(Long id, String typeLabel, String generatedAt, String generatedAtIso,
+			boolean current) {
 	}
 
 }

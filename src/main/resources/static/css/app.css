@@ -166,6 +166,20 @@ body {
 	padding: 1.5rem;
 }
 
+.back-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin-bottom: 1rem;
+	color: var(--pico-muted-color);
+	font-size: 0.9rem;
+	text-decoration: none;
+}
+
+.back-link:hover {
+	color: var(--pico-primary);
+}
+
 .page-header {
 	display: flex;
 	align-items: flex-start;

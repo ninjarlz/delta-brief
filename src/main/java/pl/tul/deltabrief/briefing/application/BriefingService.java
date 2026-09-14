@@ -18,6 +18,7 @@ import pl.tul.deltabrief.briefing.application.port.out.FeedSourceCatalog;
 import pl.tul.deltabrief.briefing.application.port.out.FetchedItem;
 import pl.tul.deltabrief.briefing.application.port.out.SourceContentFetcher;
 import pl.tul.deltabrief.briefing.application.port.out.SourceContentFetcher.SourceUnavailableException;
+import pl.tul.deltabrief.briefing.application.port.out.TopicSearchFeedProvider;
 import pl.tul.deltabrief.briefing.domain.Briefing;
 import pl.tul.deltabrief.briefing.domain.BriefingId;
 import pl.tul.deltabrief.briefing.domain.BriefingType;
@@ -38,6 +39,7 @@ public class BriefingService {
 	private final TopicRepository topicRepository;
 	private final CategoryRepository categoryRepository;
 	private final FeedSourceCatalog feedSourceCatalog;
+	private final TopicSearchFeedProvider topicSearchFeedProvider;
 	private final SourceContentFetcher sourceContentFetcher;
 	private final BriefingContentGenerator contentGenerator;
 	private final BriefingRepository briefingRepository;
@@ -74,7 +76,11 @@ public class BriefingService {
 	}
 
 	/**
-	 * Fetches every source in the topic's category, skipping (not failing
+	 * Fetches every source in the topic's category, plus one topic-targeted
+	 * search feed ({@link TopicSearchFeedProvider}) built from the topic's
+	 * name — the category feeds are category-wide and carry no relevance
+	 * signal for this specific topic, so the search feed is what actually
+	 * biases ingestion toward what this topic is about. Skips (doesn't fail
 	 * on) any source that's unreachable — a deliberate, accepted tradeoff
 	 * (plan.md): one flaky public RSS feed shouldn't block the whole
 	 * feature. A source that fails here simply contributes no items; the
@@ -82,8 +88,11 @@ public class BriefingService {
 	 */
 	private List<IngestedItem> ingestSources(TopicSummary topic) {
 		Instant fetchedAt = Instant.now();
+		List<FeedSource> sources = new ArrayList<>(feedSourceCatalog.findByCategoryId(topic.categoryId()));
+		sources.add(topicSearchFeedProvider.searchFeedFor(topic.name()));
+
 		List<IngestedItem> ingestedItems = new ArrayList<>();
-		for (FeedSource source : feedSourceCatalog.findByCategoryId(topic.categoryId())) {
+		for (FeedSource source : sources) {
 			try {
 				for (FetchedItem item : sourceContentFetcher.fetch(source)) {
 					ingestedItems.add(new IngestedItem(source.name(), item.title(), item.link(), item.publishedAt(),
@@ -115,13 +124,22 @@ public class BriefingService {
 	/**
 	 * @return empty if the topic isn't owned by {@code userId}, or the
 	 * briefing doesn't exist, or doesn't belong to this topic — all three
-	 * cases are indistinguishable to the caller.
+	 * cases are indistinguishable to the caller. Bundles the topic name
+	 * alongside the briefing (the web layer's page title needs both) so the
+	 * caller doesn't have to issue a second lookup against {@link
+	 * TopicRepository} for something already fetched here for the ownership
+	 * check.
 	 */
-	public Optional<Briefing> findOne(TopicId topicId, BriefingId briefingId, UserId userId) {
-		if (topicRepository.findSummaryByIdAndUserId(topicId, userId).isEmpty()) {
+	public Optional<BriefingDetail> findOne(TopicId topicId, BriefingId briefingId, UserId userId) {
+		Optional<TopicSummary> topic = topicRepository.findSummaryByIdAndUserId(topicId, userId);
+		if (topic.isEmpty()) {
 			return Optional.empty();
 		}
-		return briefingRepository.findByIdAndTopicId(briefingId, topicId);
+		return briefingRepository.findByIdAndTopicId(briefingId, topicId)
+				.map(briefing -> new BriefingDetail(briefing, topic.get().name()));
+	}
+
+	public record BriefingDetail(Briefing briefing, String topicName) {
 	}
 
 	public static class TopicNotFoundException extends RuntimeException {

@@ -16,7 +16,7 @@
 			<p class="subtitle">Something went wrong generating this briefing. This is usually temporary —
 				try again.</p>
 			<form th:action="@{/topics/{id}/briefings(id=${topicId})}" method="post">
-				<button type="submit">Try again</button>
+				<button type="submit" data-busy-text="Generating…">Try again</button>
 			</form>
 			<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>
 		</div>

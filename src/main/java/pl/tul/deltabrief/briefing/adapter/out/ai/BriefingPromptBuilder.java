@@ -42,6 +42,26 @@ class BriefingPromptBuilder {
 
 	static final String NUMBERED_SOURCES_HEADER = "Numbered sources:";
 
+	/**
+	 * The original one-sentence delta instruction left two real gaps: nothing
+	 * told the model to explicitly say "no genuine change" when that's the
+	 * honest answer (rather than leaving key-changes vague), and nothing
+	 * stopped it from restating the prior briefing's own key changes as if
+	 * they were new. Both directly undermine what "delta" is supposed to
+	 * mean for this product — the whole point is distinguishing genuinely
+	 * new from already-known, not producing another summary of the same
+	 * situation.
+	 */
+	static final String DELTA_COMPARISON_INSTRUCTION = "Compare the numbered sources above against the prior "
+			+ "briefing above, section by section. Classify what you find into three categories: (1) genuine "
+			+ "changes — new developments NOT already covered in the prior briefing's key changes; (2) "
+			+ "continuation — sources that simply reaffirm or extend something the prior briefing already "
+			+ "reported; (3) noise or unverified speculation. Do not restate the prior briefing's key changes "
+			+ "as if they were new — the key-changes section should report ONLY what is genuinely new since "
+			+ "the prior briefing. If none of the sources reveal a genuine change, say so explicitly in "
+			+ "key-changes (e.g. \"No significant change since the prior briefing\") rather than leaving it "
+			+ "vague or repeating old information.";
+
 	String build(GenerationRequest request) {
 		StringBuilder prompt = new StringBuilder();
 		prompt.append("You are generating briefing sections for a news-tracking app called DeltaBrief.\n");
@@ -64,9 +84,7 @@ class BriefingPromptBuilder {
 					+ "being left blank.\n");
 		} else {
 			prompt.append(previousBriefingSection(request.previousBriefing()));
-			prompt.append("Compare the numbered sources above against the prior briefing above. Classify what "
-					+ "you find into: genuine changes to the situation, continuation of an already-known trend, "
-					+ "and noise or unverified speculation.\n");
+			prompt.append(DELTA_COMPARISON_INSTRUCTION).append('\n');
 		}
 
 		return prompt.toString();

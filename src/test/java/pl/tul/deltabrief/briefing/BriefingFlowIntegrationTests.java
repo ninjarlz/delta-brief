@@ -45,7 +45,7 @@ import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
  * flow, mirroring {@code TopicFlowIntegrationTests}.
  */
 @SpringBootTest(properties = {"app.async.email.enabled=false", "bucket4j.enabled=false", "spring.cache.type=none",
-		"spring.ai.openai.base-url=${wiremock.server.baseUrl}"})
+		"spring.ai.openai.base-url=${wiremock.server.baseUrl}", "app.google-news.base-url=${wiremock.server.baseUrl}"})
 @Import({TestcontainersDatasourceConfig.class, SynchronousAsyncConfig.class})
 @EnableWireMock
 @Transactional
@@ -78,7 +78,7 @@ class BriefingFlowIntegrationTests {
 			      "index": 0,
 			      "message": {
 			        "role": "assistant",
-			        "content": "{\\"keyChanges\\":\\"changes\\",\\"trendContinuation\\":\\"trend\\",\\"noiseSpeculation\\":\\"noise\\",\\"significance\\":\\"significance\\",\\"uncertainties\\":\\"uncertainties\\",\\"sourceImpact\\":\\"impact\\"}"
+			        "content": "{\\"keyChanges\\":\\"changes [1]\\",\\"trendContinuation\\":\\"trend\\",\\"noiseSpeculation\\":\\"noise\\",\\"significance\\":\\"significance\\",\\"uncertainties\\":\\"uncertainties\\",\\"sourceImpact\\":\\"impact\\"}"
 			      },
 			      "finish_reason": "stop"
 			    }

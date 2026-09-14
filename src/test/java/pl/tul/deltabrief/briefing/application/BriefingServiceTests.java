@@ -1,10 +1,12 @@
 package pl.tul.deltabrief.briefing.application;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
@@ -26,6 +28,7 @@ import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.GenerationFailedException;
 import pl.tul.deltabrief.briefing.domain.Briefing;
 import pl.tul.deltabrief.briefing.domain.BriefingType;
+import pl.tul.deltabrief.briefing.domain.IngestedItem;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
@@ -54,7 +57,7 @@ import pl.tul.deltabrief.topic.domain.TopicId;
  * {@link TestcontainersDatasourceConfig#localDataSource()}'s reuse fix).
  */
 @SpringBootTest(properties = {"app.async.email.enabled=false", "bucket4j.enabled=false", "spring.cache.type=none",
-		"spring.ai.openai.base-url=${wiremock.server.baseUrl}"})
+		"spring.ai.openai.base-url=${wiremock.server.baseUrl}", "app.google-news.base-url=${wiremock.server.baseUrl}"})
 @Import({TestcontainersDatasourceConfig.class, SynchronousAsyncConfig.class})
 @EnableWireMock
 @Transactional
@@ -158,6 +161,50 @@ class BriefingServiceTests {
 		assertThat(briefing.keyChanges()).isEqualTo("changes");
 		assertThat(briefing.ingestedItems()).hasSize(1);
 		assertThat(briefing.ingestedItems().get(0).title()).isEqualTo("Test Headline");
+	}
+
+	/**
+	 * The other tests in this class leave the Google News search feed
+	 * unstubbed on purpose — WireMock's default 404 for an unmatched request
+	 * is treated as {@code SourceUnavailableException} the same as any other
+	 * unreachable source (see {@code aFailingSourceDoesNotBlockGeneration}),
+	 * so it simply contributes nothing rather than breaking those tests' item
+	 * counts. This test is the one place that actually stubs it, to verify
+	 * it's queried with the topic's name and its items really do get
+	 * ingested alongside the category feed's.
+	 */
+	@Test
+	void alsoIngestsFromTheTopicTargetedGoogleNewsSearchFeed() {
+		String categoryFeedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(get(urlEqualTo(categoryFeedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		CategoryId categoryId = newCategoryWithFeedAt(categoryFeedPath);
+		Topic topic = topicRepository
+				.save(Topic.create(owner, "Unique Topic " + UUID.randomUUID(), categoryId, Instant.now()));
+		String googleNewsRss = """
+				<?xml version="1.0" encoding="UTF-8"?>
+				<rss version="2.0">
+				  <channel>
+				    <title>Google News</title>
+				    <item>
+				      <title>Targeted Headline</title>
+				      <link>https://example.com/targeted-headline</link>
+				      <pubDate>Tue, 02 Jan 2024 00:00:00 GMT</pubDate>
+				    </item>
+				  </channel>
+				</rss>
+				""";
+		stubFor(get(urlPathEqualTo("/rss/search")).withQueryParam("q", equalTo(topic.name())).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(googleNewsRss)));
+
+		Briefing briefing = briefingService.generateBriefing(topic.id(), owner);
+
+		assertThat(briefing.ingestedItems()).extracting(IngestedItem::title)
+				.containsExactlyInAnyOrder("Test Headline", "Targeted Headline");
+		assertThat(briefing.ingestedItems()).extracting(IngestedItem::sourceName)
+				.contains("Google News: " + topic.name());
 	}
 
 	@Test
