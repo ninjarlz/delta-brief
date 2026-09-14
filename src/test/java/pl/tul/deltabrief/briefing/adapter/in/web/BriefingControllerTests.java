@@ -6,8 +6,10 @@ import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import pl.tul.deltabrief.briefing.adapter.in.web.BriefingController.BriefingView;
+import pl.tul.deltabrief.briefing.adapter.in.web.BriefingController.HistoryEntryView;
 import pl.tul.deltabrief.briefing.adapter.in.web.BriefingController.SourceView;
 import pl.tul.deltabrief.briefing.application.BriefingService.BriefingDetail;
+import pl.tul.deltabrief.briefing.application.port.out.BriefingSummary;
 import pl.tul.deltabrief.briefing.domain.Briefing;
 import pl.tul.deltabrief.briefing.domain.BriefingId;
 import pl.tul.deltabrief.briefing.domain.BriefingType;
@@ -100,6 +102,28 @@ class BriefingControllerTests {
 		BriefingView view = BriefingController.toView(detail, 3);
 
 		assertThat(view.title()).isEqualTo("War in Ukraine #3");
+	}
+
+	@Test
+	void historyEntryTitleMatchesTheTopicNameAndOrdinalFormat() {
+		BriefingSummary summary = new BriefingSummary(new BriefingId(1L), BriefingType.DELTA, Instant.now());
+
+		HistoryEntryView view = BriefingController.toHistoryEntryView(summary, new BriefingId(2L), "War in Ukraine",
+				3);
+
+		assertThat(view.title()).isEqualTo("War in Ukraine #3");
+		assertThat(view.current()).isFalse();
+	}
+
+	@Test
+	void historyEntryTitleAppendsOnboardingBriefingForTheOnboardingType() {
+		BriefingSummary summary = new BriefingSummary(new BriefingId(1L), BriefingType.ONBOARDING, Instant.now());
+
+		HistoryEntryView view = BriefingController.toHistoryEntryView(summary, new BriefingId(1L), "War in Ukraine",
+				1);
+
+		assertThat(view.title()).isEqualTo("War in Ukraine #1 (onboarding briefing)");
+		assertThat(view.current()).isTrue();
 	}
 
 }
