@@ -49,11 +49,11 @@ body {
 .wordmark {
 	display: block;
 	text-align: center;
-	font-weight: 700;
-	font-size: 1.5rem;
-	letter-spacing: -0.02em;
+	font-weight: 800;
+	font-size: 1.85rem;
+	letter-spacing: -0.03em;
 	color: var(--pico-primary);
-	margin-bottom: 1rem;
+	margin-bottom: 1.75rem;
 }
 
 .field-error {
@@ -364,9 +364,18 @@ body {
    it, so it doesn't affect the auth card's own vertical centering. */
 .landing-about {
 	width: 100%;
+	margin-top: 1rem;
+	padding: 2.5rem 0 3rem;
+	background: var(--pico-card-background-color);
+	border-top: 1px solid var(--pico-muted-border-color);
+}
+
+.landing-about__inner {
+	width: 100%;
 	max-width: 34rem;
 	margin: 0 auto;
-	padding: 0 1.5rem 3rem;
+	padding: 0 1.5rem;
+	box-sizing: border-box;
 }
 
 .landing-about h2 {

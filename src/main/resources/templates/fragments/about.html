@@ -6,38 +6,40 @@
 	       creating an account. Included via th:replace, e.g.:
 	       <section th:replace="~{fragments/about :: about}"></section> */-->
 	<section th:fragment="about" class="landing-about">
-		<h2>📰 What is DeltaBrief?</h2>
-		<p class="landing-about__lede">
-			DeltaBrief tracks long-running news topics — wars, politics, economics, regulations — and answers a
-			different question than any feed or AI summarizer: not <em>what's newest</em>, but
-			<strong>what changed</strong>. Every briefing compares a topic's current state against your last one,
-			so you never have to scroll for 20 minutes to reconstruct what actually shifted.
-		</p>
+		<div class="landing-about__inner">
+			<h2>📰 What is DeltaBrief?</h2>
+			<p class="landing-about__lede">
+				DeltaBrief tracks long-running news topics — wars, politics, economics, regulations — and answers a
+				different question than any feed or AI summarizer: not <em>what's newest</em>, but
+				<strong>what changed</strong>. Every briefing compares a topic's current state against your last one,
+				so you never have to scroll for 20 minutes to reconstruct what actually shifted.
+			</p>
 
-		<table class="landing-about__compare">
-			<thead>
-				<tr><th>A normal feed answers</th><th>DeltaBrief answers</th></tr>
-			</thead>
-			<tbody>
-				<tr><td>What's newest?</td><td>What changed the picture?</td></tr>
-				<tr><td>What's trending?</td><td>Genuine development vs. trend continuation?</td></tr>
-				<tr><td>What was said?</td><td>What's noise/speculation vs. what matters?</td></tr>
-			</tbody>
-		</table>
+			<table class="landing-about__compare">
+				<thead>
+					<tr><th>A normal feed answers</th><th>DeltaBrief answers</th></tr>
+				</thead>
+				<tbody>
+					<tr><td>What's newest?</td><td>What changed the picture?</td></tr>
+					<tr><td>What's trending?</td><td>Genuine development vs. trend continuation?</td></tr>
+					<tr><td>What was said?</td><td>What's noise/speculation vs. what matters?</td></tr>
+				</tbody>
+			</table>
 
-		<ul class="landing-about__features">
-			<li>🎯 <strong>Watch any topic</strong> — pick a category, its curated sources come built in</li>
-			<li>🧵 <strong>Onboarding, then deltas</strong> — a longer first briefing, sharp deltas after that</li>
-			<li>⏱️ <strong>On demand or scheduled</strong> — generate now, or set a cadence from daily to weekly</li>
-			<li>📬 <strong>Straight to your inbox</strong> — opt in per topic, no need to remember to check the app</li>
-			<li>🕘 <strong>Full history</strong> — every past briefing for a topic, browsable anytime</li>
-			<li>🔒 <strong>Private by default</strong> — your topics and briefings are visible to you alone</li>
-		</ul>
+			<ul class="landing-about__features">
+				<li>🎯 <strong>Watch any topic</strong> — pick a category, its curated sources come built in</li>
+				<li>🧵 <strong>Onboarding, then deltas</strong> — a longer first briefing, sharp deltas after that</li>
+				<li>⏱️ <strong>On demand or scheduled</strong> — generate now, or set a cadence from daily to weekly</li>
+				<li>📬 <strong>Straight to your inbox</strong> — opt in per topic, no need to remember to check the app</li>
+				<li>🕘 <strong>Full history</strong> — every past briefing for a topic, browsable anytime</li>
+				<li>🔒 <strong>Private by default</strong> — your topics and briefings are visible to you alone</li>
+			</ul>
 
-		<p class="landing-about__trust">
-			🧾 Every claim traces back to a real, ingested source — DeltaBrief never fabricates what a briefing
-			tells you.
-		</p>
+			<p class="landing-about__trust">
+				🧾 Every claim traces back to a real, ingested source — DeltaBrief never fabricates what a briefing
+				tells you.
+			</p>
+		</div>
 	</section>
 </body>
 </html>
