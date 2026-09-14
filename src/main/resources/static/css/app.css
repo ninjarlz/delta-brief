@@ -300,6 +300,11 @@ body {
 	gap: 0.35rem;
 }
 
+.briefing-sources__empty {
+	color: var(--pico-muted-color);
+	margin: 0;
+}
+
 .briefing-sources__name {
 	font-weight: 600;
 	margin-right: 0.4rem;

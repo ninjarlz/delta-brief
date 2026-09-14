@@ -2,8 +2,10 @@ package pl.tul.deltabrief.briefing.adapter.in.web;
 
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -117,13 +119,18 @@ public class BriefingController {
 		return newestFirstHistory.size() - descendingIndex;
 	}
 
-	private static BriefingView toView(BriefingDetail detail, int ordinal) {
+	static BriefingView toView(BriefingDetail detail, int ordinal) {
 		Briefing briefing = detail.briefing();
+		List<Integer> citedInOrder = citedNumbersInOrder(briefing);
+		Map<Integer, Integer> renumbering = renumbering(citedInOrder);
 		return new BriefingView(briefing.id().value(), "%s #%d".formatted(detail.topicName(), ordinal),
 				typeLabel(briefing.type()), TIMESTAMP_FORMAT.format(briefing.generatedAt()),
-				briefing.generatedAt().toString(), briefing.keyChanges(), briefing.trendContinuation(),
-				briefing.noiseSpeculation(), briefing.significance(), briefing.uncertainties(),
-				briefing.sourceImpact(), citedSources(briefing));
+				briefing.generatedAt().toString(), renumberCitations(briefing.keyChanges(), renumbering),
+				renumberCitations(briefing.trendContinuation(), renumbering),
+				renumberCitations(briefing.noiseSpeculation(), renumbering),
+				renumberCitations(briefing.significance(), renumbering),
+				renumberCitations(briefing.uncertainties(), renumbering),
+				renumberCitations(briefing.sourceImpact(), renumbering), citedSources(briefing, citedInOrder));
 	}
 
 	/**
@@ -137,8 +144,8 @@ public class BriefingController {
 	 * derive from the same {@code ingestedItems} list in the same order (see
 	 * {@code BriefingService.generateBriefing}).
 	 */
-	private static List<SourceView> citedSources(Briefing briefing) {
-		List<IngestedItem> items = briefing.ingestedItems();
+	private static List<Integer> citedNumbersInOrder(Briefing briefing) {
+		int sourceCount = briefing.ingestedItems().size();
 		Set<Integer> citedInOrder = new LinkedHashSet<>();
 		for (String section : List.of(briefing.keyChanges(), briefing.trendContinuation(),
 				briefing.noiseSpeculation(), briefing.significance(), briefing.uncertainties(),
@@ -148,10 +155,43 @@ public class BriefingController {
 				citedInOrder.add(Integer.valueOf(matcher.group(1)));
 			}
 		}
-		return citedInOrder.stream()
-				.filter(n -> n >= 1 && n <= items.size())
-				.map(n -> toSourceView(items.get(n - 1)))
-				.toList();
+		return citedInOrder.stream().filter(n -> n >= 1 && n <= sourceCount).toList();
+	}
+
+	private static List<SourceView> citedSources(Briefing briefing, List<Integer> citedInOrder) {
+		List<IngestedItem> items = briefing.ingestedItems();
+		return citedInOrder.stream().map(n -> toSourceView(items.get(n - 1))).toList();
+	}
+
+	/**
+	 * The displayed Sources list only ever shows the handful of cited items,
+	 * not the full numbered list the prompt was built from — so a citation
+	 * like {@code [28]} pointing into a hidden 40-item list would be
+	 * meaningless to a reader. Remaps each original citation number to its
+	 * 1-based position in the (already-filtered, already-ordered) displayed
+	 * list, so the inline markers always match what's actually shown. A
+	 * citation with no mapping (shouldn't happen — {@link
+	 * #citedNumbersInOrder} already filters to valid, in-range numbers) is
+	 * left as-is rather than risk mangling the sentence around it.
+	 */
+	private static String renumberCitations(String text, Map<Integer, Integer> renumbering) {
+		Matcher matcher = CITATION_PATTERN.matcher(text);
+		StringBuilder result = new StringBuilder();
+		while (matcher.find()) {
+			Integer newNumber = renumbering.get(Integer.valueOf(matcher.group(1)));
+			String replacement = newNumber != null ? "[" + newNumber + "]" : matcher.group();
+			matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+		}
+		matcher.appendTail(result);
+		return result.toString();
+	}
+
+	private static Map<Integer, Integer> renumbering(List<Integer> citedInOrder) {
+		Map<Integer, Integer> renumbering = new HashMap<>();
+		for (int i = 0; i < citedInOrder.size(); i++) {
+			renumbering.put(citedInOrder.get(i), i + 1);
+		}
+		return renumbering;
 	}
 
 	private static SourceView toSourceView(IngestedItem item) {
