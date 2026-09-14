@@ -168,6 +168,64 @@ class BriefingFlowIntegrationTests {
 			.andExpect(redirectedUrl("/"));
 	}
 
+	@Test
+	void historyPageListsEveryBriefingForATopicAndLinksIntoEachOne() throws Exception {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(WireMock.get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubFor(WireMock.post(urlEqualTo("/chat/completions")).willReturn(
+				aResponse().withHeader("Content-Type", "application/json").withBody(CHAT_COMPLETION_RESPONSE)));
+
+		MockHttpSession session = loginAsNewVerifiedUser();
+		Long categoryId = newCategoryWithFeedAt(feedPath);
+		mockMvc.perform(post("/topics").with(csrf()).session(session)
+				.param("name", "Test Topic")
+				.param("categoryId", categoryId.toString()))
+			.andExpect(status().is3xxRedirection());
+		String topicId = extractCreatedTopicId(session);
+
+		mockMvc.perform(post("/topics/" + topicId + "/briefings").with(csrf()).session(session))
+			.andExpect(status().is3xxRedirection());
+		mockMvc.perform(post("/topics/" + topicId + "/briefings").with(csrf()).session(session))
+			.andExpect(status().is3xxRedirection());
+
+		mockMvc.perform(get("/topics/" + topicId + "/briefings").session(session))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("(onboarding briefing)")))
+			.andExpect(content().string(containsString("/topics/" + topicId + "/briefings/")));
+	}
+
+	@Test
+	void historyPageShowsAnEmptyStateForATopicWithNoBriefingsYet() throws Exception {
+		MockHttpSession session = loginAsNewVerifiedUser();
+		Long categoryId = newCategoryWithFeedAt("/feed-" + UUID.randomUUID() + ".xml");
+		mockMvc.perform(post("/topics").with(csrf()).session(session)
+				.param("name", "Test Topic")
+				.param("categoryId", categoryId.toString()))
+			.andExpect(status().is3xxRedirection());
+		String topicId = extractCreatedTopicId(session);
+
+		mockMvc.perform(get("/topics/" + topicId + "/briefings").session(session))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("No briefings yet")));
+	}
+
+	@Test
+	void historyPageRedirectsHomeForATopicNotOwnedByTheCaller() throws Exception {
+		MockHttpSession sessionA = loginAsNewVerifiedUser();
+		Long categoryId = newCategoryWithFeedAt("/feed-" + UUID.randomUUID() + ".xml");
+		mockMvc.perform(post("/topics").with(csrf()).session(sessionA)
+				.param("name", "User A topic")
+				.param("categoryId", categoryId.toString()))
+			.andExpect(status().is3xxRedirection());
+		String topicId = extractCreatedTopicId(sessionA);
+
+		MockHttpSession sessionB = loginAsNewVerifiedUser();
+		mockMvc.perform(get("/topics/" + topicId + "/briefings").session(sessionB))
+			.andExpect(status().is3xxRedirection())
+			.andExpect(redirectedUrl("/"));
+	}
+
 	private MockHttpSession loginAsNewVerifiedUser() throws Exception {
 		String email = "briefing-flow-" + UUID.randomUUID() + "@example.com";
 		String password = "correct-horse-battery-staple";

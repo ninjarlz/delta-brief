@@ -155,6 +155,13 @@ A **DDD modular monolith** under `pl.tul.deltabrief` — one package per bounded
 (persistence, AI, email, RSS). Dependencies point inward only; modules reference each other by ID
 (e.g. `TopicId`, `UserId`), never by importing another module's domain aggregate.
 
+> 🖥️ **Spring Boot + server-side rendering, not an API.** DeltaBrief is a classic server-rendered web app
+> (Spring MVC + Thymeleaf, with HTMX for the few dynamic fragments like live generation progress) backed by
+> session-based auth. There is no public REST/JSON API — every route returns HTML behind the session cookie,
+> and the only non-HTML endpoint is the `/actuator/health` check Render uses. This is a deliberate MVP choice
+> (see `tech-stack.md`), not a missing feature; a JSON API could be added later if a native app, SPA, or
+> third-party integration ever needed one.
+
 ```
 src/main/java/pl/tul/deltabrief/
   DeltaBriefApplication.java     — Spring Boot entry point

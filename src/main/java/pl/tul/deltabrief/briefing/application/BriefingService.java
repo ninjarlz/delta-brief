@@ -204,7 +204,25 @@ public class BriefingService {
 				.map(briefing -> new BriefingDetail(briefing, topic.get().name()));
 	}
 
+	/**
+	 * @return empty if the topic doesn't exist or isn't owned by {@code
+	 * userId}. Unlike {@link #listSummaries}, this distinguishes that case
+	 * from "owned, zero briefings yet" — {@code summaries} may legitimately
+	 * be empty inside a present {@code Optional}, which the web layer needs
+	 * to render a friendly empty state instead of redirecting away.
+	 */
+	public Optional<TopicHistory> getHistory(TopicId topicId, UserId userId) {
+		Optional<TopicSummary> topic = topicRepository.findSummaryByIdAndUserId(topicId, userId);
+		if (topic.isEmpty()) {
+			return Optional.empty();
+		}
+		return Optional.of(new TopicHistory(topic.get().name(), briefingRepository.findSummariesByTopicId(topicId)));
+	}
+
 	public record BriefingDetail(Briefing briefing, String topicName) {
+	}
+
+	public record TopicHistory(String topicName, List<BriefingSummary> summaries) {
 	}
 
 	public static class TopicNotFoundException extends RuntimeException {

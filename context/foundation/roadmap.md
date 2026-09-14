@@ -47,7 +47,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | done  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | done | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
 | S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | done | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
-| S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | ready | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
+| S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | in-progress | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
 | S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | ready | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
 | S-07 | rate-a-briefing                  | rate a briefing with predefined categories                          | S-03           | FR-013                  | ready | [#12](https://github.com/ninjarlz/delta-brief/issues/12) |
 | S-08 | oauth-login-google-facebook      | log in or register via Google or Facebook, in addition to email/password | S-01      | FR-001                  | ready | [#22](https://github.com/ninjarlz/delta-brief/issues/22) |
@@ -160,7 +160,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low-risk, standard read/list capability. Sequenced after S-03 only because there's nothing to browse until at least one briefing exists.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-06: Email briefing delivery
 

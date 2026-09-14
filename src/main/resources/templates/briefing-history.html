@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title th:text="${topicName} + ' — Briefing history — DeltaBrief'"></title>
+	<link rel="stylesheet" th:href="@{/css/pico.min.css}"/>
+	<link rel="stylesheet" th:href="@{/css/app.css}"/>
+	<script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+	<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+	<main class="app-content">
+		<a th:href="@{/}" class="back-link">← Back to your topics</a>
+		<header class="page-header">
+			<div>
+				<h1 th:text="${topicName}"></h1>
+				<p class="subtitle">Briefing history</p>
+			</div>
+		</header>
+
+		<div class="empty-state" th:if="${#lists.isEmpty(history)}">
+			<p>No briefings yet for this topic.</p>
+			<form th:action="@{/topics/{id}/briefings(id=${topicId})}" method="post">
+				<button type="submit" role="button" data-busy-text="Generating…">Generate briefing</button>
+			</form>
+		</div>
+
+		<section class="briefing-history" th:unless="${#lists.isEmpty(history)}">
+			<ul class="briefing-history__list">
+				<li th:each="entry : ${history}">
+					<a th:href="@{/topics/{topicId}/briefings/{briefingId}(topicId=${topicId},briefingId=${entry.id})}">
+						<span th:text="${entry.title}"></span>
+						<span th:text="' — '"></span>
+						<span th:text="${entry.generatedAt}" th:data-timestamp="${entry.generatedAtIso}"></span>
+					</a>
+				</li>
+			</ul>
+		</section>
+	</main>
+</body>
+</html>

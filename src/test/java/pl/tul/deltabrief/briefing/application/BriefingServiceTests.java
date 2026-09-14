@@ -12,6 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -336,6 +337,49 @@ class BriefingServiceTests {
 		assertThatExceptionOfType(GenerationFailedException.class)
 				.isThrownBy(() -> briefingService.generateBriefing(topicId, owner));
 		assertThat(briefingService.listSummaries(topicId, owner)).isEmpty();
+	}
+
+	@Test
+	void getHistoryReturnsTheTopicNameAndSummariesForTheOwner() {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		TopicId topicId = newTopic(owner, newCategoryWithFeedAt(feedPath));
+		Briefing briefing = briefingService.generateBriefing(topicId, owner);
+
+		BriefingService.TopicHistory history = briefingService.getHistory(topicId, owner).orElseThrow();
+
+		assertThat(history.summaries()).hasSize(1);
+		assertThat(history.summaries().get(0).id()).isEqualTo(briefing.id());
+	}
+
+	/**
+	 * Distinguishes "owned, zero briefings yet" from "not owned" — unlike
+	 * {@link BriefingService#listSummaries}, which collapses both into an
+	 * empty list, {@code getHistory} must still return a present {@code
+	 * Optional} here so the web layer can render an empty state rather than
+	 * redirect away from a topic the caller actually owns.
+	 */
+	@Test
+	void getHistoryReturnsAnEmptySummaryListForATopicWithNoBriefingsYet() {
+		UserId owner = newUser();
+		TopicId topicId = newTopic(owner, newCategoryWithFeedAt("/feed-" + UUID.randomUUID() + ".xml"));
+
+		Optional<BriefingService.TopicHistory> history = briefingService.getHistory(topicId, owner);
+
+		assertThat(history).isPresent();
+		assertThat(history.get().summaries()).isEmpty();
+	}
+
+	@Test
+	void getHistoryIsEmptyForATopicNotOwnedByTheCaller() {
+		UserId owner = newUser();
+		UserId otherUser = newUser();
+		TopicId topicId = newTopic(owner, newCategoryWithFeedAt("/feed-" + UUID.randomUUID() + ".xml"));
+
+		assertThat(briefingService.getHistory(topicId, otherUser)).isEmpty();
 	}
 
 }

@@ -22,6 +22,7 @@ import pl.tul.deltabrief.auth.adapter.out.security.AppUserDetails;
 import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.briefing.application.BriefingService;
 import pl.tul.deltabrief.briefing.application.BriefingService.BriefingDetail;
+import pl.tul.deltabrief.briefing.application.BriefingService.TopicHistory;
 import pl.tul.deltabrief.briefing.application.BriefingService.TopicNotFoundException;
 import pl.tul.deltabrief.briefing.application.port.out.BriefingContentGenerator.GenerationFailedException;
 import pl.tul.deltabrief.briefing.application.port.out.BriefingSummary;
@@ -83,6 +84,29 @@ public class BriefingController {
 		TopicId id = new TopicId(topicId);
 		UserId userId = currentUserId(authentication);
 		return showBriefing(id, new BriefingId(briefingId), userId, briefingService.listSummaries(id, userId), model);
+	}
+
+	/**
+	 * Reachable independent of generating or viewing any specific briefing —
+	 * unlike {@link #latest}, a topic with zero briefings yet still renders
+	 * (with an empty state) rather than redirecting to {@code /}, since an
+	 * owned topic with no history is a valid state here, not an error.
+	 */
+	@GetMapping("/topics/{topicId}/briefings")
+	public String history(@PathVariable Long topicId, Authentication authentication, Model model) {
+		TopicId id = new TopicId(topicId);
+		Optional<TopicHistory> history = briefingService.getHistory(id, currentUserId(authentication));
+		if (history.isEmpty()) {
+			return "redirect:/";
+		}
+		List<BriefingSummary> summaries = history.get().summaries();
+		model.addAttribute("topicId", topicId);
+		model.addAttribute("topicName", history.get().topicName());
+		model.addAttribute("history", IntStream.range(0, summaries.size())
+				.mapToObj(i -> toHistoryEntryView(summaries.get(i), null, history.get().topicName(),
+						summaries.size() - i))
+				.toList());
+		return "briefing-history";
 	}
 
 	/**
