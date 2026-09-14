@@ -272,17 +272,17 @@ Dispatch concurrency is explicitly bounded (`app.scheduling.max-concurrent-gener
 
 #### Automated
 
-- [x] 3.1 Integration test: due topic generates and `next_due_at` advances
-- [x] 3.2 Integration test: failed generation leaves `next_due_at` unchanged, marks `FAILURE`
-- [x] 3.3 Test: manual "Generate now" also advances `next_due_at`
+- [x] 3.1 Integration test: due topic generates and `next_due_at` advances — 89d5e97
+- [x] 3.2 Integration test: failed generation leaves `next_due_at` unchanged, marks `FAILURE` — 89d5e97
+- [x] 3.3 Test: manual "Generate now" also advances `next_due_at` — 89d5e97
 
 #### Manual
 
-- [x] 3.4 Real poll-tick verification via seeded past-due `next_due_at`
-- [x] 3.5 Deliberately-broken topic shows failure indicator and retries next tick
+- [x] 3.4 Real poll-tick verification via seeded past-due `next_due_at` — 89d5e97
+- [x] 3.5 Deliberately-broken topic shows failure indicator and retries next tick — 89d5e97
 
 ### Phase 4: Documentation & roadmap closeout
 
 #### Manual
 
-- [ ] 4.1 `change.md` contains the deferred email-notification note
+- [x] 4.1 `change.md` contains the deferred email-notification note
