@@ -127,6 +127,21 @@ class TopicFlowIntegrationTests {
 	}
 
 	@Test
+	void topicsListShowsAViewBriefingsLinkForEachTopic() throws Exception {
+		MockHttpSession session = loginAsNewVerifiedUser();
+		Long categoryId = categoryRepository.findAll().get(0).id().value();
+		mockMvc.perform(post("/topics").with(csrf()).session(session)
+				.param("name", "War in Ukraine")
+				.param("categoryId", categoryId.toString()))
+			.andExpect(status().is3xxRedirection());
+		String topicId = extractCreatedTopicId(session);
+
+		mockMvc.perform(get("/").session(session))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("/topics/" + topicId + "/briefings")));
+	}
+
+	@Test
 	void aUserCanEditATopicsSchedule() throws Exception {
 		MockHttpSession session = loginAsNewVerifiedUser();
 		Long categoryId = categoryRepository.findAll().get(0).id().value();

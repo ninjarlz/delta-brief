@@ -169,6 +169,42 @@ class BriefingFlowIntegrationTests {
 	}
 
 	@Test
+	void fullPathFromTopicsListThroughHistoryToADetailViewWorks() throws Exception {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(WireMock.get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubFor(WireMock.post(urlEqualTo("/chat/completions")).willReturn(
+				aResponse().withHeader("Content-Type", "application/json").withBody(CHAT_COMPLETION_RESPONSE)));
+
+		MockHttpSession session = loginAsNewVerifiedUser();
+		Long categoryId = newCategoryWithFeedAt(feedPath);
+		mockMvc.perform(post("/topics").with(csrf()).session(session)
+				.param("name", "Test Topic")
+				.param("categoryId", categoryId.toString()))
+			.andExpect(status().is3xxRedirection());
+		String topicId = extractCreatedTopicId(session);
+
+		mockMvc.perform(post("/topics/" + topicId + "/briefings").with(csrf()).session(session))
+			.andExpect(status().is3xxRedirection());
+
+		String topicsListBody = mockMvc.perform(get("/").session(session))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("/topics/" + topicId + "/briefings")))
+			.andReturn().getResponse().getContentAsString();
+		assertThat(topicsListBody).contains("View briefings");
+
+		String historyBody = mockMvc.perform(get("/topics/" + topicId + "/briefings").session(session))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("(onboarding briefing)")))
+			.andReturn().getResponse().getContentAsString();
+		String linkedBriefingId = extractHistoryLinkedBriefingId(historyBody, topicId);
+
+		mockMvc.perform(get("/topics/" + topicId + "/briefings/" + linkedBriefingId).session(session))
+			.andExpect(status().isOk())
+			.andExpect(content().string(containsString("Onboarding briefing")));
+	}
+
+	@Test
 	void historyPageListsEveryBriefingForATopicAndLinksIntoEachOne() throws Exception {
 		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
 		stubFor(WireMock.get(urlEqualTo(feedPath)).willReturn(

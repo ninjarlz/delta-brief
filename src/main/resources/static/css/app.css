@@ -284,7 +284,8 @@ body {
 
 .topic-card__delete,
 .topic-card__generate,
-.topic-card__edit {
+.topic-card__edit,
+.topic-card__history {
 	width: auto;
 	margin: 0;
 	padding: 0.4rem 0.9rem;

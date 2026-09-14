@@ -39,6 +39,7 @@
 					<form th:action="@{/topics/{id}/briefings(id=${topic.id})}" method="post">
 						<button type="submit" class="topic-card__generate outline" data-busy-text="Generating…">Generate briefing</button>
 					</form>
+					<a th:href="@{/topics/{id}/briefings(id=${topic.id})}" role="button" class="topic-card__history outline">View briefings</a>
 					<a th:href="@{/topics/{id}/edit(id=${topic.id})}" role="button" class="topic-card__edit outline">Edit schedule</a>
 					<form th:action="@{/topics/{id}/delete(id=${topic.id})}" method="post">
 						<button type="submit" class="topic-card__delete secondary outline">Delete</button>

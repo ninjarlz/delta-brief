@@ -268,25 +268,25 @@ pause here for manual confirmation from the human.
 
 #### Automated
 
-- [x] 1.1 `BriefingServiceTests` passes including new `getHistory` cases
-- [x] 1.2 `BriefingFlowIntegrationTests` passes including new history-page cases
-- [x] 1.3 `./gradlew test` passes
+- [x] 1.1 `BriefingServiceTests` passes including new `getHistory` cases — 2c3e205
+- [x] 1.2 `BriefingFlowIntegrationTests` passes including new history-page cases — 2c3e205
+- [x] 1.3 `./gradlew test` passes — 2c3e205
 
 #### Manual
 
-- [x] 1.4 Direct navigation to the history page for a topic with briefings works
-- [x] 1.5 Direct navigation to the history page for a topic with zero briefings shows the empty state
-- [x] 1.6 New page visually matches topics.html/briefing.html (navbar, back-link, header, list, empty state)
+- [x] 1.4 Direct navigation to the history page for a topic with briefings works — 2c3e205
+- [x] 1.5 Direct navigation to the history page for a topic with zero briefings shows the empty state — 2c3e205
+- [x] 1.6 New page visually matches topics.html/briefing.html (navbar, back-link, header, list, empty state) — 2c3e205
 
 ### Phase 2: Entry point from the topics list
 
 #### Automated
 
-- [ ] 2.1 Topics list renders the "View briefings" link with the correct href
-- [ ] 2.2 Full-path integration test (generate → topics list → history → detail) passes
-- [ ] 2.3 `./gradlew test` passes
+- [x] 2.1 Topics list renders the "View briefings" link with the correct href
+- [x] 2.2 Full-path integration test (generate → topics list → history → detail) passes
+- [x] 2.3 `./gradlew test` passes
 
 #### Manual
 
-- [ ] 2.4 "View briefings" link on the topics list works end to end
-- [ ] 2.5 "View briefings" link visually matches the "Edit schedule"/"Delete" actions on the card
+- [x] 2.4 "View briefings" link on the topics list works end to end
+- [x] 2.5 "View briefings" link visually matches the "Edit schedule"/"Delete" actions on the card
