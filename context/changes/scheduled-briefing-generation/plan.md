@@ -285,4 +285,4 @@ Dispatch concurrency is explicitly bounded (`app.scheduling.max-concurrent-gener
 
 #### Manual
 
-- [x] 4.1 `change.md` contains the deferred email-notification note
+- [x] 4.1 `change.md` contains the deferred email-notification note — c640e29

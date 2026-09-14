@@ -1,7 +1,7 @@
 ---
 change_id: scheduled-briefing-generation
 title: Scheduled briefing generation
-status: implementing
+status: implemented
 created: 2026-09-14
 updated: 2026-09-14
 archived_at: null
