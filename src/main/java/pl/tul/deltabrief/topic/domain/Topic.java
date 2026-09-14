@@ -21,15 +21,26 @@ public class Topic {
 	private final CategoryId categoryId;
 	private final String description;
 	private final Instant createdAt;
+	private Frequency frequency;
+	private Integer preferredHour;
+	private Instant nextDueAt;
+	private Instant lastScheduledAttemptAt;
+	private ScheduledRunStatus lastScheduledStatus;
 
-	public Topic(TopicId id, UserId userId, String name, CategoryId categoryId, String description,
-			Instant createdAt) {
+	public Topic(TopicId id, UserId userId, String name, CategoryId categoryId, String description, Instant createdAt,
+			Frequency frequency, Integer preferredHour, Instant nextDueAt, Instant lastScheduledAttemptAt,
+			ScheduledRunStatus lastScheduledStatus) {
 		this.id = id;
 		this.userId = userId;
 		this.name = name;
 		this.categoryId = categoryId;
 		this.description = description;
 		this.createdAt = createdAt;
+		this.frequency = frequency;
+		this.preferredHour = preferredHour;
+		this.nextDueAt = nextDueAt;
+		this.lastScheduledAttemptAt = lastScheduledAttemptAt;
+		this.lastScheduledStatus = lastScheduledStatus;
 	}
 
 	/**
@@ -39,7 +50,8 @@ public class Topic {
 	 */
 	public static Topic create(UserId userId, String name, CategoryId categoryId, String description,
 			Instant createdAt) {
-		return new Topic(null, userId, name, categoryId, description, createdAt);
+		return new Topic(null, userId, name, categoryId, description, createdAt, Frequency.DAILY, null, null, null,
+				null);
 	}
 
 	/**
@@ -53,6 +65,39 @@ public class Topic {
 
 	public void assignId(TopicId id) {
 		this.id = Objects.requireNonNull(id);
+	}
+
+	/**
+	 * Sets the topic's cadence — used both at creation (with a freshly
+	 * computed {@code nextDueAt}) and from the edit flow (recomputing it
+	 * from the topic's current schedule anchor). Does not touch
+	 * {@code lastScheduledAttemptAt}/{@code lastScheduledStatus} — those
+	 * only change as an actual scheduled attempt happens.
+	 */
+	public void applySchedule(Frequency frequency, Integer preferredHour, Instant nextDueAt) {
+		this.frequency = Objects.requireNonNull(frequency);
+		this.preferredHour = preferredHour;
+		this.nextDueAt = nextDueAt;
+	}
+
+	/**
+	 * A scheduled generation attempt succeeded: advance the schedule and
+	 * record the attempt.
+	 */
+	public void recordScheduledSuccess(Instant attemptedAt, Instant nextDueAt) {
+		this.lastScheduledAttemptAt = attemptedAt;
+		this.lastScheduledStatus = ScheduledRunStatus.SUCCESS;
+		this.nextDueAt = nextDueAt;
+	}
+
+	/**
+	 * A scheduled generation attempt failed: record the attempt but leave
+	 * {@code nextDueAt} unchanged, so the topic stays due and the next poll
+	 * cycle retries it — no backoff, no auto-pause.
+	 */
+	public void recordScheduledFailure(Instant attemptedAt) {
+		this.lastScheduledAttemptAt = attemptedAt;
+		this.lastScheduledStatus = ScheduledRunStatus.FAILURE;
 	}
 
 }

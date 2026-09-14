@@ -22,6 +22,11 @@ class TopicTests {
 		assertThat(topic.categoryId()).isEqualTo(categoryId);
 		assertThat(topic.description()).isNull();
 		assertThat(topic.createdAt()).isEqualTo(now);
+		assertThat(topic.frequency()).isEqualTo(Frequency.DAILY);
+		assertThat(topic.preferredHour()).isNull();
+		assertThat(topic.nextDueAt()).isNull();
+		assertThat(topic.lastScheduledAttemptAt()).isNull();
+		assertThat(topic.lastScheduledStatus()).isNull();
 	}
 
 	@Test
@@ -39,6 +44,45 @@ class TopicTests {
 		topic.assignId(new TopicId(42L));
 
 		assertThat(topic.id()).isEqualTo(new TopicId(42L));
+	}
+
+	@Test
+	void applyScheduleSetsFrequencyPreferredHourAndNextDueAt() {
+		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now());
+		Instant nextDueAt = Instant.parse("2026-09-20T09:00:00Z");
+
+		topic.applySchedule(Frequency.WEEKLY, 9, nextDueAt);
+
+		assertThat(topic.frequency()).isEqualTo(Frequency.WEEKLY);
+		assertThat(topic.preferredHour()).isEqualTo(9);
+		assertThat(topic.nextDueAt()).isEqualTo(nextDueAt);
+	}
+
+	@Test
+	void recordScheduledSuccessAdvancesNextDueAtAndMarksSuccess() {
+		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now());
+		Instant attemptedAt = Instant.parse("2026-09-14T09:00:00Z");
+		Instant nextDueAt = Instant.parse("2026-09-15T09:00:00Z");
+
+		topic.recordScheduledSuccess(attemptedAt, nextDueAt);
+
+		assertThat(topic.lastScheduledAttemptAt()).isEqualTo(attemptedAt);
+		assertThat(topic.lastScheduledStatus()).isEqualTo(ScheduledRunStatus.SUCCESS);
+		assertThat(topic.nextDueAt()).isEqualTo(nextDueAt);
+	}
+
+	@Test
+	void recordScheduledFailureLeavesNextDueAtUnchangedAndMarksFailure() {
+		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now());
+		Instant originalNextDueAt = Instant.parse("2026-09-15T09:00:00Z");
+		topic.applySchedule(Frequency.DAILY, 9, originalNextDueAt);
+		Instant attemptedAt = Instant.parse("2026-09-15T09:05:00Z");
+
+		topic.recordScheduledFailure(attemptedAt);
+
+		assertThat(topic.lastScheduledAttemptAt()).isEqualTo(attemptedAt);
+		assertThat(topic.lastScheduledStatus()).isEqualTo(ScheduledRunStatus.FAILURE);
+		assertThat(topic.nextDueAt()).isEqualTo(originalNextDueAt);
 	}
 
 }

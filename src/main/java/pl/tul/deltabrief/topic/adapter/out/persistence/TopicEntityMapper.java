@@ -26,6 +26,11 @@ interface TopicEntityMapper {
 	@Mapping(target = "categoryId", expression = "java(topic.categoryId().value())")
 	@Mapping(target = "description", expression = "java(topic.description())")
 	@Mapping(target = "createdAt", expression = "java(topic.createdAt())")
+	@Mapping(target = "frequency", expression = "java(topic.frequency())")
+	@Mapping(target = "preferredHour", expression = "java(topic.preferredHour())")
+	@Mapping(target = "nextDueAt", expression = "java(topic.nextDueAt())")
+	@Mapping(target = "lastScheduledAttemptAt", expression = "java(topic.lastScheduledAttemptAt())")
+	@Mapping(target = "lastScheduledStatus", expression = "java(topic.lastScheduledStatus())")
 	TopicJpaEntity toEntity(Topic topic);
 
 	Topic toDomain(TopicJpaEntity entity);
