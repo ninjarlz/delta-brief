@@ -18,6 +18,20 @@ document.addEventListener('submit', function (event) {
 		if (busyText) {
 			submitButton.setAttribute('aria-busy', 'true');
 			submitButton.textContent = busyText;
+			// A busy button means a slow, synchronous full-page action (e.g.
+			// briefing generation) — submitting one of these is a real page
+			// navigation, so starting a second one before the first
+			// responds would abandon this request's response entirely and
+			// leave the user on whichever one they clicked last, per the
+			// browser's standard "a new navigation cancels the pending
+			// one" behavior. Grey out every other busy-capable button on
+			// the page (e.g. "Generate briefing" for other topics) so that
+			// can't happen — only the clicked one gets the busy animation.
+			document.querySelectorAll('[data-busy-text]').forEach(function (other) {
+				if (other !== submitButton) {
+					other.disabled = true;
+				}
+			});
 		}
 	}
 }, true);
