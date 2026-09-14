@@ -3,7 +3,9 @@ package pl.tul.deltabrief.topic.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatException;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -17,9 +19,12 @@ import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 import pl.tul.deltabrief.topic.application.port.out.CategoryRepository;
+import pl.tul.deltabrief.topic.application.port.out.DueTopic;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
 import pl.tul.deltabrief.topic.application.port.out.TopicSummary;
 import pl.tul.deltabrief.topic.domain.CategoryId;
+import pl.tul.deltabrief.topic.domain.Frequency;
+import pl.tul.deltabrief.topic.domain.ScheduledRunStatus;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
@@ -199,6 +204,82 @@ class TopicRepositoryAdapterTests {
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
 
 		assertThat(topicRepository.findByIdAndUserId(topic.id(), otherUser)).isEmpty();
+	}
+
+	@Test
+	void findDueForScheduledGenerationReturnsATopicWhoseNextDueAtHasPassed() {
+		UserId owner = newUser();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
+		topic.applySchedule(Frequency.DAILY, null, Instant.now().minus(Duration.ofMinutes(1)));
+		topicRepository.save(topic);
+
+		List<DueTopic> due = topicRepository.findDueForScheduledGeneration(Instant.now());
+
+		assertThat(due).extracting(DueTopic::id).contains(topic.id());
+		assertThat(due).filteredOn(d -> d.id().equals(topic.id())).extracting(DueTopic::userId).containsExactly(owner);
+	}
+
+	@Test
+	void findDueForScheduledGenerationExcludesATopicWhoseNextDueAtIsInTheFuture() {
+		UserId owner = newUser();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
+		topic.applySchedule(Frequency.DAILY, null, Instant.now().plus(Duration.ofDays(1)));
+		topicRepository.save(topic);
+
+		assertThat(topicRepository.findDueForScheduledGeneration(Instant.now())).extracting(DueTopic::id)
+				.doesNotContain(topic.id());
+	}
+
+	@Test
+	void findDueForScheduledGenerationExcludesAManualTopicSinceItHasNoNextDueAt() {
+		// MANUAL topics always have a null nextDueAt in practice — enforced
+		// structurally by ScheduleCalculator.nextDueAt returning null for
+		// MANUAL, which every real mutation path (creation, edit) routes
+		// through — so this is what actually exercises the exclusion, not an
+		// artificially-forced non-null nextDueAt on a MANUAL topic (a state
+		// no real code path can produce).
+		UserId owner = newUser();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
+		topic.applySchedule(Frequency.MANUAL, null, null);
+		topicRepository.save(topic);
+
+		assertThat(topicRepository.findDueForScheduledGeneration(Instant.now())).extracting(DueTopic::id)
+				.doesNotContain(topic.id());
+	}
+
+	@Test
+	void recordSuccessfulGenerationAdvancesNextDueAtAndMarksSuccess() {
+		UserId owner = newUser();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
+		topic.applySchedule(Frequency.DAILY, null, Instant.now());
+		topicRepository.save(topic);
+		Instant generatedAt = Instant.parse("2026-09-14T09:00:00Z");
+
+		topicRepository.recordSuccessfulGeneration(topic.id(), generatedAt);
+
+		Topic updated = topicRepository.findByIdAndUserId(topic.id(), owner).orElseThrow();
+		assertThat(updated.nextDueAt()).isEqualTo(generatedAt.plus(Duration.ofDays(1)));
+		assertThat(updated.lastScheduledStatus()).isEqualTo(ScheduledRunStatus.SUCCESS);
+		assertThat(updated.lastScheduledAttemptAt()).isEqualTo(generatedAt);
+	}
+
+	@Test
+	void recordFailedScheduledGenerationLeavesNextDueAtUnchangedAndMarksFailure() {
+		UserId owner = newUser();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
+		// Truncated to microseconds — TIMESTAMPTZ's DB round-trip precision,
+		// coarser than Instant's nanosecond precision — so the persisted and
+		// re-read value can be compared for exact equality below.
+		Instant originalNextDueAt = Instant.now().plus(Duration.ofMinutes(1)).truncatedTo(ChronoUnit.MICROS);
+		topic.applySchedule(Frequency.DAILY, null, originalNextDueAt);
+		topicRepository.save(topic);
+		Instant attemptedAt = Instant.now();
+
+		topicRepository.recordFailedScheduledGeneration(topic.id(), attemptedAt);
+
+		Topic updated = topicRepository.findByIdAndUserId(topic.id(), owner).orElseThrow();
+		assertThat(updated.nextDueAt()).isEqualTo(originalNextDueAt);
+		assertThat(updated.lastScheduledStatus()).isEqualTo(ScheduledRunStatus.FAILURE);
 	}
 
 }

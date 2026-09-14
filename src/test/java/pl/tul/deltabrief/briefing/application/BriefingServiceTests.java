@@ -33,6 +33,7 @@ import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
 import pl.tul.deltabrief.topic.domain.CategoryId;
+import pl.tul.deltabrief.topic.domain.Frequency;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
@@ -300,6 +301,27 @@ class BriefingServiceTests {
 		assertThat(briefing.id()).isNotNull();
 		assertThat(briefing.ingestedItems()).isEmpty();
 		assertThat(briefing.keyChanges()).isEqualTo("changes");
+	}
+
+	/**
+	 * FR-009's "manual generation resets the schedule" decision: every
+	 * successful generation advances {@code nextDueAt} the same way,
+	 * whether triggered manually (as here) or by the scheduler — see
+	 * {@link TopicRepository#recordSuccessfulGeneration}.
+	 */
+	@Test
+	void generatingABriefingAdvancesTheTopicsNextDueAt() {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		TopicId topicId = newTopic(owner, newCategoryWithFeedAt(feedPath));
+
+		Briefing briefing = briefingService.generateBriefing(topicId, owner);
+
+		Topic updated = topicRepository.findByIdAndUserId(topicId, owner).orElseThrow();
+		assertThat(updated.nextDueAt()).isEqualTo(briefing.generatedAt().plus(Frequency.DAILY.interval()));
 	}
 
 	@Test

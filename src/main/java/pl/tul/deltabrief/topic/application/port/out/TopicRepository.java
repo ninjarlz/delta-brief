@@ -1,5 +1,6 @@
 package pl.tul.deltabrief.topic.application.port.out;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import pl.tul.deltabrief.auth.domain.UserId;
@@ -53,5 +54,32 @@ public interface TopicRepository {
 	 * must treat both cases identically (no information leak).
 	 */
 	boolean deleteByIdAndUserId(TopicId id, UserId userId);
+
+	/**
+	 * Topics due for scheduled generation (FR-009) as of {@code now} — every
+	 * non-{@code MANUAL} topic whose {@code nextDueAt} has passed.
+	 */
+	List<DueTopic> findDueForScheduledGeneration(Instant now);
+
+	/**
+	 * Records a successful generation's outcome for scheduling purposes —
+	 * called after every generation (manual, onboarding, or scheduled)
+	 * persists its briefing, so the schedule advances the same way
+	 * regardless of trigger. Recomputes and persists {@code nextDueAt} from
+	 * the topic's own frequency/preferredHour, anchored at
+	 * {@code generatedAt}, and marks the attempt a success. Silently no-ops
+	 * if the topic no longer exists (a narrow, harmless race with topic
+	 * deletion).
+	 */
+	void recordSuccessfulGeneration(TopicId id, Instant generatedAt);
+
+	/**
+	 * Records a failed <em>scheduled</em> generation attempt — never called
+	 * for a manual/onboarding failure, which already surfaces synchronously
+	 * as an HTTP error to the user. Leaves {@code nextDueAt} unchanged so
+	 * the topic stays due and the next poll cycle retries it — no backoff,
+	 * no auto-pause.
+	 */
+	void recordFailedScheduledGeneration(TopicId id, Instant attemptedAt);
 
 }

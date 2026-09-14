@@ -76,7 +76,14 @@ public class BriefingService {
 		Briefing briefing = Briefing.generate(topicId, type, Instant.now(), content.keyChanges(),
 				content.trendContinuation(), content.noiseSpeculation(), content.significance(),
 				content.uncertainties(), content.sourceImpact(), ingestedItems);
-		return briefingRepository.save(briefing);
+		Briefing saved = briefingRepository.save(briefing);
+		// Every generation path — manual, onboarding, or scheduled — advances
+		// the schedule the same way, anchored at this briefing's own
+		// generatedAt (FR-009's "manual generation resets the schedule"
+		// decision applies uniformly here rather than special-casing the
+		// scheduler's own calls).
+		topicRepository.recordSuccessfulGeneration(topicId, saved.generatedAt());
+		return saved;
 	}
 
 	/**

@@ -1,13 +1,16 @@
 package pl.tul.deltabrief.topic.adapter.out.persistence;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.tul.deltabrief.auth.domain.UserId;
+import pl.tul.deltabrief.topic.application.port.out.DueTopic;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
 import pl.tul.deltabrief.topic.application.port.out.TopicSummary;
 import pl.tul.deltabrief.topic.domain.CategoryId;
+import pl.tul.deltabrief.topic.domain.ScheduleCalculator;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
@@ -55,6 +58,32 @@ class TopicRepositoryAdapter implements TopicRepository {
 	@Override
 	public boolean deleteByIdAndUserId(TopicId id, UserId userId) {
 		return jpaRepository.deleteByIdAndUserId(id.value(), userId.value()) > 0;
+	}
+
+	@Override
+	public List<DueTopic> findDueForScheduledGeneration(Instant now) {
+		return jpaRepository.findDueForScheduledGeneration(now).stream()
+				.map(entity -> new DueTopic(new TopicId(entity.getId()), new UserId(entity.getUserId())))
+				.toList();
+	}
+
+	@Override
+	public void recordSuccessfulGeneration(TopicId id, Instant generatedAt) {
+		jpaRepository.findById(id.value()).ifPresent(entity -> {
+			Topic topic = mapper.toDomain(entity);
+			Instant nextDueAt = ScheduleCalculator.nextDueAt(generatedAt, topic.frequency(), topic.preferredHour());
+			topic.recordScheduledSuccess(generatedAt, nextDueAt);
+			jpaRepository.save(mapper.toEntity(topic));
+		});
+	}
+
+	@Override
+	public void recordFailedScheduledGeneration(TopicId id, Instant attemptedAt) {
+		jpaRepository.findById(id.value()).ifPresent(entity -> {
+			Topic topic = mapper.toDomain(entity);
+			topic.recordScheduledFailure(attemptedAt);
+			jpaRepository.save(mapper.toEntity(topic));
+		});
 	}
 
 }

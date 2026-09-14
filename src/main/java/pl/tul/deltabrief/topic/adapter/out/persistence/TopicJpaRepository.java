@@ -1,5 +1,6 @@
 package pl.tul.deltabrief.topic.adapter.out.persistence;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -49,5 +50,16 @@ interface TopicJpaRepository extends JpaRepository<TopicJpaEntity, Long> {
 	 */
 	@Transactional
 	long deleteByIdAndUserId(Long id, Long userId);
+
+	/**
+	 * Backs the scheduler's poll query (FR-009). A {@code MANUAL} topic
+	 * always has a {@code null} {@code nextDueAt} (see {@code
+	 * ScheduleCalculator}/{@code Topic.applySchedule}), so checking for a
+	 * past, non-null {@code nextDueAt} is equivalent to "every non-MANUAL
+	 * topic that's due" without needing to reference the enum in JPQL. See
+	 * the partial index {@code topics_next_due_at_idx} (V13 migration).
+	 */
+	@Query("select t from TopicJpaEntity t where t.nextDueAt is not null and t.nextDueAt <= :now")
+	List<TopicJpaEntity> findDueForScheduledGeneration(@Param("now") Instant now);
 
 }

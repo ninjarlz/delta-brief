@@ -259,27 +259,27 @@ Dispatch concurrency is explicitly bounded (`app.scheduling.max-concurrent-gener
 
 #### Automated
 
-- [x] 2.1 `./gradlew test` passes including new `TopicService.updateSchedule` tests
-- [x] 2.2 New edit-endpoint tests pass
+- [x] 2.1 `./gradlew test` passes including new `TopicService.updateSchedule` tests — 36b0e87
+- [x] 2.2 New edit-endpoint tests pass — 36b0e87
 
 #### Manual
 
-- [x] 2.3 Create a topic, confirm frequency/hour fields render and persist
-- [x] 2.4 Edit an existing topic's frequency, confirm "next briefing" updates
-- [x] 2.5 Confirm failure indicator appears/disappears correctly
+- [x] 2.3 Create a topic, confirm frequency/hour fields render and persist — 36b0e87
+- [x] 2.4 Edit an existing topic's frequency, confirm "next briefing" updates — 36b0e87
+- [x] 2.5 Confirm failure indicator appears/disappears correctly — 36b0e87
 
 ### Phase 3: The scheduler + manual-trigger schedule integration
 
 #### Automated
 
-- [ ] 3.1 Integration test: due topic generates and `next_due_at` advances
-- [ ] 3.2 Integration test: failed generation leaves `next_due_at` unchanged, marks `FAILURE`
-- [ ] 3.3 Test: manual "Generate now" also advances `next_due_at`
+- [x] 3.1 Integration test: due topic generates and `next_due_at` advances
+- [x] 3.2 Integration test: failed generation leaves `next_due_at` unchanged, marks `FAILURE`
+- [x] 3.3 Test: manual "Generate now" also advances `next_due_at`
 
 #### Manual
 
-- [ ] 3.4 Real poll-tick verification via seeded past-due `next_due_at`
-- [ ] 3.5 Deliberately-broken topic shows failure indicator and retries next tick
+- [x] 3.4 Real poll-tick verification via seeded past-due `next_due_at`
+- [x] 3.5 Deliberately-broken topic shows failure indicator and retries next tick
 
 ### Phase 4: Documentation & roadmap closeout
 
