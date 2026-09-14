@@ -1,10 +1,10 @@
 ---
 change_id: testing-auth-boundary-abuse-resistance
 title: Testing auth boundary abuse resistance
-status: implemented
+status: archived
 created: 2026-09-12
-updated: 2026-09-13
-archived_at: null
+updated: 2026-09-14
+archived_at: 2026-09-14T12:38:44Z
 ---
 
 ## Notes
