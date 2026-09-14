@@ -46,11 +46,11 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | done | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
 | S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | done  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | done | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
-| S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | proposed | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
-| S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | proposed | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
-| S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | proposed | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
-| S-07 | rate-a-briefing                  | rate a briefing with predefined categories                          | S-03           | FR-013                  | proposed | [#12](https://github.com/ninjarlz/delta-brief/issues/12) |
-| S-08 | oauth-login-google-facebook      | log in or register via Google or Facebook, in addition to email/password | S-01      | FR-001                  | proposed | [#22](https://github.com/ninjarlz/delta-brief/issues/22) |
+| S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | ready | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
+| S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | ready | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
+| S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | ready | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
+| S-07 | rate-a-briefing                  | rate a briefing with predefined categories                          | S-03           | FR-013                  | ready | [#12](https://github.com/ninjarlz/delta-brief/issues/12) |
+| S-08 | oauth-login-google-facebook      | log in or register via Google or Facebook, in addition to email/password | S-01      | FR-001                  | ready | [#22](https://github.com/ninjarlz/delta-brief/issues/22) |
 
 ## Streams
 
@@ -147,7 +147,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Depends on S-03's generation logic already working manually — adding scheduling on top of unproven generation would compound two unknowns (does generation work? does the schedule fire reliably?) into one slice that's harder to debug if something goes wrong.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-05: Browse briefing history
 
@@ -160,7 +160,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Low-risk, standard read/list capability. Sequenced after S-03 only because there's nothing to browse until at least one briefing exists.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-06: Email briefing delivery
 
@@ -174,7 +174,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - What is the email briefing format (plain text vs. styled), and the opt-in/opt-out flow details? — Owner: user. Block: no.
 - **Risk:** Depends on a real briefing existing to send. The exact email format is still an open PRD question, so this slice's scope may narrow once that's answered — but the delivery mechanism itself can be planned regardless.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-07: Rate a briefing
 
@@ -188,7 +188,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - How are briefing ratings used in v1 (the feedback-loop mechanics)? — Owner: user. Block: no.
 - **Risk:** Capturing the rating itself is safe to build regardless of the open question above — "how ratings feed back into prompts" is a separate, unblocked downstream concern that doesn't gate collecting the data now.
-- **Status:** proposed
+- **Status:** ready
 
 ### S-08: OAuth login (Google, Facebook)
 
@@ -202,7 +202,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Facebook's `email` permission review status was flagged uncertain by research (conflicting sources on whether Meta's App Review is required) — Owner: user. Block: no (Google can proceed regardless; only affects Facebook's specific rollout timing).
 - **Risk:** Originally parked as explicitly optional per `tech-stack.md` and FR-001's either-or phrasing; promoted to a tracked slice per user request after `/10x-frame` confirmed (2026-09-11, `context/changes/user-registration-and-login/frame.md`) that it's a clean, additive extension of S-01 — no `users` table retrofit, no `SecurityFilterChain` restructuring. Sequenced strictly after S-01 (extends the `auth` module rather than preceding it); does not block or get blocked by S-02 onward. Google is lower-friction than Facebook (no app-review path for basic scopes) — implement Google first, Facebook as a near-free fast-follow. Full research: `context/changes/user-registration-and-login/research.md`.
-- **Status:** proposed
+- **Status:** ready
 
 ## Backlog Handoff
 
@@ -212,11 +212,11 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-01       | user-registration-and-login          | User registration and login                                | yes                    | —                                                    |
 | S-02       | create-topic-and-select-sources      | Create topic and select sources                             | no                     | Blocked — preset source lists not yet defined (user) |
 | S-03       | first-onboarding-and-delta-briefing  | First onboarding + delta briefing (manual trigger)          | no                     | Waiting on S-02                                     |
-| S-04       | scheduled-briefing-generation        | Scheduled briefing generation                                | no                     | Waiting on S-03                                     |
-| S-05       | browse-briefing-history              | Browse briefing history                                      | no                     | Waiting on S-03                                     |
-| S-06       | email-briefing-delivery              | Email briefing delivery                                       | no                     | Waiting on S-03; email format still open (Q3)       |
-| S-07       | rate-a-briefing                      | Rate a briefing                                               | no                     | Waiting on S-03; ratings usage still open (Q4)      |
-| S-08       | oauth-login-google-facebook          | OAuth login (Google, Facebook)                                | no                     | Waiting on S-01                                     |
+| S-04       | scheduled-briefing-generation        | Scheduled briefing generation                                | yes                    | —                                                    |
+| S-05       | browse-briefing-history              | Browse briefing history                                      | yes                    | —                                                    |
+| S-06       | email-briefing-delivery              | Email briefing delivery                                       | yes                    | Email format still open (Q3) — doesn't block planning |
+| S-07       | rate-a-briefing                      | Rate a briefing                                               | yes                    | Ratings usage still open (Q4) — doesn't block planning |
+| S-08       | oauth-login-google-facebook          | OAuth login (Google, Facebook)                                | yes                    | —                                                    |
 
 ## Open Roadmap Questions
 
