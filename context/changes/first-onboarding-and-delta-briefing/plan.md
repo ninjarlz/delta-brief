@@ -510,9 +510,9 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 
 #### Automated
 
-- [x] 6.1 `./gradlew build` compiles; full suite passes — includes `BriefingServiceTests`' no-local-filtering coverage and `BriefingPromptBuilderTests`' source-name/filler-guidance assertions
+- [x] 6.1 `./gradlew build` compiles; full suite passes — includes `BriefingServiceTests`' no-local-filtering coverage and `BriefingPromptBuilderTests`' source-name/filler-guidance assertions — b650d12
 
 #### Manual
 
-- [x] 6.2 Live generation latency confirmed dropping from ~8s to ~3-5s consistently after parallelizing source fetches
-- [x] 6.3 Live generation's Sources list confirmed curated-first after landing on the filler framing + doubled curated sources: 0 of 3 post-ship runs cited Google News; several cited 3-4 distinct curated outlets together
+- [x] 6.2 Live generation latency confirmed dropping from ~8s to ~3-5s consistently after parallelizing source fetches — b650d12
+- [x] 6.3 Live generation's Sources list confirmed curated-first after landing on the filler framing + doubled curated sources: 0 of 3 post-ship runs cited Google News; several cited 3-4 distinct curated outlets together — b650d12
