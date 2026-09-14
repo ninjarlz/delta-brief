@@ -53,9 +53,16 @@ class BriefingRepositoryAdapterTests {
 	}
 
 	private TopicId newTopic() {
-		User user = userRepository.save(User.register(uniqueEmail(), "hashed-password", Instant.now()));
+		return newTopicOwnedBy(newUser());
+	}
+
+	private UserId newUser() {
+		return userRepository.save(User.register(uniqueEmail(), "hashed-password", Instant.now())).id();
+	}
+
+	private TopicId newTopicOwnedBy(UserId owner) {
 		CategoryId categoryId = categoryRepository.findAll().get(0).id();
-		Topic topic = topicRepository.save(Topic.create(user.id(), "War in Ukraine", categoryId, Instant.now()));
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
 		return topic.id();
 	}
 
@@ -131,6 +138,27 @@ class BriefingRepositoryAdapterTests {
 		assertThat(summaries).hasSize(2);
 		assertThat(summaries.get(0).type()).isEqualTo(BriefingType.DELTA);
 		assertThat(summaries.get(1).type()).isEqualTo(BriefingType.ONBOARDING);
+	}
+
+	/**
+	 * {@code briefings.topic_id} is {@code ON DELETE CASCADE} (V8 migration)
+	 * specifically so topic deletion — an already-shipped feature
+	 * ({@code TopicController.deleteTopic}) — keeps working once a topic has
+	 * briefings, rather than failing on this FK. That intent was previously
+	 * untested; this proves it.
+	 */
+	@Test
+	void deletingATopicCascadesToDeleteItsBriefings() {
+		UserId owner = newUser();
+		TopicId topicId = newTopicOwnedBy(owner);
+		briefingRepository.save(newBriefing(topicId, BriefingType.ONBOARDING, Instant.now()));
+		briefingRepository.save(newBriefing(topicId, BriefingType.DELTA, Instant.now()));
+
+		boolean deleted = topicRepository.deleteByIdAndUserId(topicId, owner);
+
+		assertThat(deleted).isTrue();
+		assertThat(briefingRepository.findLatestByTopicId(topicId)).isEmpty();
+		assertThat(briefingRepository.findSummariesByTopicId(topicId)).isEmpty();
 	}
 
 }

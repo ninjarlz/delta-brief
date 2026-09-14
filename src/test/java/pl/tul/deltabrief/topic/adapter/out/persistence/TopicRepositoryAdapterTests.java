@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.topic.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatException;
 
 import java.time.Duration;
@@ -261,6 +262,26 @@ class TopicRepositoryAdapterTests {
 		assertThat(updated.nextDueAt()).isEqualTo(generatedAt.plus(Duration.ofDays(1)));
 		assertThat(updated.lastScheduledStatus()).isEqualTo(ScheduledRunStatus.SUCCESS);
 		assertThat(updated.lastScheduledAttemptAt()).isEqualTo(generatedAt);
+	}
+
+	/**
+	 * A topic can be deleted between the scheduler's due-query and its
+	 * dispatch actually reaching this call (e.g. the user deletes it mid
+	 * poll tick) — {@code generateBriefing} would already have failed with
+	 * {@code TopicNotFoundException} by this point, and {@code
+	 * ScheduledBriefingRunner} still calls this to record that failure.
+	 * Must not throw.
+	 */
+	@Test
+	void recordSuccessfulGenerationIsANoOpForATopicThatNoLongerExists() {
+		assertThatCode(() -> topicRepository.recordSuccessfulGeneration(new TopicId(999_999L), Instant.now()))
+				.doesNotThrowAnyException();
+	}
+
+	@Test
+	void recordFailedScheduledGenerationIsANoOpForATopicThatNoLongerExists() {
+		assertThatCode(() -> topicRepository.recordFailedScheduledGeneration(new TopicId(999_999L), Instant.now()))
+				.doesNotThrowAnyException();
 	}
 
 	@Test
