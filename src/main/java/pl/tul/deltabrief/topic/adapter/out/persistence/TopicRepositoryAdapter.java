@@ -52,7 +52,7 @@ class TopicRepositoryAdapter implements TopicRepository {
 	public Optional<TopicSummary> findSummaryByIdAndUserId(TopicId id, UserId userId) {
 		return jpaRepository.findByIdAndUserId(id.value(), userId.value())
 				.map(view -> new TopicSummary(view.getName(), new CategoryId(view.getCategoryId()),
-						view.getDescription(), view.getEmailEnabled()));
+						view.getDescription(), view.getEmailEnabled(), view.getFrequency().emailAdjective()));
 	}
 
 	@Override
@@ -71,7 +71,7 @@ class TopicRepositoryAdapter implements TopicRepository {
 	public void recordSuccessfulGeneration(TopicId id, Instant generatedAt) {
 		jpaRepository.findById(id.value()).ifPresent(entity -> {
 			Topic topic = mapper.toDomain(entity);
-			Instant nextDueAt = ScheduleCalculator.nextDueAt(generatedAt, topic.frequency(), topic.preferredHour());
+			Instant nextDueAt = ScheduleCalculator.nextDueAt(generatedAt, topic.frequency(), topic.preferredTime());
 			topic.recordScheduledSuccess(generatedAt, nextDueAt);
 			jpaRepository.save(mapper.toEntity(topic));
 		});

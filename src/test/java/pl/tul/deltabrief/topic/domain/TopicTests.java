@@ -3,6 +3,7 @@ package pl.tul.deltabrief.topic.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import org.junit.jupiter.api.Test;
 import pl.tul.deltabrief.auth.domain.UserId;
 
@@ -23,7 +24,7 @@ class TopicTests {
 		assertThat(topic.description()).isNull();
 		assertThat(topic.createdAt()).isEqualTo(now);
 		assertThat(topic.frequency()).isEqualTo(Frequency.DAILY);
-		assertThat(topic.preferredHour()).isNull();
+		assertThat(topic.preferredTime()).isNull();
 		assertThat(topic.nextDueAt()).isNull();
 		assertThat(topic.lastScheduledAttemptAt()).isNull();
 		assertThat(topic.lastScheduledStatus()).isNull();
@@ -48,14 +49,14 @@ class TopicTests {
 	}
 
 	@Test
-	void applyScheduleSetsFrequencyPreferredHourEmailEnabledAndNextDueAt() {
+	void applyScheduleSetsFrequencyPreferredTimeEmailEnabledAndNextDueAt() {
 		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now());
 		Instant nextDueAt = Instant.parse("2026-09-20T09:00:00Z");
 
-		topic.applySchedule(Frequency.WEEKLY, 9, false, nextDueAt);
+		topic.applySchedule(Frequency.WEEKLY, LocalTime.of(9, 0), false, nextDueAt);
 
 		assertThat(topic.frequency()).isEqualTo(Frequency.WEEKLY);
-		assertThat(topic.preferredHour()).isEqualTo(9);
+		assertThat(topic.preferredTime()).isEqualTo(LocalTime.of(9, 0));
 		assertThat(topic.emailEnabled()).isFalse();
 		assertThat(topic.nextDueAt()).isEqualTo(nextDueAt);
 	}
@@ -77,7 +78,7 @@ class TopicTests {
 	void recordScheduledFailureLeavesNextDueAtUnchangedAndMarksFailure() {
 		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now());
 		Instant originalNextDueAt = Instant.parse("2026-09-15T09:00:00Z");
-		topic.applySchedule(Frequency.DAILY, 9, true, originalNextDueAt);
+		topic.applySchedule(Frequency.DAILY, LocalTime.of(9, 0), true, originalNextDueAt);
 		Instant attemptedAt = Instant.parse("2026-09-15T09:05:00Z");
 
 		topic.recordScheduledFailure(attemptedAt);

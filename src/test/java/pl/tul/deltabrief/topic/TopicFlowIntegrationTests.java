@@ -158,7 +158,7 @@ class TopicFlowIntegrationTests {
 
 		mockMvc.perform(post("/topics/" + topicId + "/edit").with(csrf()).session(session)
 				.param("frequency", "WEEKLY")
-				.param("preferredHour", "9"))
+				.param("preferredTime", "09:00"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/"));
 
@@ -168,7 +168,7 @@ class TopicFlowIntegrationTests {
 	}
 
 	@Test
-	void invalidPreferredHourOnEditShowsAnInlineErrorWithoutRedirecting() throws Exception {
+	void invalidPreferredTimeOnEditShowsAnInlineErrorWithoutRedirecting() throws Exception {
 		MockHttpSession session = loginAsNewVerifiedUser();
 		Long categoryId = categoryRepository.findAll().get(0).id().value();
 		mockMvc.perform(post("/topics").with(csrf()).session(session)
@@ -180,7 +180,7 @@ class TopicFlowIntegrationTests {
 
 		mockMvc.perform(post("/topics/" + topicId + "/edit").with(csrf()).session(session)
 				.param("frequency", "WEEKLY")
-				.param("preferredHour", "24"))
+				.param("preferredTime", "24:00"))
 			.andExpect(status().isOk())
 			.andExpect(view().name("topic-edit"));
 	}
@@ -205,7 +205,7 @@ class TopicFlowIntegrationTests {
 
 		mockMvc.perform(post("/topics/" + userAsTopicId + "/edit").with(csrf()).session(sessionB)
 				.param("frequency", "WEEKLY")
-				.param("preferredHour", "9"))
+				.param("preferredTime", "09:00"))
 			.andExpect(status().is3xxRedirection())
 			.andExpect(redirectedUrl("/"));
 	}

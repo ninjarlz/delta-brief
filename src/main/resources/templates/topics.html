@@ -27,11 +27,17 @@
 		<ul class="topic-list" th:unless="${#lists.isEmpty(topics)}">
 			<li class="topic-card" th:each="topic : ${topics}">
 				<div class="topic-card__info">
-					<span class="topic-card__name" th:text="${topic.name}"></span>
-					<span class="topic-card__category" th:text="${topic.categoryName}"></span>
-					<span class="topic-card__schedule">Next briefing:
-						<span th:text="${topic.nextDueAt}" th:data-timestamp="${topic.nextDueAtIso}"></span>
-					</span>
+					<div class="topic-card__heading">
+						<span class="topic-card__name" th:text="${topic.name}"></span>
+						<span class="topic-card__email-status" th:classappend="${topic.emailEnabled} ? 'topic-card__email-status--on' : ''"
+							th:text="${topic.emailEnabled} ? '📬 Email on' : '🔕 Email off'"></span>
+					</div>
+					<div class="topic-card__meta">
+						<span class="topic-card__category" th:text="${topic.categoryName}"></span>
+						<span class="topic-card__schedule">Next briefing:
+							<span th:text="${topic.nextDueAt}" th:data-timestamp="${topic.nextDueAtIso}"></span>
+						</span>
+					</div>
 					<span class="topic-card__schedule-failed" th:if="${topic.lastRunFailed}">
 						⚠ Last scheduled attempt failed — will retry automatically</span>
 				</div>

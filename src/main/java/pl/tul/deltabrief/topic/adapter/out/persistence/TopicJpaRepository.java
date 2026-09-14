@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import pl.tul.deltabrief.topic.domain.Frequency;
 
 interface TopicJpaRepository extends JpaRepository<TopicJpaEntity, Long> {
 
@@ -18,9 +19,9 @@ interface TopicJpaRepository extends JpaRepository<TopicJpaEntity, Long> {
 
 	/**
 	 * Spring Data interface projection — selects only {@code name}/{@code
-	 * categoryId}/{@code description}/{@code emailEnabled}, not the full
-	 * row; this is an ownership check + summary lookup, not a full topic
-	 * read.
+	 * categoryId}/{@code description}/{@code emailEnabled}/{@code frequency},
+	 * not the full row; this is an ownership check + summary lookup, not a
+	 * full topic read.
 	 */
 	Optional<TopicNameAndCategoryView> findByIdAndUserId(Long id, Long userId);
 
@@ -33,6 +34,8 @@ interface TopicJpaRepository extends JpaRepository<TopicJpaEntity, Long> {
 		String getDescription();
 
 		boolean getEmailEnabled();
+
+		Frequency getFrequency();
 
 	}
 
@@ -55,12 +58,12 @@ interface TopicJpaRepository extends JpaRepository<TopicJpaEntity, Long> {
 	long deleteByIdAndUserId(Long id, Long userId);
 
 	/**
-	 * Backs the scheduler's poll query (FR-009). A {@code MANUAL} topic
-	 * always has a {@code null} {@code nextDueAt} (see {@code
-	 * ScheduleCalculator}/{@code Topic.applySchedule}), so checking for a
-	 * past, non-null {@code nextDueAt} is equivalent to "every non-MANUAL
-	 * topic that's due" without needing to reference the enum in JPQL. See
-	 * the partial index {@code topics_next_due_at_idx} (V13 migration).
+	 * Backs the scheduler's poll query (FR-009): every topic whose {@code
+	 * nextDueAt} is in the past. Every {@link pl.tul.deltabrief.topic.domain.Frequency}
+	 * always produces a {@code nextDueAt} via {@code ScheduleCalculator}, so
+	 * the {@code is not null} check is a defensive guard, not the primary
+	 * filtering mechanism — see the index {@code topics_next_due_at_idx}
+	 * (V13/V15 migrations).
 	 */
 	@Query("select t from TopicJpaEntity t where t.nextDueAt is not null and t.nextDueAt <= :now")
 	List<TopicJpaEntity> findDueForScheduledGeneration(@Param("now") Instant now);

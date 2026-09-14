@@ -1,12 +1,12 @@
 package pl.tul.deltabrief.topic.application.dto;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.time.LocalTime;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 import pl.tul.deltabrief.topic.domain.Frequency;
 
 /**
@@ -40,12 +40,13 @@ public class CreateTopicRequest {
 	private Frequency frequency = Frequency.DAILY;
 
 	/**
-	 * Optional UTC hour-of-day (0-23) to nudge scheduled generation toward —
-	 * {@code null} means no preference.
+	 * Optional UTC time-of-day to nudge scheduled generation toward —
+	 * {@code null} means no preference. Bound from a hidden field that
+	 * {@code app.js} populates with the UTC equivalent of whatever local time
+	 * the user picked in the visible {@code <input type="time">}.
 	 */
-	@Min(0)
-	@Max(23)
-	private Integer preferredHour;
+	@DateTimeFormat(pattern = "HH:mm")
+	private LocalTime preferredTime;
 
 	/**
 	 * Whether to email newly generated briefings for this topic (FR-012) —

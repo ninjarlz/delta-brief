@@ -27,7 +27,7 @@ interface TopicEntityMapper {
 	@Mapping(target = "description", expression = "java(topic.description())")
 	@Mapping(target = "createdAt", expression = "java(topic.createdAt())")
 	@Mapping(target = "frequency", expression = "java(topic.frequency())")
-	@Mapping(target = "preferredHour", expression = "java(topic.preferredHour())")
+	@Mapping(target = "preferredTime", expression = "java(topic.preferredTime())")
 	@Mapping(target = "nextDueAt", expression = "java(topic.nextDueAt())")
 	@Mapping(target = "lastScheduledAttemptAt", expression = "java(topic.lastScheduledAttemptAt())")
 	@Mapping(target = "lastScheduledStatus", expression = "java(topic.lastScheduledStatus())")

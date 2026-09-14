@@ -12,6 +12,11 @@ import pl.tul.deltabrief.topic.domain.CategoryId;
  * {@code null} if not provided.
  * @param emailEnabled whether the topic's owner opted in to receive
  * generated briefings by email (FR-012, S-06).
+ * @param frequencyAdjective the topic's {@code Frequency}, already
+ * translated to a lowercase email-wording adjective (e.g. "daily") by
+ * {@code TopicRepositoryAdapter} — a plain {@code String}, not the
+ * {@code topic.domain} enum itself, is what crosses into {@code briefing}.
  */
-public record TopicSummary(String name, CategoryId categoryId, String description, boolean emailEnabled) {
+public record TopicSummary(String name, CategoryId categoryId, String description, boolean emailEnabled,
+		String frequencyAdjective) {
 }

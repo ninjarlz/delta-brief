@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.topic.domain;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -12,41 +13,43 @@ import java.time.ZonedDateTime;
  */
 public final class ScheduleCalculator {
 
+	/**
+	 * The time of day scheduled generation nudges toward when a topic has no
+	 * explicit {@code preferredTime} — a deliberate product default, not a
+	 * conservative placeholder.
+	 */
+	private static final LocalTime DEFAULT_PREFERRED_TIME = LocalTime.of(9, 0);
+
 	private ScheduleCalculator() {
 	}
 
 	/**
 	 * @param anchor the timestamp the interval is measured from
-	 * @param frequency how often to regenerate; {@link Frequency#MANUAL} has
-	 * no schedule
-	 * @param preferredHour optional UTC hour-of-day (0-23) to nudge the
-	 * result toward; {@code null} means no nudging. The app has no per-user
-	 * timezone concept, so this is interpreted in UTC.
-	 * @return the next due instant, nudged forward (never earlier) to
-	 * {@code preferredHour} when set; {@code null} for {@link Frequency#MANUAL}
+	 * @param frequency how often to regenerate
+	 * @param preferredTime UTC time-of-day to nudge the result toward;
+	 * {@code null} falls back to {@link #DEFAULT_PREFERRED_TIME}. The app has
+	 * no per-user timezone concept, so this is interpreted in UTC.
+	 * @return the next due instant, always nudged forward (never earlier) to
+	 * the effective preferred time — never {@code null}.
 	 */
-	public static Instant nextDueAt(Instant anchor, Frequency frequency, Integer preferredHour) {
-		if (frequency == Frequency.MANUAL) {
-			return null;
-		}
+	public static Instant nextDueAt(Instant anchor, Frequency frequency, LocalTime preferredTime) {
 		Instant base = anchor.plus(frequency.interval());
-		return preferredHour == null ? base : nudgeToPreferredHour(base, preferredHour);
+		LocalTime time = preferredTime != null ? preferredTime : DEFAULT_PREFERRED_TIME;
+		return nudgeToPreferredTime(base, time);
 	}
 
 	/**
-	 * Rounds {@code base} forward to the next UTC instant at
-	 * {@code preferredHour}:00 — never earlier than {@code base}. If
-	 * {@code base} already falls within {@code preferredHour}, it is
-	 * returned unchanged rather than rounded down to that hour's :00 mark
-	 * (which could otherwise land before {@code base} and force an
-	 * unwanted extra day of rollover).
+	 * Rounds {@code base} forward to the next UTC instant at {@code time} —
+	 * never earlier than {@code base}. If {@code base} already falls exactly
+	 * on {@code time}, it is returned unchanged rather than rolled forward a
+	 * full day.
 	 */
-	private static Instant nudgeToPreferredHour(Instant base, int preferredHour) {
+	private static Instant nudgeToPreferredTime(Instant base, LocalTime time) {
 		ZonedDateTime baseUtc = base.atZone(ZoneOffset.UTC);
-		if (baseUtc.getHour() == preferredHour) {
+		if (baseUtc.toLocalTime().equals(time)) {
 			return base;
 		}
-		ZonedDateTime nudged = baseUtc.withHour(preferredHour).withMinute(0).withSecond(0).withNano(0);
+		ZonedDateTime nudged = baseUtc.withHour(time.getHour()).withMinute(time.getMinute()).withSecond(0).withNano(0);
 		if (nudged.isBefore(baseUtc)) {
 			nudged = nudged.plusDays(1);
 		}

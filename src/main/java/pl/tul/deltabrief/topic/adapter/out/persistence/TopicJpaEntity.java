@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -50,8 +51,8 @@ public class TopicJpaEntity {
 	@Column(nullable = false)
 	private Frequency frequency;
 
-	@Column(name = "preferred_hour")
-	private Integer preferredHour;
+	@Column(name = "preferred_time")
+	private LocalTime preferredTime;
 
 	@Column(name = "next_due_at")
 	private Instant nextDueAt;

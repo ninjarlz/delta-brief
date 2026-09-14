@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.topic.domain;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -22,14 +23,14 @@ public class Topic {
 	private final String description;
 	private final Instant createdAt;
 	private Frequency frequency;
-	private Integer preferredHour;
+	private LocalTime preferredTime;
 	private Instant nextDueAt;
 	private Instant lastScheduledAttemptAt;
 	private ScheduledRunStatus lastScheduledStatus;
 	private boolean emailEnabled;
 
 	public Topic(TopicId id, UserId userId, String name, CategoryId categoryId, String description, Instant createdAt,
-			Frequency frequency, Integer preferredHour, Instant nextDueAt, Instant lastScheduledAttemptAt,
+			Frequency frequency, LocalTime preferredTime, Instant nextDueAt, Instant lastScheduledAttemptAt,
 			ScheduledRunStatus lastScheduledStatus, boolean emailEnabled) {
 		this.id = id;
 		this.userId = userId;
@@ -38,7 +39,7 @@ public class Topic {
 		this.description = description;
 		this.createdAt = createdAt;
 		this.frequency = frequency;
-		this.preferredHour = preferredHour;
+		this.preferredTime = preferredTime;
 		this.nextDueAt = nextDueAt;
 		this.lastScheduledAttemptAt = lastScheduledAttemptAt;
 		this.lastScheduledStatus = lastScheduledStatus;
@@ -74,13 +75,13 @@ public class Topic {
 	 * creation (with a freshly computed {@code nextDueAt}) and from the edit
 	 * flow (recomputing it from the topic's current schedule anchor).
 	 * {@code emailEnabled} rides along here since it changes at exactly the
-	 * same two call sites as {@code frequency}/{@code preferredHour}. Does
+	 * same two call sites as {@code frequency}/{@code preferredTime}. Does
 	 * not touch {@code lastScheduledAttemptAt}/{@code lastScheduledStatus} —
 	 * those only change as an actual scheduled attempt happens.
 	 */
-	public void applySchedule(Frequency frequency, Integer preferredHour, boolean emailEnabled, Instant nextDueAt) {
+	public void applySchedule(Frequency frequency, LocalTime preferredTime, boolean emailEnabled, Instant nextDueAt) {
 		this.frequency = Objects.requireNonNull(frequency);
-		this.preferredHour = preferredHour;
+		this.preferredTime = preferredTime;
 		this.emailEnabled = emailEnabled;
 		this.nextDueAt = nextDueAt;
 	}

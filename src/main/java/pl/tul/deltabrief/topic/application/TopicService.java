@@ -1,6 +1,7 @@
 package pl.tul.deltabrief.topic.application;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -55,8 +56,9 @@ public class TopicService {
 	 * @param frequency how often DeltaBrief should regenerate this topic's
 	 * briefing automatically (FR-008); {@link Frequency#DAILY} is the
 	 * product default.
-	 * @param preferredHour optional UTC hour-of-day (0-23) to nudge
-	 * scheduled generation toward — {@code null} for no preference.
+	 * @param preferredTime optional UTC time-of-day to nudge scheduled
+	 * generation toward — {@code null} for no preference (falls back to
+	 * {@code ScheduleCalculator}'s own default).
 	 * @param emailEnabled whether the topic's owner opted in to receive
 	 * generated briefings by email (FR-012); {@code true} is the product
 	 * default (recommended, checked by default on the create form).
@@ -69,7 +71,7 @@ public class TopicService {
 	 *         {@value #MAX_TOPICS_PER_USER} topics
 	 */
 	public Topic createTopic(UserId userId, String name, CategoryId categoryId, String description,
-			Frequency frequency, Integer preferredHour, boolean emailEnabled) {
+			Frequency frequency, LocalTime preferredTime, boolean emailEnabled) {
 		if (!categoryRepository.existsById(categoryId)) {
 			throw new CategoryNotFoundException(categoryId);
 		}
@@ -91,8 +93,8 @@ public class TopicService {
 		// the first time this topic actually generates a briefing (onboarding,
 		// manual, or scheduled all advance the schedule the same way; see
 		// BriefingService).
-		topic.applySchedule(frequency, preferredHour, emailEnabled,
-				ScheduleCalculator.nextDueAt(createdAt, frequency, preferredHour));
+		topic.applySchedule(frequency, preferredTime, emailEnabled,
+				ScheduleCalculator.nextDueAt(createdAt, frequency, preferredTime));
 		return topicRepository.save(topic);
 	}
 
@@ -116,11 +118,11 @@ public class TopicService {
 	 * the schedule is itself a reset, the same way a manual/scheduled
 	 * generation resets it (see {@code BriefingService}).
 	 */
-	public void updateSchedule(UserId userId, TopicId topicId, Frequency frequency, Integer preferredHour,
+	public void updateSchedule(UserId userId, TopicId topicId, Frequency frequency, LocalTime preferredTime,
 			boolean emailEnabled) {
 		topicRepository.findByIdAndUserId(topicId, userId).ifPresent(topic -> {
-			Instant nextDueAt = ScheduleCalculator.nextDueAt(Instant.now(), frequency, preferredHour);
-			topic.applySchedule(frequency, preferredHour, emailEnabled, nextDueAt);
+			Instant nextDueAt = ScheduleCalculator.nextDueAt(Instant.now(), frequency, preferredTime);
+			topic.applySchedule(frequency, preferredTime, emailEnabled, nextDueAt);
 			topicRepository.save(topic);
 		});
 	}

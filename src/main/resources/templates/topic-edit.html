@@ -22,15 +22,16 @@
 					</select>
 					<small class="field-error" th:if="${#fields.hasErrors('frequency')}" th:errors="*{frequency}"></small>
 				</label>
-				<label for="preferredHour">Preferred hour (UTC, optional)
-					<input type="number" id="preferredHour" th:field="*{preferredHour}" min="0" max="23" placeholder="e.g. 9"
-						th:aria-invalid="${#fields.hasErrors('preferredHour')} ? 'true' : null"/>
-					<small class="field-error" th:if="${#fields.hasErrors('preferredHour')}" th:errors="*{preferredHour}"></small>
-					<small>DeltaBrief nudges automatic generation toward this hour when set. Leave blank for no preference.</small>
+				<label for="preferredTimeLocal">Preferred time (your local time, optional)
+					<input type="time" id="preferredTimeLocal" data-preferred-time-local/>
+					<input type="hidden" id="preferredTime" th:field="*{preferredTime}" data-preferred-time-utc/>
+					<small class="field-error" th:if="${#fields.hasErrors('preferredTime')}" th:errors="*{preferredTime}"></small>
+					<small data-preferred-time-help>DeltaBrief nudges automatic generation toward this time when set.
+						Leave blank to use the default (9:00 UTC).</small>
 				</label>
-				<label for="emailEnabled">
+				<label for="emailEnabled" class="checkbox-field">
 					<input type="checkbox" id="emailEnabled" th:field="*{emailEnabled}"/>
-					Email me new briefings for this topic <small>(recommended)</small>
+					<span>Email me new briefings for this topic <small>(recommended)</small></span>
 				</label>
 				<button type="submit">Save schedule</button>
 			</form>

@@ -8,7 +8,7 @@ import pl.tul.deltabrief.topic.domain.TopicId;
  * scheduler (which lives in the {@code briefing} module, since that's what
  * already owns generation) to call {@code BriefingService.generateBriefing}
  * the same way an HTTP request would. The schedule math itself
- * (frequency/preferredHour) stays inside the {@code topic} module — see
+ * (frequency/preferredTime) stays inside the {@code topic} module — see
  * {@link TopicRepository#recordSuccessfulGeneration}.
  */
 public record DueTopic(TopicId id, UserId userId) {

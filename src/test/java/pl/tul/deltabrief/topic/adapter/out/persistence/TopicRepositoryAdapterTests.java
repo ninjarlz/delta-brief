@@ -155,7 +155,7 @@ class TopicRepositoryAdapterTests {
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
 
 		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
-				.contains(new TopicSummary("War in Ukraine", categoryId, null, true));
+				.contains(new TopicSummary("War in Ukraine", categoryId, null, true, "daily"));
 	}
 
 	@Test
@@ -166,7 +166,7 @@ class TopicRepositoryAdapterTests {
 				Topic.create(owner, "War in Ukraine", categoryId, "Tracking the humanitarian angle", Instant.now()));
 
 		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
-				.contains(new TopicSummary("War in Ukraine", categoryId, "Tracking the humanitarian angle", true));
+				.contains(new TopicSummary("War in Ukraine", categoryId, "Tracking the humanitarian angle", true, "daily"));
 	}
 
 	@Test
@@ -174,11 +174,11 @@ class TopicRepositoryAdapterTests {
 		UserId owner = newUser();
 		CategoryId categoryId = anyCategoryId();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
-		topic.applySchedule(topic.frequency(), topic.preferredHour(), false, topic.nextDueAt());
+		topic.applySchedule(topic.frequency(), topic.preferredTime(), false, topic.nextDueAt());
 		topicRepository.save(topic);
 
 		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
-				.contains(new TopicSummary("War in Ukraine", categoryId, null, false));
+				.contains(new TopicSummary("War in Ukraine", categoryId, null, false, "daily"));
 	}
 
 	@Test
@@ -237,23 +237,6 @@ class TopicRepositoryAdapterTests {
 		UserId owner = newUser();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
 		topic.applySchedule(Frequency.DAILY, null, true, Instant.now().plus(Duration.ofDays(1)));
-		topicRepository.save(topic);
-
-		assertThat(topicRepository.findDueForScheduledGeneration(Instant.now())).extracting(DueTopic::id)
-				.doesNotContain(topic.id());
-	}
-
-	@Test
-	void findDueForScheduledGenerationExcludesAManualTopicSinceItHasNoNextDueAt() {
-		// MANUAL topics always have a null nextDueAt in practice — enforced
-		// structurally by ScheduleCalculator.nextDueAt returning null for
-		// MANUAL, which every real mutation path (creation, edit) routes
-		// through — so this is what actually exercises the exclusion, not an
-		// artificially-forced non-null nextDueAt on a MANUAL topic (a state
-		// no real code path can produce).
-		UserId owner = newUser();
-		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
-		topic.applySchedule(Frequency.MANUAL, null, true, null);
 		topicRepository.save(topic);
 
 		assertThat(topicRepository.findDueForScheduledGeneration(Instant.now())).extracting(DueTopic::id)

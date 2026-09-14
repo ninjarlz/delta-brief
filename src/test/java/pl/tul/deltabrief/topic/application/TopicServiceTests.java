@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +75,7 @@ class TopicServiceTests {
 		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId());
 
 		assertThat(created.frequency()).isEqualTo(Frequency.DAILY);
-		assertThat(created.preferredHour()).isNull();
+		assertThat(created.preferredTime()).isNull();
 		assertThat(created.nextDueAt()).isNotNull();
 	}
 
@@ -88,25 +89,26 @@ class TopicServiceTests {
 	}
 
 	@Test
-	void createsATopicWithAnExplicitFrequencyAndPreferredHour() {
+	void createsATopicWithAnExplicitFrequencyAndPreferredTime() {
 		UserId userId = newUser();
 
-		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), "note", Frequency.WEEKLY, 9,
-				true);
+		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), "note", Frequency.WEEKLY,
+				LocalTime.of(9, 0), true);
 
 		assertThat(created.frequency()).isEqualTo(Frequency.WEEKLY);
-		assertThat(created.preferredHour()).isEqualTo(9);
+		assertThat(created.preferredTime()).isEqualTo(LocalTime.of(9, 0));
 		assertThat(created.nextDueAt()).isNotNull();
 	}
 
 	@Test
-	void createsAManualTopicWithNoNextDueAt() {
+	void createsATopicAlwaysHasANonNullNextDueAtRegardlessOfFrequency() {
 		UserId userId = newUser();
 
-		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), null, Frequency.MANUAL, null,
-				true);
-
-		assertThat(created.nextDueAt()).isNull();
+		for (Frequency frequency : Frequency.values()) {
+			Topic created = topicService.createTopic(userId, "Topic for " + frequency, anyCategoryId(), null, frequency,
+					null, true);
+			assertThat(created.nextDueAt()).as("nextDueAt for %s", frequency).isNotNull();
+		}
 	}
 
 	@Test
@@ -181,15 +183,15 @@ class TopicServiceTests {
 	}
 
 	@Test
-	void updateScheduleChangesFrequencyPreferredHourAndRecomputesNextDueAt() {
+	void updateScheduleChangesFrequencyPreferredTimeAndRecomputesNextDueAt() {
 		UserId owner = newUser();
 		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
 
-		topicService.updateSchedule(owner, topic.id(), Frequency.WEEKLY, 9, true);
+		topicService.updateSchedule(owner, topic.id(), Frequency.WEEKLY, LocalTime.of(9, 0), true);
 
 		Topic updated = topicService.findForSchedule(owner, topic.id()).orElseThrow();
 		assertThat(updated.frequency()).isEqualTo(Frequency.WEEKLY);
-		assertThat(updated.preferredHour()).isEqualTo(9);
+		assertThat(updated.preferredTime()).isEqualTo(LocalTime.of(9, 0));
 		assertThat(updated.nextDueAt()).isNotNull();
 	}
 
@@ -207,13 +209,13 @@ class TopicServiceTests {
 	}
 
 	@Test
-	void updateScheduleToManualClearsNextDueAt() {
+	void updateScheduleWithNullPreferredTimeStillProducesANonNullNextDueAt() {
 		UserId owner = newUser();
 		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
 
-		topicService.updateSchedule(owner, topic.id(), Frequency.MANUAL, null, true);
+		topicService.updateSchedule(owner, topic.id(), Frequency.DAILY, null, true);
 
-		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().nextDueAt()).isNull();
+		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().nextDueAt()).isNotNull();
 	}
 
 	@Test
@@ -222,7 +224,7 @@ class TopicServiceTests {
 		UserId otherUser = newUser();
 		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
 
-		topicService.updateSchedule(otherUser, topic.id(), Frequency.WEEKLY, 9, true);
+		topicService.updateSchedule(otherUser, topic.id(), Frequency.WEEKLY, LocalTime.of(9, 0), true);
 
 		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().frequency()).isEqualTo(Frequency.DAILY);
 	}
@@ -231,7 +233,7 @@ class TopicServiceTests {
 	void updateScheduleIsANoOpForAnUnknownId() {
 		UserId owner = newUser();
 
-		topicService.updateSchedule(owner, new TopicId(999_999L), Frequency.WEEKLY, 9, true);
+		topicService.updateSchedule(owner, new TopicId(999_999L), Frequency.WEEKLY, LocalTime.of(9, 0), true);
 
 		assertThat(topicService.listTopics(owner)).isEmpty();
 	}

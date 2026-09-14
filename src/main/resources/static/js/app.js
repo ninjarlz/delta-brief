@@ -32,3 +32,48 @@ document.querySelectorAll('[data-timestamp]').forEach(function (el) {
 		el.textContent = date.toLocaleString(undefined, {dateStyle: 'medium', timeStyle: 'short'});
 	}
 });
+
+// Preferred-time picker on topic-form.html/topic-edit.html: the app has no
+// per-user timezone concept, so the server only ever stores/reads UTC. The
+// visible <input type="time"> lets the user think in their own local time;
+// a hidden field alongside it carries the actual UTC value Spring binds to
+// preferredTime. "Today" is used as the reference date for the UTC<->local
+// conversion (there's no date, only a time-of-day) — a DST-transition edge
+// case could shift the displayed local hour by one on the transition day
+// itself, an accepted tradeoff for a "nudge, not a guarantee" schedule.
+function pad2(n) {
+	return String(n).padStart(2, '0');
+}
+
+function utcTimeToLocal(utcTime) {
+	var parts = utcTime.split(':');
+	var d = new Date();
+	d.setUTCHours(Number(parts[0]), Number(parts[1]), 0, 0);
+	return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+}
+
+function localTimeToUtc(localTime) {
+	var parts = localTime.split(':');
+	var d = new Date();
+	d.setHours(Number(parts[0]), Number(parts[1]), 0, 0);
+	return pad2(d.getUTCHours()) + ':' + pad2(d.getUTCMinutes());
+}
+
+(function () {
+	var hidden = document.querySelector('[data-preferred-time-utc]');
+	var visible = document.querySelector('[data-preferred-time-local]');
+	var help = document.querySelector('[data-preferred-time-help]');
+	if (!hidden || !visible) {
+		return;
+	}
+	if (hidden.value) {
+		visible.value = utcTimeToLocal(hidden.value);
+	}
+	if (help) {
+		help.textContent = 'DeltaBrief nudges automatic generation toward this time when set. Leave blank to use '
+			+ 'the default — 9:00 UTC (' + utcTimeToLocal('09:00') + ' your time).';
+	}
+	visible.addEventListener('change', function () {
+		hidden.value = visible.value ? localTimeToUtc(visible.value) : '';
+	});
+})();

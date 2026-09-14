@@ -20,6 +20,7 @@ body {
 .auth-card {
 	width: 100%;
 	max-width: 26rem;
+	margin: 0 auto;
 	background: var(--pico-card-background-color);
 	border-radius: var(--pico-border-radius);
 	box-shadow: var(--pico-card-box-shadow);
@@ -80,6 +81,21 @@ body {
 	color: var(--pico-ins-color);
 }
 
+/* Pico's checkbox+label baseline alignment assumes single-line text — once
+   the label text wraps (as "Email me new briefings... (recommended)" does
+   at card width), the wrapped line ends up overlapping the line above.
+   Flexing the checkbox and text as separate siblings sidesteps that. */
+.checkbox-field {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
+.checkbox-field input[type="checkbox"] {
+	flex-shrink: 0;
+	margin-top: 0.2rem;
+}
+
 .coming-soon-panel {
 	border: 1px dashed var(--pico-muted-border-color);
 	border-radius: var(--pico-border-radius);
@@ -127,23 +143,25 @@ body {
 	position: relative;
 	width: 100%;
 	box-sizing: border-box;
-	padding: 0.85rem 1.5rem;
+	padding: 0.75rem 1.5rem;
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	min-height: 2.75rem;
+	min-height: 3.5rem;
 }
 
+/* Matches the .wordmark treatment on the auth pages — same brand mark,
+   same weight, so it reads as one consistent logo across the app. */
 .navbar__brand {
 	position: absolute;
 	left: 50%;
 	top: 50%;
 	transform: translate(-50%, -50%);
-	font-weight: 700;
-	font-size: 1.15rem;
-	letter-spacing: -0.01em;
+	font-weight: 800;
+	font-size: 1.85rem;
+	letter-spacing: -0.03em;
 	text-decoration: none;
-	color: var(--pico-color);
+	color: var(--pico-primary);
 }
 
 .navbar__inner form {
@@ -232,38 +250,68 @@ body {
 	list-style: none;
 }
 
+/* A column stack, not a row split against the actions — a row layout
+   forces the info block and 4-button action row to share one line's
+   width, which squeezes the topic name/category down to nothing at
+   ordinary card widths. Stacking removes that fight entirely. */
 .topic-card {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
+	flex-direction: column;
+	gap: 0.85rem;
 	background: var(--pico-card-background-color);
 	border-radius: var(--pico-border-radius);
 	box-shadow: var(--pico-card-box-shadow);
-	padding: 1rem 1.25rem;
+	padding: 1.1rem 1.25rem;
 }
 
 .topic-card__info {
 	display: flex;
 	flex-direction: column;
-	gap: 0.35rem;
-	min-width: 0;
+	gap: 0.5rem;
+}
+
+.topic-card__heading {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem;
 }
 
 .topic-card__name {
 	font-weight: 600;
+	font-size: 1.05rem;
 	overflow-wrap: anywhere;
 }
 
+.topic-card__email-status {
+	flex-shrink: 0;
+	font-size: 0.8rem;
+	color: var(--pico-muted-color);
+	white-space: nowrap;
+}
+
+.topic-card__email-status--on {
+	color: var(--pico-primary);
+	font-weight: 600;
+}
+
+.topic-card__meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+}
+
 .topic-card__category {
-	align-self: flex-start;
+	flex-shrink: 0;
+	white-space: nowrap;
 	font-size: 0.75rem;
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.03em;
 	color: var(--pico-muted-color);
 	background: var(--pico-muted-border-color);
-	padding: 0.15rem 0.55rem;
+	padding: 0.25rem 0.65rem;
 	border-radius: 999px;
 }
 
@@ -280,8 +328,8 @@ body {
 
 .topic-card__actions {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5rem;
-	flex-shrink: 0;
 }
 
 .topic-card__actions form {

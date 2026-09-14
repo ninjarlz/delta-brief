@@ -57,7 +57,7 @@ public interface TopicRepository {
 
 	/**
 	 * Topics due for scheduled generation (FR-009) as of {@code now} — every
-	 * non-{@code MANUAL} topic whose {@code nextDueAt} has passed.
+	 * topic whose {@code nextDueAt} has passed.
 	 */
 	List<DueTopic> findDueForScheduledGeneration(Instant now);
 
@@ -66,7 +66,7 @@ public interface TopicRepository {
 	 * called after every generation (manual, onboarding, or scheduled)
 	 * persists its briefing, so the schedule advances the same way
 	 * regardless of trigger. Recomputes and persists {@code nextDueAt} from
-	 * the topic's own frequency/preferredHour, anchored at
+	 * the topic's own frequency/preferredTime, anchored at
 	 * {@code generatedAt}, and marks the attempt a success. Silently no-ops
 	 * if the topic no longer exists (a narrow, harmless race with topic
 	 * deletion).

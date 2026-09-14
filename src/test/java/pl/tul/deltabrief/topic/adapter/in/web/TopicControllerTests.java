@@ -32,16 +32,32 @@ class TopicControllerTests {
 		assertThat(view.nextDueAtIso()).isEqualTo("2026-09-15T09:00:00Z");
 		assertThat(view.nextDueAt()).contains("2026").contains("UTC");
 		assertThat(view.lastRunFailed()).isFalse();
+		assertThat(view.emailEnabled()).isTrue();
 	}
 
 	@Test
-	void showsManualWithNoTimestampForAManualTopic() {
+	void reflectsEmailEnabledFalseForAnOptedOutTopic() {
 		Topic topic = persisted(Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now()), 10L);
-		topic.applySchedule(Frequency.MANUAL, null, true, null);
+		topic.applySchedule(Frequency.DAILY, null, false, Instant.parse("2026-09-15T09:00:00Z"));
 
 		TopicView view = TopicController.toView(topic, Map.of(2L, "World News"));
 
-		assertThat(view.nextDueAt()).isEqualTo("Manual");
+		assertThat(view.emailEnabled()).isFalse();
+	}
+
+	@Test
+	void showsNotYetScheduledForATopicWithNoNextDueAt() {
+		// Every real Frequency always produces a non-null nextDueAt via
+		// ScheduleCalculator — this state is manufactured directly via
+		// applySchedule (whose nextDueAt parameter is caller-supplied, not
+		// computed) purely to exercise toView's defensive fallback, not a
+		// state any real create/edit/generation code path can produce.
+		Topic topic = persisted(Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now()), 10L);
+		topic.applySchedule(Frequency.DAILY, null, true, null);
+
+		TopicView view = TopicController.toView(topic, Map.of(2L, "World News"));
+
+		assertThat(view.nextDueAt()).isEqualTo("Not yet scheduled");
 		assertThat(view.nextDueAtIso()).isNull();
 	}
 

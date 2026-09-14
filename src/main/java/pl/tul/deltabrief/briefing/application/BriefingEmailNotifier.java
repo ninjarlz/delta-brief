@@ -48,28 +48,33 @@ public class BriefingEmailNotifier {
 	 * {@code RegistrationService.sendVerificationEmail}'s existing
 	 * precedent: the briefing itself is already saved successfully by the
 	 * time this runs, so email delivery failure must never affect that.
+	 *
+	 * @param frequencyAdjective the topic's frequency, pre-translated to a
+	 * lowercase email-wording adjective (e.g. "daily") by {@code
+	 * TopicRepositoryAdapter} — unused for {@link BriefingType#ONBOARDING},
+	 * which has no cadence to describe.
 	 */
 	@Async("emailTaskExecutor")
-	public void sendBriefingEmail(UserId userId, String topicName, Briefing briefing) {
+	public void sendBriefingEmail(UserId userId, String topicName, String frequencyAdjective, Briefing briefing) {
 		Optional<String> recipient = userRepository.findEmailById(userId);
 		if (recipient.isEmpty()) {
 			log.warn(">>> Cannot email briefing {} for topic '{}': no email found for user {}", briefing.id().value(),
 					topicName, userId.value());
 			return;
 		}
-		String subject = "%s — %s".formatted(topicName, typeLabel(briefing.type()));
+		String headline = headline(briefing.type(), frequencyAdjective, topicName);
 		try {
-			emailSender.send(recipient.get(), subject, buildBody(topicName, briefing));
+			emailSender.send(recipient.get(), headline, buildBody(headline, briefing));
 		} catch (EmailDeliveryException emailDeliveryFailed) {
 			log.warn(">>> Failed to email briefing {} to {}: {}", briefing.id().value(), recipient.get(),
 					emailDeliveryFailed.getMessage());
 		}
 	}
 
-	private String buildBody(String topicName, Briefing briefing) {
+	private String buildBody(String headline, Briefing briefing) {
 		RenderedBriefing rendered = CitationRenderer.render(briefing);
 		StringBuilder body = new StringBuilder();
-		body.append(topicName).append(" — ").append(typeLabel(briefing.type())).append("\n\n");
+		body.append(headline).append("\n\n");
 		appendSection(body, "Key changes", rendered.keyChanges());
 		appendSection(body, "Trend continuation", rendered.trendContinuation());
 		appendSection(body, "Noise & speculation", rendered.noiseSpeculation());
@@ -100,8 +105,17 @@ public class BriefingEmailNotifier {
 		body.append('\n');
 	}
 
-	private static String typeLabel(BriefingType type) {
-		return type == BriefingType.ONBOARDING ? "Onboarding briefing" : "Delta briefing";
+	/**
+	 * Subject line and body opening — deliberately the same string for both,
+	 * per the existing convention of leading the body with the subject's own
+	 * wording. Onboarding is a one-off, not a cadence, so it gets its own
+	 * phrasing rather than a frequency adjective that wouldn't make sense.
+	 */
+	private static String headline(BriefingType type, String frequencyAdjective, String topicName) {
+		return switch (type) {
+			case ONBOARDING -> "Your first briefing for %s is ready".formatted(topicName);
+			case DELTA -> "It's your %s delta briefing for %s".formatted(frequencyAdjective, topicName);
+		};
 	}
 
 }

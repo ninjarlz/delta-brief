@@ -36,6 +36,7 @@ import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
 import pl.tul.deltabrief.topic.domain.CategoryId;
 import pl.tul.deltabrief.topic.domain.Frequency;
+import pl.tul.deltabrief.topic.domain.ScheduleCalculator;
 import pl.tul.deltabrief.topic.domain.Topic;
 import pl.tul.deltabrief.topic.domain.TopicId;
 
@@ -153,7 +154,13 @@ class BriefingServiceTests {
 
 	private TopicId newTopic(UserId owner, CategoryId categoryId, boolean emailEnabled) {
 		Topic topic = Topic.create(owner, "Test Topic " + UUID.randomUUID(), categoryId, Instant.now());
-		topic.applySchedule(topic.frequency(), topic.preferredHour(), emailEnabled, topic.nextDueAt());
+		topic.applySchedule(topic.frequency(), topic.preferredTime(), emailEnabled, topic.nextDueAt());
+		return topicRepository.save(topic).id();
+	}
+
+	private TopicId newTopic(UserId owner, CategoryId categoryId, boolean emailEnabled, Frequency frequency) {
+		Topic topic = Topic.create(owner, "Test Topic " + UUID.randomUUID(), categoryId, Instant.now());
+		topic.applySchedule(frequency, topic.preferredTime(), emailEnabled, topic.nextDueAt());
 		return topicRepository.save(topic).id();
 	}
 
@@ -332,7 +339,8 @@ class BriefingServiceTests {
 		Briefing briefing = briefingService.generateBriefing(topicId, owner);
 
 		Topic updated = topicRepository.findByIdAndUserId(topicId, owner).orElseThrow();
-		assertThat(updated.nextDueAt()).isEqualTo(briefing.generatedAt().plus(Frequency.DAILY.interval()));
+		assertThat(updated.nextDueAt())
+				.isEqualTo(ScheduleCalculator.nextDueAt(briefing.generatedAt(), Frequency.DAILY, null));
 	}
 
 	@Test
@@ -408,7 +416,7 @@ class BriefingServiceTests {
 				.hasSize(1)
 				.first()
 				.satisfies(sent -> {
-					assertThat(sent.subject()).contains("Onboarding briefing");
+					assertThat(sent.subject()).contains("first briefing");
 					assertThat(sent.body()).contains("changes");
 				});
 	}
@@ -447,8 +455,33 @@ class BriefingServiceTests {
 		briefingService.generateBriefing(topicId, owner);
 
 		assertThat(fakeEmailSender.sentEmails()).filteredOn(sent -> sent.to().equals(ownerEmail))
-				.extracting(sent -> sent.subject().contains("Onboarding briefing") ? "ONBOARDING" : "DELTA")
+				.extracting(sent -> sent.subject().contains("first briefing") ? "ONBOARDING" : "DELTA")
 				.containsExactlyInAnyOrder("ONBOARDING", "DELTA");
+	}
+
+	@Test
+	void deltaBriefingSubjectMentionsTheTopicsFrequencyAdjective() {
+		UserId owner = newUser();
+		String ownerEmail = userRepository.findEmailById(owner).orElseThrow();
+
+		for (Frequency frequency : Frequency.values()) {
+			String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+			stubFor(get(urlEqualTo(feedPath)).willReturn(
+					aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+			stubValidChatCompletion();
+			String topicName = "Test Topic " + UUID.randomUUID();
+			Topic topic = Topic.create(owner, topicName, newCategoryWithFeedAt(feedPath), Instant.now());
+			topic.applySchedule(frequency, topic.preferredTime(), true, topic.nextDueAt());
+			TopicId topicId = topicRepository.save(topic).id();
+
+			briefingService.generateBriefing(topicId, owner); // onboarding — no frequency wording
+			briefingService.generateBriefing(topicId, owner); // delta — should mention the frequency adjective
+
+			assertThat(fakeEmailSender.sentEmails())
+					.filteredOn(sent -> sent.to().equals(ownerEmail) && sent.subject().contains(topicName))
+					.extracting(sent -> sent.subject())
+					.anyMatch(subject -> subject.contains(frequency.emailAdjective()));
+		}
 	}
 
 }

@@ -92,7 +92,7 @@ public class TopicController {
 		}
 		try {
 			topicService.createTopic(currentUserId(authentication), form.getName(), new CategoryId(form.getCategoryId()),
-					form.getDescription(), form.getFrequency(), form.getPreferredHour(), form.isEmailEnabled());
+					form.getDescription(), form.getFrequency(), form.getPreferredTime(), form.isEmailEnabled());
 		} catch (DuplicateTopicNameException alreadyExists) {
 			bindingResult.rejectValue("name", "name.duplicate", "You already have a topic with this name");
 			return "topic-form";
@@ -114,7 +114,7 @@ public class TopicController {
 		}
 		EditScheduleRequest form = new EditScheduleRequest();
 		form.setFrequency(topic.get().frequency());
-		form.setPreferredHour(topic.get().preferredHour());
+		form.setPreferredTime(topic.get().preferredTime());
 		form.setEmailEnabled(topic.get().emailEnabled());
 		model.addAttribute("topicId", id);
 		model.addAttribute("editScheduleRequest", form);
@@ -135,7 +135,7 @@ public class TopicController {
 			return "topic-edit";
 		}
 		topicService.updateSchedule(currentUserId(authentication), new TopicId(id), form.getFrequency(),
-				form.getPreferredHour(), form.isEmailEnabled());
+				form.getPreferredTime(), form.isEmailEnabled());
 		return "redirect:/";
 	}
 
@@ -157,16 +157,15 @@ public class TopicController {
 
 	static TopicView toView(Topic topic, Map<Long, String> categoryNamesById) {
 		String categoryName = categoryNamesById.get(topic.categoryId().value());
-		String nextDueAt = topic.nextDueAt() == null ? "Manual" : TIMESTAMP_FORMAT.format(topic.nextDueAt());
+		String nextDueAt = topic.nextDueAt() == null ? "Not yet scheduled" : TIMESTAMP_FORMAT.format(topic.nextDueAt());
 		String nextDueAtIso = topic.nextDueAt() == null ? null : topic.nextDueAt().toString();
 		boolean lastRunFailed = topic.lastScheduledStatus() == ScheduledRunStatus.FAILURE;
-		return new TopicView(topic.id().value(), topic.name(), categoryName, nextDueAt, nextDueAtIso, lastRunFailed);
+		return new TopicView(topic.id().value(), topic.name(), categoryName, nextDueAt, nextDueAtIso, lastRunFailed,
+				topic.emailEnabled());
 	}
 
 	private static String frequencyLabel(Frequency frequency) {
 		return switch (frequency) {
-			case MANUAL -> "Manual only";
-			case TWICE_DAILY -> "Twice daily";
 			case DAILY -> "Daily";
 			case EVERY_OTHER_DAY -> "Every other day";
 			case WEEKLY -> "Weekly";
@@ -177,12 +176,13 @@ public class TopicController {
 	 * Display-only shape for {@code topics.html} — resolves the category
 	 * name once here rather than making the template do a lookup.
 	 * {@code nextDueAtIso} carries the raw instant for {@code app.js} to
-	 * re-render in the viewer's local timezone (or {@code null} for a
-	 * {@code MANUAL} topic, which has no schedule); {@code nextDueAt} (UTC
-	 * text, or "Manual") is the no-JS fallback.
+	 * re-render in the viewer's local timezone. Every {@link Frequency} now
+	 * always produces a {@code nextDueAt}, so the null branch (and its
+	 * "Not yet scheduled" fallback) is defensive only and should never
+	 * trigger in practice.
 	 */
 	public record TopicView(Long id, String name, String categoryName, String nextDueAt, String nextDueAtIso,
-			boolean lastRunFailed) {
+			boolean lastRunFailed, boolean emailEnabled) {
 	}
 
 	/**

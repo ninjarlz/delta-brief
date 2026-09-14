@@ -88,7 +88,7 @@ public class BriefingService {
 		// email delivery (FR-012) — onboarding and delta briefings, manual
 		// and scheduled triggers, all reach this one line.
 		if (topic.emailEnabled()) {
-			briefingEmailNotifier.sendBriefingEmail(userId, topic.name(), saved);
+			briefingEmailNotifier.sendBriefingEmail(userId, topic.name(), topic.frequencyAdjective(), saved);
 		}
 		return saved;
 	}
