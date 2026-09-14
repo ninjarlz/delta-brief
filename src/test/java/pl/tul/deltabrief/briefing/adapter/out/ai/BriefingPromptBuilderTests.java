@@ -32,7 +32,7 @@ class BriefingPromptBuilderTests {
 		String prompt = promptBuilder.build(request);
 
 		assertThat(prompt).contains(BriefingPromptBuilder.ANTI_HALLUCINATION_INSTRUCTION);
-		assertThat(prompt).contains(BriefingPromptBuilder.GOOGLE_NEWS_FILLER_GUIDANCE);
+		assertThat(prompt).contains(BriefingPromptBuilder.SOURCE_RELEVANCE_AND_PRIORITY_GUIDANCE);
 		assertThat(prompt).contains(BriefingPromptBuilder.INJECTION_GUARDRAIL);
 		assertThat(prompt).contains(BriefingPromptBuilder.NUMBERED_SOURCES_HEADER);
 		assertThat(prompt).contains("[1] BBC News: Headline — https://example.com/1");
@@ -50,7 +50,7 @@ class BriefingPromptBuilderTests {
 		String prompt = promptBuilder.build(request);
 
 		assertThat(prompt).contains(BriefingPromptBuilder.ANTI_HALLUCINATION_INSTRUCTION);
-		assertThat(prompt).contains(BriefingPromptBuilder.GOOGLE_NEWS_FILLER_GUIDANCE);
+		assertThat(prompt).contains(BriefingPromptBuilder.SOURCE_RELEVANCE_AND_PRIORITY_GUIDANCE);
 		assertThat(prompt).contains(BriefingPromptBuilder.INJECTION_GUARDRAIL);
 		assertThat(prompt).contains(BriefingPromptBuilder.NUMBERED_SOURCES_HEADER);
 		assertThat(prompt).contains(BriefingPromptBuilder.DELTA_COMPARISON_INSTRUCTION);

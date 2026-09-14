@@ -228,7 +228,7 @@ class BriefingServiceTests {
 
 	/**
 	 * Relevance judgment for what to actually cite is left entirely to the
-	 * LLM (see {@code BriefingPromptBuilder.CURATED_SOURCE_PRIORITY_GUIDANCE})
+	 * LLM (see {@code BriefingPromptBuilder.SOURCE_RELEVANCE_AND_PRIORITY_GUIDANCE})
 	 * rather than pre-filtered during ingestion — a local keyword filter was
 	 * tried and removed (unreliable, missed paraphrases like "Kyiv" for a
 	 * "Ukraine" topic). This seeds a category feed with an on-topic and an
