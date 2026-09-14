@@ -31,6 +31,7 @@ interface TopicEntityMapper {
 	@Mapping(target = "nextDueAt", expression = "java(topic.nextDueAt())")
 	@Mapping(target = "lastScheduledAttemptAt", expression = "java(topic.lastScheduledAttemptAt())")
 	@Mapping(target = "lastScheduledStatus", expression = "java(topic.lastScheduledStatus())")
+	@Mapping(target = "emailEnabled", expression = "java(topic.emailEnabled())")
 	TopicJpaEntity toEntity(Topic topic);
 
 	Topic toDomain(TopicJpaEntity entity);

@@ -52,7 +52,7 @@ class TopicRepositoryAdapter implements TopicRepository {
 	public Optional<TopicSummary> findSummaryByIdAndUserId(TopicId id, UserId userId) {
 		return jpaRepository.findByIdAndUserId(id.value(), userId.value())
 				.map(view -> new TopicSummary(view.getName(), new CategoryId(view.getCategoryId()),
-						view.getDescription()));
+						view.getDescription(), view.getEmailEnabled()));
 	}
 
 	@Override

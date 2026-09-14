@@ -28,6 +28,10 @@
 					<small class="field-error" th:if="${#fields.hasErrors('preferredHour')}" th:errors="*{preferredHour}"></small>
 					<small>DeltaBrief nudges automatic generation toward this hour when set. Leave blank for no preference.</small>
 				</label>
+				<label for="emailEnabled">
+					<input type="checkbox" id="emailEnabled" th:field="*{emailEnabled}"/>
+					Email me new briefings for this topic <small>(recommended)</small>
+				</label>
 				<button type="submit">Save schedule</button>
 			</form>
 			<p class="switch-link"><a th:href="@{/}">Back to your topics</a></p>

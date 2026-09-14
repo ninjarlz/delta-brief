@@ -159,7 +159,7 @@ class ScheduledBriefingRunnerTests {
 	private Topic dueTopic(UserId owner, CategoryId categoryId, Instant nextDueAt) {
 		Topic topic = topicRepository
 				.save(Topic.create(owner, "Test Topic " + UUID.randomUUID(), categoryId, Instant.now()));
-		topic.applySchedule(Frequency.DAILY, null, nextDueAt);
+		topic.applySchedule(Frequency.DAILY, null, true, nextDueAt);
 		return topicRepository.save(topic);
 	}
 

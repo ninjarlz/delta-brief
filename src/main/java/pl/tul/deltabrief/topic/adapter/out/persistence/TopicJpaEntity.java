@@ -63,4 +63,7 @@ public class TopicJpaEntity {
 	@Column(name = "last_scheduled_status")
 	private ScheduledRunStatus lastScheduledStatus;
 
+	@Column(name = "email_enabled", nullable = false)
+	private boolean emailEnabled;
+
 }

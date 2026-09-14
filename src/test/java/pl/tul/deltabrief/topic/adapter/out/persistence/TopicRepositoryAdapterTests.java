@@ -155,7 +155,7 @@ class TopicRepositoryAdapterTests {
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
 
 		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
-				.contains(new TopicSummary("War in Ukraine", categoryId, null));
+				.contains(new TopicSummary("War in Ukraine", categoryId, null, true));
 	}
 
 	@Test
@@ -166,7 +166,19 @@ class TopicRepositoryAdapterTests {
 				Topic.create(owner, "War in Ukraine", categoryId, "Tracking the humanitarian angle", Instant.now()));
 
 		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
-				.contains(new TopicSummary("War in Ukraine", categoryId, "Tracking the humanitarian angle"));
+				.contains(new TopicSummary("War in Ukraine", categoryId, "Tracking the humanitarian angle", true));
+	}
+
+	@Test
+	void findSummaryByIdAndUserIdReflectsEmailEnabledAfterItsToggledOff() {
+		UserId owner = newUser();
+		CategoryId categoryId = anyCategoryId();
+		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", categoryId, Instant.now()));
+		topic.applySchedule(topic.frequency(), topic.preferredHour(), false, topic.nextDueAt());
+		topicRepository.save(topic);
+
+		assertThat(topicRepository.findSummaryByIdAndUserId(topic.id(), owner))
+				.contains(new TopicSummary("War in Ukraine", categoryId, null, false));
 	}
 
 	@Test
@@ -211,7 +223,7 @@ class TopicRepositoryAdapterTests {
 	void findDueForScheduledGenerationReturnsATopicWhoseNextDueAtHasPassed() {
 		UserId owner = newUser();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
-		topic.applySchedule(Frequency.DAILY, null, Instant.now().minus(Duration.ofMinutes(1)));
+		topic.applySchedule(Frequency.DAILY, null, true, Instant.now().minus(Duration.ofMinutes(1)));
 		topicRepository.save(topic);
 
 		List<DueTopic> due = topicRepository.findDueForScheduledGeneration(Instant.now());
@@ -224,7 +236,7 @@ class TopicRepositoryAdapterTests {
 	void findDueForScheduledGenerationExcludesATopicWhoseNextDueAtIsInTheFuture() {
 		UserId owner = newUser();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
-		topic.applySchedule(Frequency.DAILY, null, Instant.now().plus(Duration.ofDays(1)));
+		topic.applySchedule(Frequency.DAILY, null, true, Instant.now().plus(Duration.ofDays(1)));
 		topicRepository.save(topic);
 
 		assertThat(topicRepository.findDueForScheduledGeneration(Instant.now())).extracting(DueTopic::id)
@@ -241,7 +253,7 @@ class TopicRepositoryAdapterTests {
 		// no real code path can produce).
 		UserId owner = newUser();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
-		topic.applySchedule(Frequency.MANUAL, null, null);
+		topic.applySchedule(Frequency.MANUAL, null, true, null);
 		topicRepository.save(topic);
 
 		assertThat(topicRepository.findDueForScheduledGeneration(Instant.now())).extracting(DueTopic::id)
@@ -252,7 +264,7 @@ class TopicRepositoryAdapterTests {
 	void recordSuccessfulGenerationAdvancesNextDueAtAndMarksSuccess() {
 		UserId owner = newUser();
 		Topic topic = topicRepository.save(Topic.create(owner, "War in Ukraine", anyCategoryId(), Instant.now()));
-		topic.applySchedule(Frequency.DAILY, null, Instant.now());
+		topic.applySchedule(Frequency.DAILY, null, true, Instant.now());
 		topicRepository.save(topic);
 		Instant generatedAt = Instant.parse("2026-09-14T09:00:00Z");
 
@@ -292,7 +304,7 @@ class TopicRepositoryAdapterTests {
 		// coarser than Instant's nanosecond precision — so the persisted and
 		// re-read value can be compared for exact equality below.
 		Instant originalNextDueAt = Instant.now().plus(Duration.ofMinutes(1)).truncatedTo(ChronoUnit.MICROS);
-		topic.applySchedule(Frequency.DAILY, null, originalNextDueAt);
+		topic.applySchedule(Frequency.DAILY, null, true, originalNextDueAt);
 		topicRepository.save(topic);
 		Instant attemptedAt = Instant.now();
 

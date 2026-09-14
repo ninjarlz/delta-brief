@@ -22,7 +22,7 @@ class TopicControllerTests {
 	@Test
 	void showsTheNextDueAtAndNoFailureWhenNoScheduledAttemptHappenedYet() {
 		Topic topic = persisted(Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now()), 10L);
-		topic.applySchedule(Frequency.DAILY, null, Instant.parse("2026-09-15T09:00:00Z"));
+		topic.applySchedule(Frequency.DAILY, null, true, Instant.parse("2026-09-15T09:00:00Z"));
 
 		TopicView view = TopicController.toView(topic, Map.of(2L, "World News"));
 
@@ -37,7 +37,7 @@ class TopicControllerTests {
 	@Test
 	void showsManualWithNoTimestampForAManualTopic() {
 		Topic topic = persisted(Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now()), 10L);
-		topic.applySchedule(Frequency.MANUAL, null, null);
+		topic.applySchedule(Frequency.MANUAL, null, true, null);
 
 		TopicView view = TopicController.toView(topic, Map.of(2L, "World News"));
 
@@ -48,7 +48,7 @@ class TopicControllerTests {
 	@Test
 	void flagsLastRunFailedWhenTheLastScheduledAttemptFailed() {
 		Topic topic = persisted(Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now()), 10L);
-		topic.applySchedule(Frequency.DAILY, null, Instant.parse("2026-09-15T09:00:00Z"));
+		topic.applySchedule(Frequency.DAILY, null, true, Instant.parse("2026-09-15T09:00:00Z"));
 		topic.recordScheduledFailure(Instant.now());
 
 		TopicView view = TopicController.toView(topic, Map.of(2L, "World News"));
@@ -59,7 +59,7 @@ class TopicControllerTests {
 	@Test
 	void doesNotFlagLastRunFailedAfterASuccessfulScheduledAttempt() {
 		Topic topic = persisted(Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now()), 10L);
-		topic.applySchedule(Frequency.DAILY, null, Instant.parse("2026-09-15T09:00:00Z"));
+		topic.applySchedule(Frequency.DAILY, null, true, Instant.parse("2026-09-15T09:00:00Z"));
 		topic.recordScheduledSuccess(Instant.now(), Instant.parse("2026-09-16T09:00:00Z"));
 
 		TopicView view = TopicController.toView(topic, Map.of(2L, "World News"));

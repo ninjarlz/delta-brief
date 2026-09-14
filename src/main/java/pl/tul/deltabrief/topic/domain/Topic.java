@@ -26,10 +26,11 @@ public class Topic {
 	private Instant nextDueAt;
 	private Instant lastScheduledAttemptAt;
 	private ScheduledRunStatus lastScheduledStatus;
+	private boolean emailEnabled;
 
 	public Topic(TopicId id, UserId userId, String name, CategoryId categoryId, String description, Instant createdAt,
 			Frequency frequency, Integer preferredHour, Instant nextDueAt, Instant lastScheduledAttemptAt,
-			ScheduledRunStatus lastScheduledStatus) {
+			ScheduledRunStatus lastScheduledStatus, boolean emailEnabled) {
 		this.id = id;
 		this.userId = userId;
 		this.name = name;
@@ -41,6 +42,7 @@ public class Topic {
 		this.nextDueAt = nextDueAt;
 		this.lastScheduledAttemptAt = lastScheduledAttemptAt;
 		this.lastScheduledStatus = lastScheduledStatus;
+		this.emailEnabled = emailEnabled;
 	}
 
 	/**
@@ -51,7 +53,7 @@ public class Topic {
 	public static Topic create(UserId userId, String name, CategoryId categoryId, String description,
 			Instant createdAt) {
 		return new Topic(null, userId, name, categoryId, description, createdAt, Frequency.DAILY, null, null, null,
-				null);
+				null, true);
 	}
 
 	/**
@@ -68,15 +70,18 @@ public class Topic {
 	}
 
 	/**
-	 * Sets the topic's cadence — used both at creation (with a freshly
-	 * computed {@code nextDueAt}) and from the edit flow (recomputing it
-	 * from the topic's current schedule anchor). Does not touch
-	 * {@code lastScheduledAttemptAt}/{@code lastScheduledStatus} — those
-	 * only change as an actual scheduled attempt happens.
+	 * Sets the topic's cadence and email-delivery preference — used both at
+	 * creation (with a freshly computed {@code nextDueAt}) and from the edit
+	 * flow (recomputing it from the topic's current schedule anchor).
+	 * {@code emailEnabled} rides along here since it changes at exactly the
+	 * same two call sites as {@code frequency}/{@code preferredHour}. Does
+	 * not touch {@code lastScheduledAttemptAt}/{@code lastScheduledStatus} —
+	 * those only change as an actual scheduled attempt happens.
 	 */
-	public void applySchedule(Frequency frequency, Integer preferredHour, Instant nextDueAt) {
+	public void applySchedule(Frequency frequency, Integer preferredHour, boolean emailEnabled, Instant nextDueAt) {
 		this.frequency = Objects.requireNonNull(frequency);
 		this.preferredHour = preferredHour;
+		this.emailEnabled = emailEnabled;
 		this.nextDueAt = nextDueAt;
 	}
 

@@ -48,7 +48,7 @@ public class TopicService {
 	 *         {@value #MAX_TOPICS_PER_USER} topics
 	 */
 	public Topic createTopic(UserId userId, String name, CategoryId categoryId, String description) {
-		return createTopic(userId, name, categoryId, description, Frequency.DAILY, null);
+		return createTopic(userId, name, categoryId, description, Frequency.DAILY, null, true);
 	}
 
 	/**
@@ -57,6 +57,9 @@ public class TopicService {
 	 * product default.
 	 * @param preferredHour optional UTC hour-of-day (0-23) to nudge
 	 * scheduled generation toward — {@code null} for no preference.
+	 * @param emailEnabled whether the topic's owner opted in to receive
+	 * generated briefings by email (FR-012); {@code true} is the product
+	 * default (recommended, checked by default on the create form).
 	 * @throws CategoryNotFoundException if {@code categoryId} doesn't exist —
 	 *         only reachable via a tampered form value, since the UI picker is
 	 *         DB-populated
@@ -66,7 +69,7 @@ public class TopicService {
 	 *         {@value #MAX_TOPICS_PER_USER} topics
 	 */
 	public Topic createTopic(UserId userId, String name, CategoryId categoryId, String description,
-			Frequency frequency, Integer preferredHour) {
+			Frequency frequency, Integer preferredHour, boolean emailEnabled) {
 		if (!categoryRepository.existsById(categoryId)) {
 			throw new CategoryNotFoundException(categoryId);
 		}
@@ -88,7 +91,8 @@ public class TopicService {
 		// the first time this topic actually generates a briefing (onboarding,
 		// manual, or scheduled all advance the schedule the same way; see
 		// BriefingService).
-		topic.applySchedule(frequency, preferredHour, ScheduleCalculator.nextDueAt(createdAt, frequency, preferredHour));
+		topic.applySchedule(frequency, preferredHour, emailEnabled,
+				ScheduleCalculator.nextDueAt(createdAt, frequency, preferredHour));
 		return topicRepository.save(topic);
 	}
 
@@ -112,10 +116,11 @@ public class TopicService {
 	 * the schedule is itself a reset, the same way a manual/scheduled
 	 * generation resets it (see {@code BriefingService}).
 	 */
-	public void updateSchedule(UserId userId, TopicId topicId, Frequency frequency, Integer preferredHour) {
+	public void updateSchedule(UserId userId, TopicId topicId, Frequency frequency, Integer preferredHour,
+			boolean emailEnabled) {
 		topicRepository.findByIdAndUserId(topicId, userId).ifPresent(topic -> {
 			Instant nextDueAt = ScheduleCalculator.nextDueAt(Instant.now(), frequency, preferredHour);
-			topic.applySchedule(frequency, preferredHour, nextDueAt);
+			topic.applySchedule(frequency, preferredHour, emailEnabled, nextDueAt);
 			topicRepository.save(topic);
 		});
 	}

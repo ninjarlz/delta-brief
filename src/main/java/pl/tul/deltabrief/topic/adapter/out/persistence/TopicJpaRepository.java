@@ -18,8 +18,9 @@ interface TopicJpaRepository extends JpaRepository<TopicJpaEntity, Long> {
 
 	/**
 	 * Spring Data interface projection — selects only {@code name}/{@code
-	 * categoryId}/{@code description}, not the full row; this is an
-	 * ownership check + summary lookup, not a full topic read.
+	 * categoryId}/{@code description}/{@code emailEnabled}, not the full
+	 * row; this is an ownership check + summary lookup, not a full topic
+	 * read.
 	 */
 	Optional<TopicNameAndCategoryView> findByIdAndUserId(Long id, Long userId);
 
@@ -30,6 +31,8 @@ interface TopicJpaRepository extends JpaRepository<TopicJpaEntity, Long> {
 		Long getCategoryId();
 
 		String getDescription();
+
+		boolean getEmailEnabled();
 
 	}
 

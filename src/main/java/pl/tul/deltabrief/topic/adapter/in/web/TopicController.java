@@ -92,7 +92,7 @@ public class TopicController {
 		}
 		try {
 			topicService.createTopic(currentUserId(authentication), form.getName(), new CategoryId(form.getCategoryId()),
-					form.getDescription(), form.getFrequency(), form.getPreferredHour());
+					form.getDescription(), form.getFrequency(), form.getPreferredHour(), form.isEmailEnabled());
 		} catch (DuplicateTopicNameException alreadyExists) {
 			bindingResult.rejectValue("name", "name.duplicate", "You already have a topic with this name");
 			return "topic-form";
@@ -115,6 +115,7 @@ public class TopicController {
 		EditScheduleRequest form = new EditScheduleRequest();
 		form.setFrequency(topic.get().frequency());
 		form.setPreferredHour(topic.get().preferredHour());
+		form.setEmailEnabled(topic.get().emailEnabled());
 		model.addAttribute("topicId", id);
 		model.addAttribute("editScheduleRequest", form);
 		return "topic-edit";
@@ -134,7 +135,7 @@ public class TopicController {
 			return "topic-edit";
 		}
 		topicService.updateSchedule(currentUserId(authentication), new TopicId(id), form.getFrequency(),
-				form.getPreferredHour());
+				form.getPreferredHour(), form.isEmailEnabled());
 		return "redirect:/";
 	}
 

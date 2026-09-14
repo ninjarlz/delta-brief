@@ -14,15 +14,13 @@ DeltaBrief tracks long-running news topics (wars, politics, economics, regulatio
 answers a different question than every feed or AI summarizer out there. Classic tools tell you **what's newest**.
 DeltaBrief tells you **what changed** — it compares a topic's current state against your last briefing and
 separates genuine change from noise, trend continuation, and speculation, so you don't have to scroll for
-20 minutes to reconstruct it yourself.
+20 minutes to reconstruct it yourself. At its core, DeltaBrief is meant to be consumed as an **email newsletter**:
+once you opt in, each delta briefing lands straight in your inbox on your topic's own schedule — the app itself
+is there for setup and history, but the everyday product experience is the email hitting your inbox, not a
+dashboard you have to remember to open.
 
 Every claim in a generated briefing is traceable back to an ingested source — hallucination-free output is the
 product's non-negotiable trust guarantee, not an afterthought.
-
-> 📬 **Email delivery is core, not a bolt-on.** DeltaBrief is designed to work as your **delta newsletter**: once
-> you opt in, every generated briefing lands in your inbox on your topic's own schedule, with zero need to open
-> the app. The in-app view exists for browsing history and drilling into detail — the primary delivery channel
-> the product is built around is email.
 
 ### 🧭 Why "delta," not "digest"
 

@@ -8,9 +8,9 @@ import lombok.Setter;
 import pl.tul.deltabrief.topic.domain.Frequency;
 
 /**
- * The validated edit-schedule form shape (FR-008) — only frequency and
- * preferred hour are editable after creation; name/category/description
- * have no edit flow.
+ * The validated edit-schedule form shape (FR-008) — only frequency,
+ * preferred hour, and email opt-in are editable after creation;
+ * name/category/description have no edit flow.
  */
 @Getter
 @Setter
@@ -22,5 +22,12 @@ public class EditScheduleRequest {
 	@Min(0)
 	@Max(23)
 	private Integer preferredHour;
+
+	/**
+	 * Whether to email newly generated briefings for this topic (FR-012) —
+	 * always explicitly pre-populated by the controller before the form
+	 * renders, same as {@link #frequency}/{@link #preferredHour}.
+	 */
+	private boolean emailEnabled;
 
 }

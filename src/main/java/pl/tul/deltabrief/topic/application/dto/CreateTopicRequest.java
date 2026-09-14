@@ -47,4 +47,10 @@ public class CreateTopicRequest {
 	@Max(23)
 	private Integer preferredHour;
 
+	/**
+	 * Whether to email newly generated briefings for this topic (FR-012) —
+	 * defaults to {@code true} (checked, recommended) on a fresh form render.
+	 */
+	private boolean emailEnabled = true;
+
 }

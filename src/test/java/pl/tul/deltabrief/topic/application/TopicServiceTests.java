@@ -79,10 +79,20 @@ class TopicServiceTests {
 	}
 
 	@Test
+	void createsATopicWithEmailEnabledDefaultedToTrue() {
+		UserId userId = newUser();
+
+		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId());
+
+		assertThat(created.emailEnabled()).isTrue();
+	}
+
+	@Test
 	void createsATopicWithAnExplicitFrequencyAndPreferredHour() {
 		UserId userId = newUser();
 
-		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), "note", Frequency.WEEKLY, 9);
+		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), "note", Frequency.WEEKLY, 9,
+				true);
 
 		assertThat(created.frequency()).isEqualTo(Frequency.WEEKLY);
 		assertThat(created.preferredHour()).isEqualTo(9);
@@ -93,7 +103,8 @@ class TopicServiceTests {
 	void createsAManualTopicWithNoNextDueAt() {
 		UserId userId = newUser();
 
-		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), null, Frequency.MANUAL, null);
+		Topic created = topicService.createTopic(userId, "War in Ukraine", anyCategoryId(), null, Frequency.MANUAL, null,
+				true);
 
 		assertThat(created.nextDueAt()).isNull();
 	}
@@ -174,7 +185,7 @@ class TopicServiceTests {
 		UserId owner = newUser();
 		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
 
-		topicService.updateSchedule(owner, topic.id(), Frequency.WEEKLY, 9);
+		topicService.updateSchedule(owner, topic.id(), Frequency.WEEKLY, 9, true);
 
 		Topic updated = topicService.findForSchedule(owner, topic.id()).orElseThrow();
 		assertThat(updated.frequency()).isEqualTo(Frequency.WEEKLY);
@@ -183,11 +194,24 @@ class TopicServiceTests {
 	}
 
 	@Test
+	void updateScheduleCanFlipEmailEnabledOffAndBackOn() {
+		UserId owner = newUser();
+		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
+		assertThat(topic.emailEnabled()).isTrue();
+
+		topicService.updateSchedule(owner, topic.id(), Frequency.DAILY, null, false);
+		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().emailEnabled()).isFalse();
+
+		topicService.updateSchedule(owner, topic.id(), Frequency.DAILY, null, true);
+		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().emailEnabled()).isTrue();
+	}
+
+	@Test
 	void updateScheduleToManualClearsNextDueAt() {
 		UserId owner = newUser();
 		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
 
-		topicService.updateSchedule(owner, topic.id(), Frequency.MANUAL, null);
+		topicService.updateSchedule(owner, topic.id(), Frequency.MANUAL, null, true);
 
 		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().nextDueAt()).isNull();
 	}
@@ -198,7 +222,7 @@ class TopicServiceTests {
 		UserId otherUser = newUser();
 		Topic topic = topicService.createTopic(owner, "War in Ukraine", anyCategoryId());
 
-		topicService.updateSchedule(otherUser, topic.id(), Frequency.WEEKLY, 9);
+		topicService.updateSchedule(otherUser, topic.id(), Frequency.WEEKLY, 9, true);
 
 		assertThat(topicService.findForSchedule(owner, topic.id()).orElseThrow().frequency()).isEqualTo(Frequency.DAILY);
 	}
@@ -207,7 +231,7 @@ class TopicServiceTests {
 	void updateScheduleIsANoOpForAnUnknownId() {
 		UserId owner = newUser();
 
-		topicService.updateSchedule(owner, new TopicId(999_999L), Frequency.WEEKLY, 9);
+		topicService.updateSchedule(owner, new TopicId(999_999L), Frequency.WEEKLY, 9, true);
 
 		assertThat(topicService.listTopics(owner)).isEmpty();
 	}

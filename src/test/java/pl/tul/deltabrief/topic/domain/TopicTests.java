@@ -27,6 +27,7 @@ class TopicTests {
 		assertThat(topic.nextDueAt()).isNull();
 		assertThat(topic.lastScheduledAttemptAt()).isNull();
 		assertThat(topic.lastScheduledStatus()).isNull();
+		assertThat(topic.emailEnabled()).isTrue();
 	}
 
 	@Test
@@ -47,14 +48,15 @@ class TopicTests {
 	}
 
 	@Test
-	void applyScheduleSetsFrequencyPreferredHourAndNextDueAt() {
+	void applyScheduleSetsFrequencyPreferredHourEmailEnabledAndNextDueAt() {
 		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now());
 		Instant nextDueAt = Instant.parse("2026-09-20T09:00:00Z");
 
-		topic.applySchedule(Frequency.WEEKLY, 9, nextDueAt);
+		topic.applySchedule(Frequency.WEEKLY, 9, false, nextDueAt);
 
 		assertThat(topic.frequency()).isEqualTo(Frequency.WEEKLY);
 		assertThat(topic.preferredHour()).isEqualTo(9);
+		assertThat(topic.emailEnabled()).isFalse();
 		assertThat(topic.nextDueAt()).isEqualTo(nextDueAt);
 	}
 
@@ -75,7 +77,7 @@ class TopicTests {
 	void recordScheduledFailureLeavesNextDueAtUnchangedAndMarksFailure() {
 		Topic topic = Topic.create(new UserId(1L), "War in Ukraine", new CategoryId(2L), Instant.now());
 		Instant originalNextDueAt = Instant.parse("2026-09-15T09:00:00Z");
-		topic.applySchedule(Frequency.DAILY, 9, originalNextDueAt);
+		topic.applySchedule(Frequency.DAILY, 9, true, originalNextDueAt);
 		Instant attemptedAt = Instant.parse("2026-09-15T09:05:00Z");
 
 		topic.recordScheduledFailure(attemptedAt);
