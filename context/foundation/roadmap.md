@@ -48,7 +48,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | done | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
 | S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | done | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
 | S-05 | browse-briefing-history          | browse the history of briefings for a topic                         | S-03           | FR-011                  | done | [#10](https://github.com/ninjarlz/delta-brief/issues/10) |
-| S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | in-progress | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
+| S-06 | email-briefing-delivery          | opt in to receive briefings via email                                | S-03           | FR-012                  | done | [#11](https://github.com/ninjarlz/delta-brief/issues/11) |
 | S-07 | rate-a-briefing                  | rate a briefing with predefined categories                          | S-03           | FR-013                  | ready | [#12](https://github.com/ninjarlz/delta-brief/issues/12) |
 | S-08 | oauth-login-google-facebook      | log in or register via Google or Facebook, in addition to email/password | S-01      | FR-001                  | ready | [#22](https://github.com/ninjarlz/delta-brief/issues/22) |
 
@@ -174,7 +174,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - What is the email briefing format (plain text vs. styled), and the opt-in/opt-out flow details? — Owner: user. Block: no.
 - **Risk:** Depends on a real briefing existing to send. The exact email format is still an open PRD question, so this slice's scope may narrow once that's answered — but the delivery mechanism itself can be planned regardless.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-07: Rate a briefing
 
@@ -248,3 +248,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **S-03: User can trigger generation of an onboarding briefing for a new topic, then trigger a delta briefing that compares new content against it, and read both in the app.** — Archived 2026-09-14 → `context/archive/2026-09-13-first-onboarding-and-delta-briefing/`. Lesson: —.
 - **S-04: User can set a briefing frequency (manual, twice daily, daily, every other day, weekly) and receive delta briefings automatically on that schedule.** — Archived 2026-09-14 → `context/archive/2026-09-14-scheduled-briefing-generation/`. Lesson: —.
 - **S-05: User can browse the history of briefings for a watched topic.** — Archived 2026-09-14 → `context/archive/2026-09-14-browse-briefing-history/`. Lesson: —.
+- **S-06: User can opt in to receive generated briefings via email.** — Archived 2026-09-14 → `context/archive/2026-09-14-email-briefing-delivery/`. Lesson: —.
