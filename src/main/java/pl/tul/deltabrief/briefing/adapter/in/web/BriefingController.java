@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -102,10 +103,11 @@ public class BriefingController {
 		if (detail.isEmpty()) {
 			return "redirect:/";
 		}
+		String topicName = detail.get().topicName();
 		model.addAttribute("topicId", topicId.value());
 		model.addAttribute("briefing", toView(detail.get(), ordinal(history, briefingId)));
-		model.addAttribute("history", history.stream()
-				.map(summary -> toHistoryEntryView(summary, briefingId))
+		model.addAttribute("history", IntStream.range(0, history.size())
+				.mapToObj(i -> toHistoryEntryView(history.get(i), briefingId, topicName, history.size() - i))
 				.toList());
 		return "briefing";
 	}
@@ -198,10 +200,21 @@ public class BriefingController {
 		return new SourceView(item.sourceName(), item.title(), item.link());
 	}
 
-	private static HistoryEntryView toHistoryEntryView(BriefingSummary summary, BriefingId currentBriefingId) {
-		return new HistoryEntryView(summary.id().value(), typeLabel(summary.type()),
-				TIMESTAMP_FORMAT.format(summary.generatedAt()), summary.generatedAt().toString(),
-				summary.id().equals(currentBriefingId));
+	/**
+	 * History entries use the same "{topic name} #{ordinal}" naming as the
+	 * main page title, for consistency — the onboarding briefing (always
+	 * ordinal 1) additionally gets "(onboarding briefing)" appended, since
+	 * it's the one entry that isn't self-evidently a delta from something
+	 * else in the list.
+	 */
+	static HistoryEntryView toHistoryEntryView(BriefingSummary summary, BriefingId currentBriefingId,
+			String topicName, int ordinal) {
+		String title = "%s #%d".formatted(topicName, ordinal);
+		if (summary.type() == BriefingType.ONBOARDING) {
+			title += " (onboarding briefing)";
+		}
+		return new HistoryEntryView(summary.id().value(), title, TIMESTAMP_FORMAT.format(summary.generatedAt()),
+				summary.generatedAt().toString(), summary.id().equals(currentBriefingId));
 	}
 
 	private static String typeLabel(BriefingType type) {
@@ -226,8 +239,7 @@ public class BriefingController {
 	public record SourceView(String sourceName, String title, String link) {
 	}
 
-	public record HistoryEntryView(Long id, String typeLabel, String generatedAt, String generatedAtIso,
-			boolean current) {
+	public record HistoryEntryView(Long id, String title, String generatedAt, String generatedAtIso, boolean current) {
 	}
 
 }

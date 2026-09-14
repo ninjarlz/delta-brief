@@ -171,13 +171,15 @@ body {
 	align-items: center;
 	gap: 0.35rem;
 	margin-bottom: 1rem;
-	color: var(--pico-muted-color);
-	font-size: 0.9rem;
-	text-decoration: none;
+	color: var(--pico-primary);
+	font-size: 0.95rem;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
 }
 
 .back-link:hover {
-	color: var(--pico-primary);
+	color: var(--pico-primary-hover);
 }
 
 .page-header {

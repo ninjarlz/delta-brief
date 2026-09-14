@@ -152,7 +152,7 @@ class BriefingFlowIntegrationTests {
 			.andExpect(status().isOk())
 			.andExpect(content().string(containsString("Delta briefing")))
 			.andReturn().getResponse().getContentAsString();
-		assertThat(latestBody).contains("Onboarding briefing");
+		assertThat(latestBody).contains("(onboarding briefing)");
 		String firstBriefingId = extractHistoryLinkedBriefingId(latestBody, topicId);
 
 		mockMvc.perform(get("/topics/" + topicId + "/briefings/" + firstBriefingId).session(session))
