@@ -51,12 +51,13 @@
 		</section>
 		<section class="briefing-section">
 			<h2>Sources</h2>
-			<ol class="briefing-sources">
+			<ol class="briefing-sources" th:if="${!#lists.isEmpty(briefing.sources)}">
 				<li th:each="source : ${briefing.sources}">
 					<span class="briefing-sources__name" th:text="${source.sourceName}"></span>
 					<a th:href="${source.link}" th:text="${source.title}" target="_blank" rel="noopener"></a>
 				</li>
 			</ol>
+			<p class="briefing-sources__empty" th:if="${#lists.isEmpty(briefing.sources)}">No sources were explicitly cited in this briefing.</p>
 		</section>
 
 		<section class="briefing-history" th:if="${!#lists.isEmpty(history)}">
