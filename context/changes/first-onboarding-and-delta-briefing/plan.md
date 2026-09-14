@@ -341,8 +341,8 @@ Discovered after S-03 shipped and was merged (PR #41, squashed to `main` as `db2
 
 #### Automated Verification:
 
-- [ ] `./gradlew build` compiles
-- [ ] Full suite passes: `./gradlew test` (verified locally as of this writing; not yet committed)
+- [x] `./gradlew build` compiles — a8037fe
+- [x] Full suite passes: `./gradlew test` — a8037fe
 
 #### Manual Verification:
 
@@ -460,7 +460,7 @@ Ingested items are capped at 10 per source to bound prompt size, cost, and laten
 
 #### Automated
 
-- [ ] 5.1 `./gradlew build` compiles; full suite passes (verified locally, pending commit)
+- [x] 5.1 `./gradlew build` compiles; full suite passes — a8037fe
 
 #### Manual
 
