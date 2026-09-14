@@ -3,7 +3,7 @@ project: DeltaBrief
 version: 1
 status: draft
 created: 2026-09-10
-updated: 2026-09-13
+updated: 2026-09-14
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -43,7 +43,7 @@ Tracking a long-running news topic today means wading through feeds that show wh
 | ID   | Change ID                       | Outcome (user can …)                                              | Prerequisites | PRD refs               | Status   | GitHub |
 | ---- | -------------------------------- | ------------------------------------------------------------------- | -------------- | ----------------------- | -------- | ------ |
 | F-01 | wire-database-connectivity       | (foundation) app connects to a real Postgres DB, locally and deployed | —              | Access Control, NFR: user data privacy | done | [#5](https://github.com/ninjarlz/delta-brief/issues/5) |
-| S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | in-progress | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
+| S-01 | user-registration-and-login      | register (email/password or OAuth) and log in/out                   | F-01           | FR-001, FR-002          | done | [#6](https://github.com/ninjarlz/delta-brief/issues/6) |
 | S-02 | create-topic-and-select-sources  | create a watched topic, pick its sources, browse their topic list   | S-01           | FR-003, FR-005, FR-006  | done  | [#7](https://github.com/ninjarlz/delta-brief/issues/7) |
 | S-03 | first-onboarding-and-delta-briefing | trigger an onboarding briefing, then a delta briefing, and read both | S-02           | FR-007, FR-009 (manual trigger), FR-010, US-01 | in-progress | [#8](https://github.com/ninjarlz/delta-brief/issues/8) |
 | S-04 | scheduled-briefing-generation    | set a briefing frequency and get delta briefings automatically      | S-03           | FR-008, FR-009 (schedule) | proposed | [#9](https://github.com/ninjarlz/delta-brief/issues/9) |
@@ -106,7 +106,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Sequenced before topics/briefings because the PRD's access-control model makes all downstream data per-user from day one — building topics/briefings first would mean retrofitting ownership onto existing data later.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: Create topic and select sources
 
@@ -244,3 +244,4 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 - **F-01: (foundation) The app connects to a real Postgres (Supabase) database, both locally and in the deployed Render environment, with a schema-migration mechanism in place so future slices can add tables incrementally.** — Archived 2026-09-11 → `context/archive/2026-09-10-wire-database-connectivity/`. Lesson: —.
 - **S-02: User can create a watched topic, pick its sources from presets, and browse their topic list.** — Archived 2026-09-13 → `context/archive/2026-09-13-create-topic-and-select-sources/`. Lesson: —.
+- **S-01: User can create an account (email/password or OAuth) and log in and out.** — Archived 2026-09-14 → `context/archive/2026-09-11-user-registration-and-login/`. Lesson: —.
