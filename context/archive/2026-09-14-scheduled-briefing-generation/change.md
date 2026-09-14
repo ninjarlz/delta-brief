@@ -1,10 +1,10 @@
 ---
 change_id: scheduled-briefing-generation
 title: Scheduled briefing generation
-status: impl_reviewed
+status: archived
 created: 2026-09-14
 updated: 2026-09-14
-archived_at: null
+archived_at: 2026-09-14T15:00:31Z
 ---
 
 ## Notes
