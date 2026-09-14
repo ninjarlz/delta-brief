@@ -48,7 +48,10 @@ class ScheduledBriefingRunner {
 		this.maxConcurrentGenerations = maxConcurrentGenerations;
 	}
 
-	@Scheduled(fixedRateString = "${app.scheduling.poll-interval-ms:900000}")
+	// fixedDelay (not fixedRate): measures the interval from this method's own
+	// completion, so overlapping ticks can't happen regardless of the task
+	// scheduler's thread-pool size.
+	@Scheduled(fixedDelayString = "${app.scheduling.poll-interval-ms:900000}")
 	void runDueGenerations() {
 		List<DueTopic> due = topicRepository.findDueForScheduledGeneration(Instant.now());
 		if (due.isEmpty()) {

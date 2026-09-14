@@ -153,6 +153,24 @@ class TopicFlowIntegrationTests {
 	}
 
 	@Test
+	void invalidPreferredHourOnEditShowsAnInlineErrorWithoutRedirecting() throws Exception {
+		MockHttpSession session = loginAsNewVerifiedUser();
+		Long categoryId = categoryRepository.findAll().get(0).id().value();
+		mockMvc.perform(post("/topics").with(csrf()).session(session)
+				.param("name", "War in Ukraine")
+				.param("categoryId", categoryId.toString())
+				.param("frequency", "DAILY"))
+			.andExpect(status().is3xxRedirection());
+		String topicId = extractCreatedTopicId(session);
+
+		mockMvc.perform(post("/topics/" + topicId + "/edit").with(csrf()).session(session)
+				.param("frequency", "WEEKLY")
+				.param("preferredHour", "24"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("topic-edit"));
+	}
+
+	@Test
 	void aUserCannotEditAnotherUsersTopicSchedule() throws Exception {
 		MockHttpSession sessionA = loginAsNewVerifiedUser();
 		MockHttpSession sessionB = loginAsNewVerifiedUser();
