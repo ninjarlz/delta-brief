@@ -411,30 +411,30 @@ conservative placeholder for existing rows.
 
 #### Automated
 
-- [x] 1.1 `TopicTests` passes including the new `applySchedule` case
-- [x] 1.2 `TopicServiceTests` passes including new `emailEnabled` cases
-- [x] 1.3 `TopicRepositoryAdapterTests` passes including the new projection case
-- [x] 1.4 `./gradlew build` succeeds (migration applies cleanly, including backfill)
+- [x] 1.1 `TopicTests` passes including the new `applySchedule` case — cf79bc3
+- [x] 1.2 `TopicServiceTests` passes including new `emailEnabled` cases — cf79bc3
+- [x] 1.3 `TopicRepositoryAdapterTests` passes including the new projection case — cf79bc3
+- [x] 1.4 `./gradlew build` succeeds (migration applies cleanly, including backfill) — cf79bc3
 
 #### Manual
 
-- [x] 1.5 New topic's opt-in checkbox defaults to checked with "(recommended)" label
-- [x] 1.6 Unchecking and saving persists the unchecked state
-- [x] 1.7 Re-checking and saving persists the checked state
+- [x] 1.5 New topic's opt-in checkbox defaults to checked with "(recommended)" label — cf79bc3
+- [x] 1.6 Unchecking and saving persists the unchecked state — cf79bc3
+- [x] 1.7 Re-checking and saving persists the checked state — cf79bc3
 
 ### Phase 2: Send the briefing by email when opted in
 
 #### Automated
 
-- [ ] 2.1 `CitationRendererTests` passes
-- [ ] 2.2 `BriefingControllerTests` passes unchanged
-- [ ] 2.3 `UserRepositoryAdapterTests` passes including the new `findEmailById` cases
-- [ ] 2.4 `BriefingServiceTests` passes including opted-in/opted-out/onboarding cases
-- [ ] 2.5 `ScheduledBriefingRunnerTests` passes including the scheduled-path email case
-- [ ] 2.6 `./gradlew test` passes
+- [x] 2.1 `CitationRendererTests` passes
+- [x] 2.2 `BriefingControllerTests` passes unchanged
+- [x] 2.3 `UserRepositoryAdapterTests` passes including the new `findEmailById` cases
+- [x] 2.4 `BriefingServiceTests` passes including opted-in/opted-out/onboarding cases
+- [x] 2.5 `ScheduledBriefingRunnerTests` passes including the scheduled-path email case
+- [x] 2.6 `./gradlew test` passes
 
 #### Manual
 
-- [ ] 2.7 Opted-in topic's generated briefing arrives by email with full content and a working link
-- [ ] 2.8 Opted-out topic's generation sends no email
-- [ ] 2.9 A scheduled (not just manual) generation for an opted-in topic also sends an email
+- [x] 2.7 Opted-in topic's generated briefing arrives by email with full content and a working link
+- [x] 2.8 Opted-out topic's generation sends no email
+- [x] 2.9 A scheduled (not just manual) generation for an opted-in topic also sends an email

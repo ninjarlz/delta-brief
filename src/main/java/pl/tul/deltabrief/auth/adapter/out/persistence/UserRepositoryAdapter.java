@@ -37,4 +37,9 @@ class UserRepositoryAdapter implements UserRepository {
 		return jpaRepository.existsByEmail(email);
 	}
 
+	@Override
+	public Optional<String> findEmailById(UserId id) {
+		return jpaRepository.findById(id.value()).map(UserJpaEntity::getEmail);
+	}
+
 }

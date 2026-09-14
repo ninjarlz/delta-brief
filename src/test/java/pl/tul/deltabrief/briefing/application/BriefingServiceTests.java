@@ -32,6 +32,7 @@ import pl.tul.deltabrief.briefing.domain.BriefingType;
 import pl.tul.deltabrief.briefing.domain.IngestedItem;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
+import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
 import pl.tul.deltabrief.topic.domain.CategoryId;
 import pl.tul.deltabrief.topic.domain.Frequency;
@@ -111,6 +112,9 @@ class BriefingServiceTests {
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
+	@Autowired
+	private FakeEmailSender fakeEmailSender;
+
 	@Value("${wiremock.server.baseUrl}")
 	private String wireMockBaseUrl;
 
@@ -145,6 +149,12 @@ class BriefingServiceTests {
 		Topic topic = topicRepository
 				.save(Topic.create(owner, "Test Topic " + UUID.randomUUID(), categoryId, Instant.now()));
 		return topic.id();
+	}
+
+	private TopicId newTopic(UserId owner, CategoryId categoryId, boolean emailEnabled) {
+		Topic topic = Topic.create(owner, "Test Topic " + UUID.randomUUID(), categoryId, Instant.now());
+		topic.applySchedule(topic.frequency(), topic.preferredHour(), emailEnabled, topic.nextDueAt());
+		return topicRepository.save(topic).id();
 	}
 
 	@Test
@@ -380,6 +390,65 @@ class BriefingServiceTests {
 		TopicId topicId = newTopic(owner, newCategoryWithFeedAt("/feed-" + UUID.randomUUID() + ".xml"));
 
 		assertThat(briefingService.getHistory(topicId, otherUser)).isEmpty();
+	}
+
+	@Test
+	void generatingABriefingForAnOptedInTopicSendsAnEmailWithRecognizableContent() {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		String ownerEmail = userRepository.findEmailById(owner).orElseThrow();
+		TopicId topicId = newTopic(owner, newCategoryWithFeedAt(feedPath), true);
+
+		briefingService.generateBriefing(topicId, owner);
+
+		assertThat(fakeEmailSender.sentEmails()).filteredOn(sent -> sent.to().equals(ownerEmail))
+				.hasSize(1)
+				.first()
+				.satisfies(sent -> {
+					assertThat(sent.subject()).contains("Onboarding briefing");
+					assertThat(sent.body()).contains("changes");
+				});
+	}
+
+	@Test
+	void generatingABriefingForAnOptedOutTopicSendsNoEmail() {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		String ownerEmail = userRepository.findEmailById(owner).orElseThrow();
+		TopicId topicId = newTopic(owner, newCategoryWithFeedAt(feedPath), false);
+
+		briefingService.generateBriefing(topicId, owner);
+
+		assertThat(fakeEmailSender.sentEmails()).noneMatch(sent -> sent.to().equals(ownerEmail));
+	}
+
+	/**
+	 * FR-012's "opted in means every generated briefing" — the onboarding
+	 * briefing (a topic's first) must be emailed the same as any later delta
+	 * briefing, with no type-based branching at the one shared hook point.
+	 */
+	@Test
+	void bothOnboardingAndDeltaBriefingsAreEmailedForAnOptedInTopic() {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		String ownerEmail = userRepository.findEmailById(owner).orElseThrow();
+		TopicId topicId = newTopic(owner, newCategoryWithFeedAt(feedPath), true);
+
+		briefingService.generateBriefing(topicId, owner);
+		briefingService.generateBriefing(topicId, owner);
+
+		assertThat(fakeEmailSender.sentEmails()).filteredOn(sent -> sent.to().equals(ownerEmail))
+				.extracting(sent -> sent.subject().contains("Onboarding briefing") ? "ONBOARDING" : "DELTA")
+				.containsExactlyInAnyOrder("ONBOARDING", "DELTA");
 	}
 
 }

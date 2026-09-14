@@ -8,12 +8,14 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
- * Backs {@code @Async("emailTaskExecutor")} (see
- * {@code RegistrationService.resendVerification}) — dispatching the
+ * Backs {@code @Async("emailTaskExecutor")}, used by two async email
+ * senders: {@code RegistrationService.resendVerification} (dispatching the
  * verification-email send off the request thread closes a timing
- * side-channel (a real SMTP round-trip vs. a near-instant no-op would
+ * side-channel — a real SMTP round-trip vs. a near-instant no-op would
  * otherwise let an attacker infer account state from response latency
- * alone). Small pool: this app has no other async work today.
+ * alone) and {@code BriefingEmailNotifier.sendBriefingEmail} (keeps briefing
+ * email delivery off both the manual generation request and the scheduler's
+ * per-topic dispatch). Small pool: still the only async work in this app.
  */
 @Configuration
 @EnableAsync

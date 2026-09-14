@@ -28,6 +28,7 @@ import pl.tul.deltabrief.auth.domain.User;
 import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
+import pl.tul.deltabrief.shared.adapter.out.email.FakeEmailSender;
 import pl.tul.deltabrief.topic.application.port.out.TopicRepository;
 import pl.tul.deltabrief.topic.domain.CategoryId;
 import pl.tul.deltabrief.topic.domain.Frequency;
@@ -104,6 +105,9 @@ class ScheduledBriefingRunnerTests {
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
+
+	@Autowired
+	private FakeEmailSender fakeEmailSender;
 
 	@Value("${wiremock.server.baseUrl}")
 	private String wireMockBaseUrl;
@@ -212,6 +216,26 @@ class ScheduledBriefingRunnerTests {
 	@Test
 	void doesNothingWhenNoTopicIsDue() {
 		scheduledBriefingRunner.runDueGenerations();
+	}
+
+	/**
+	 * Proves the shared hook point (see {@code BriefingService.generateBriefing})
+	 * actually covers the scheduled trigger too, not just the manual one —
+	 * {@link BriefingServiceTests} already covers the manual path directly.
+	 */
+	@Test
+	void sendsAnEmailForADueOptedInTopic() {
+		String feedPath = "/feed-" + UUID.randomUUID() + ".xml";
+		stubFor(get(urlEqualTo(feedPath)).willReturn(
+				aResponse().withHeader("Content-Type", "application/rss+xml").withBody(VALID_RSS)));
+		stubValidChatCompletion();
+		UserId owner = newUser();
+		String ownerEmail = userRepository.findEmailById(owner).orElseThrow();
+		dueTopic(owner, newCategoryWithFeedAt(feedPath), Instant.now().minus(Duration.ofMinutes(1)));
+
+		scheduledBriefingRunner.runDueGenerations();
+
+		assertThat(fakeEmailSender.sentEmails()).anyMatch(sent -> sent.to().equals(ownerEmail));
 	}
 
 }

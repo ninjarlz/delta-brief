@@ -47,6 +47,7 @@ public class BriefingService {
 	private final SourceContentFetcher sourceContentFetcher;
 	private final BriefingContentGenerator contentGenerator;
 	private final BriefingRepository briefingRepository;
+	private final BriefingEmailNotifier briefingEmailNotifier;
 
 	/**
 	 * @throws TopicNotFoundException if the topic doesn't exist or isn't
@@ -83,6 +84,12 @@ public class BriefingService {
 		// decision applies uniformly here rather than special-casing the
 		// scheduler's own calls).
 		topicRepository.recordSuccessfulGeneration(topicId, saved.generatedAt());
+		// Same "every generation path treats this uniformly" rule applies to
+		// email delivery (FR-012) — onboarding and delta briefings, manual
+		// and scheduled triggers, all reach this one line.
+		if (topic.emailEnabled()) {
+			briefingEmailNotifier.sendBriefingEmail(userId, topic.name(), saved);
+		}
 		return saved;
 	}
 

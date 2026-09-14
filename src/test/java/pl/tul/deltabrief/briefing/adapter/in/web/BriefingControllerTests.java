@@ -22,8 +22,9 @@ import pl.tul.deltabrief.topic.domain.TopicId;
  * from — so an inline {@code [n]} marker referencing a position in that
  * hidden full list would be meaningless to a reader. {@code toView} remaps
  * each citation to its 1-based position in the displayed (filtered,
- * first-appearance-ordered) list instead — see the Javadoc on {@code
- * BriefingController#citedNumbersInOrder}/{@code #renumberCitations}.
+ * first-appearance-ordered) list instead, via {@code CitationRenderer} — see
+ * that class's own dedicated unit tests for the renumbering logic itself;
+ * these tests confirm {@code toView} wires it through correctly end to end.
  */
 class BriefingControllerTests {
 

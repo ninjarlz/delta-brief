@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import pl.tul.deltabrief.auth.application.port.out.UserRepository;
 import pl.tul.deltabrief.auth.domain.User;
+import pl.tul.deltabrief.auth.domain.UserId;
 import pl.tul.deltabrief.config.SynchronousAsyncConfig;
 import pl.tul.deltabrief.config.TestcontainersDatasourceConfig;
 
@@ -52,6 +53,19 @@ class UserRepositoryAdapterTests {
 		assertThatException()
 				.isThrownBy(() -> userRepository.save(User.register(email, "another-hash", Instant.now())))
 				.isInstanceOf(DataIntegrityViolationException.class);
+	}
+
+	@Test
+	void findEmailByIdReturnsTheEmailForAnExistingUser() {
+		String email = uniqueEmail();
+		User saved = userRepository.save(User.register(email, "hashed-password", Instant.now()));
+
+		assertThat(userRepository.findEmailById(saved.id())).contains(email);
+	}
+
+	@Test
+	void findEmailByIdIsEmptyForAnUnknownId() {
+		assertThat(userRepository.findEmailById(new UserId(999_999L))).isEmpty();
 	}
 
 }
