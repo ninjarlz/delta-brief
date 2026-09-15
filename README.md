@@ -35,6 +35,15 @@ product's non-negotiable trust guarantee, not an afterthought.
 | What's trending? | What's a genuine development vs. trend continuation? |
 | What was said? | What's noise/speculation vs. what actually matters? |
 
+### 🧘 Informed, not overstimulated
+
+DeltaBrief exists to keep you in the loop on the topics you actually care about — without the doomscrolling.
+Endless feeds are optimized to maximize time-on-app, not your understanding: they re-serve the same story from
+ten angles, mix in outrage-bait and speculation, and reward you for scrolling rather than for being informed.
+DeltaBrief does the opposite on purpose. It only tells you what's genuinely new since you last checked, filters
+out noise and trend-repetition, and delivers that once, on a schedule you set — so staying informed costs you a
+two-minute read instead of a twenty-minute scroll, and checking a topic isn't a compulsive habit anymore.
+
 ## 📸 Screenshots
 
 <table>
