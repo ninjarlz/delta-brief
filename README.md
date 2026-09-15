@@ -48,7 +48,7 @@ two-minute read instead of a twenty-minute scroll, and checking a topic isn't a 
 
 <table>
   <tr>
-    <td align="center"><strong>Login — with the landing pitch</strong><br/><img src="readme_img/login_screenshot.png" width="400"/></td>
+    <td align="center"><strong>Login — with the landing pitch</strong><br/><img src="readme_img/login_screenshot1.png" width="400"/></td>
     <td align="center"><strong>Create a topic</strong><br/><img src="readme_img/topic_creation_screenshot.png" width="400"/></td>
   </tr>
   <tr>
